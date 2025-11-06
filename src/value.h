@@ -1,3 +1,7 @@
+// cilly-vm-cpp
+// Author: Leixyaa
+// Date: 11.6
+
 #ifndef CILLY_VM_CPP_VALUE_H_
 #define CILLY_VM_CPP_VALUE_H_
 
@@ -16,6 +20,7 @@ class Value {
  public:
   // 构造与工厂方法 --------------------------------------------
   Value();  // 默认构造成 Null。
+  Value(ValueType x, std::variant<std::monostate, bool, double, std::string> y);
   static Value Null();
   static Value Bool(bool b);
   static Value Num(double d);
