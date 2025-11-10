@@ -3,6 +3,8 @@
 // Date: 11.6
 // Description: Entry point for testing environment.
 
+#include "chunk.h"
+#include "opcodes.h"
 #include "value.h"
 #include "stack_stats.h"
 #include <iostream>
@@ -31,8 +33,38 @@ void StackTest(){
   std::cout << s.PushCount() << "," << s.PopCount() << "," << s.Depth()  << "," << s.MaxDepth() << "," << v.ToRepr() << std::endl;
 }
 
+void ChunkTest() {
+  using namespace cilly;
+
+  Chunk ch;
+
+  int c0 = ch.AddConst(Value::Num(10));
+  int c1 = ch.AddConst(Value::Num(20));
+
+  ch.Emit(OpCode::OP_CONSTANT, 1);  
+  ch.EmitI32(c0, 1);
+  ch.Emit(OpCode::OP_CONSTANT, 1); 
+  ch.EmitI32(c1, 1);
+  ch.Emit(OpCode::OP_ADD, 1);       
+  ch.Emit(OpCode::OP_PRINT, 1);     
+
+  std::cout << "CodeSize = " << ch.CodeSize() << "\n";
+  std::cout << "ConstSize = " << ch.ConstSize() << "\n\n";
+
+  std::cout << "Code stream (index : value [line]):\n";
+  for (int i = 0; i < ch.CodeSize(); ++i) {
+    std::cout << "  " << i << " : " << ch.CodeAt(i)
+              << " [line " << ch.LineAt(i) << "]\n";
+  }
+
+  std::cout << "\nConst pool:\n";
+  for (int i = 0; i < ch.ConstSize(); ++i) {
+    std::cout << "  " << i << " : " << ch.ConstAt(i).ToRepr() << "\n";
+  }
+}
 
 int main() {
   ValueTest();
   StackTest();
+  ChunkTest();
 }

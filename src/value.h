@@ -18,7 +18,7 @@ enum class ValueType { kNull, kBool, kNum, kStr };
 // 可存放 null、bool、number、string 四种数据。
 class Value {
  public:
-  // 构造与工厂方法 --------------------------------------------
+  // 构造与工厂方法
   Value();  // 默认构造成 Null。
   Value(ValueType x, std::variant<std::monostate, bool, double, std::string> y);
   static Value Null();
@@ -27,7 +27,7 @@ class Value {
   static Value Str(std::string s);
 
 
-  // 类型判断 --------------------------------------------------
+  // 类型判断
   ValueType type() const;
   bool IsNull() const;
   bool IsBool() const;
@@ -35,14 +35,14 @@ class Value {
   bool IsStr() const;
 
 
-  // 取值接口 --------------------------------------------------
+  // 取值接口
   // 类型不匹配时，可选择断言或异常（实现中保持一致）。
   bool AsBool() const;
   double AsNum() const;
   const std::string& AsStr() const;
 
 
-  // 文本表示 --------------------------------------------------
+  // 文本表示
   // 用于打印或调试：
   // Null -> "null"
   // Bool -> "true"/"false"
@@ -51,7 +51,7 @@ class Value {
   std::string ToRepr() const;
 
 
-  // 比较运算 --------------------------------------------------
+  // 比较运算
   // 仅在类型相同情况下比较；类型不同直接返回 false。
   bool operator==(const Value& rhs) const;
   bool operator!=(const Value& rhs) const;

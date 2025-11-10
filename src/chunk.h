@@ -1,6 +1,8 @@
 #ifndef CILLY_VM_CPP_CHUNK_H_
 #define CILLY_VM_CPP_CHUNK_H_
 
+//chunk是可执行字节码的容器
+
 #include <cstdint>
 #include <vector>
 #include "value.h"
@@ -20,7 +22,7 @@ class Chunk {
   // 向常量池添加一个常量，并返回它的索引。
   int AddConst(const Value& v);
 
-  // 查询接口 -----------------------------------
+  // 查询接口
   int CodeSize() const;                   // code_ 元素个数（含指令和操作数）
   int ConstSize() const;                  // 常量数量
   int32_t CodeAt(int index) const;        // 获取指定位置的指令或操作数
