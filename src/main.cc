@@ -3,6 +3,7 @@
 // Date: 11.6
 // Description: Entry point for testing environment.
 
+#include "vm.h"
 #include "chunk.h"
 #include "opcodes.h"
 #include "value.h"
@@ -101,10 +102,31 @@ void FunctionTest() {
   std::cout << "---------------------------------------------\n";
 }
 
+//VM 最小执行循环自测 
+void VMTest() {
+  using namespace cilly;
+
+  Function fn("main", 0);
+  int c0 = fn.AddConst(Value::Num(10));
+  int c1 = fn.AddConst(Value::Num(20));
+
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_ADD, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  VM vm;
+  vm.Run(fn);  // 期望控制台打印：30
+}
+
+
 
 int main() {
   ValueTest();
   StackTest();
   ChunkTest();
   FunctionTest();
+  VMTest();
 }
