@@ -51,6 +51,18 @@ bool VM::Step_(const Function& fn) {
       std::cout << v.ToRepr() << std::endl;
       break;
     }
+    case OpCode::OP_NEGATE: {
+      Value v = stack_.Pop();
+      assert(v.IsNum() && "Attempted to negate a non-number value");
+      stack_.Push(Value::Num(-v.AsNum()));
+      break;
+    }
+    case OpCode::OP_RETURN: {
+      Value v = stack_.Pop();
+      std::cout << "Return value: " << v.ToRepr() << std::endl;
+      return false;  
+    }
+
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
   }
