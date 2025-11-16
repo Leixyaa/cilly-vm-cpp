@@ -106,20 +106,26 @@ void FunctionTest() {
 void VMTest() {
   using namespace cilly;
 
-  Function fn("main", 0);
+  Function fn("main", /*arity=*/0);
+  
   int c0 = fn.AddConst(Value::Num(10));
   int c1 = fn.AddConst(Value::Num(20));
 
+  // 字节码：10 20 加法，打印，负号，返回
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c1, 1);
   fn.Emit(OpCode::OP_ADD, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_NEGATE, 1);  // 新增：取负
+  fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_RETURN, 1);  // 新增：返回
 
   VM vm;
-  vm.Run(fn);  // 期望控制台打印：30
+  vm.Run(fn);  // -30
 }
+
 
 
 

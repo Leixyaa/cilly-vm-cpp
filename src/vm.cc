@@ -39,7 +39,7 @@ bool VM::Step_(const Function& fn) {
       break;
     }
     case OpCode::OP_ADD: {
-      // 先弹右操作数，再弹左操作数,便于将来支持非交换运算。
+      // 先弹右操作数，再弹左操作数（便于将来支持非交换运算）。
       Value rhs = stack_.Pop();
       Value lhs = stack_.Pop();
       assert(lhs.IsNum() && rhs.IsNum());
@@ -47,7 +47,7 @@ bool VM::Step_(const Function& fn) {
       break;
     }
     case OpCode::OP_PRINT: {
-      Value v = stack_.Pop();
+      Value v = stack_.Top();
       std::cout << v.ToRepr() << std::endl;
       break;
     }
@@ -60,13 +60,56 @@ bool VM::Step_(const Function& fn) {
     case OpCode::OP_RETURN: {
       Value v = stack_.Pop();
       std::cout << "Return value: " << v.ToRepr() << std::endl;
-      return false;  
+      return false;  // 终止执行
     }
-
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
   }
-  return true;  // 当前没有 OP_RETURN：持续执行直到字节码结束
+
+  return true;  // 当前没有函数调用栈，持续执行到字节码末尾
+}
+
+// 迷你反汇编器：打印每条指令及其操作数与行号。
+void DisassembleChunk(const Chunk& chunk) {
+  for (int i = 0; i < chunk.CodeSize(); ++i) {
+    int ip = i;  // 记录本条“指令”的位置（避免 OP_CONSTANT 消耗操作数后丢位）
+    int32_t word = chunk.CodeAt(i);
+    OpCode op = static_cast<OpCode>(word);
+
+    std::cout << ip << " : ";
+
+    switch (op) {
+      case OpCode::OP_CONSTANT: {
+        int index = chunk.CodeAt(++i);  // 消耗 1 个操作数
+        std::cout << "OP_CONSTANT " << index
+                  << " (" << chunk.ConstAt(index).ToRepr() << ")";
+        break;
+      }
+      case OpCode::OP_ADD: {
+        std::cout << "OP_ADD";
+        break;
+      }
+      case OpCode::OP_PRINT: {
+        std::cout << "OP_PRINT";
+        break;
+      }
+      case OpCode::OP_NEGATE: {
+        std::cout << "OP_NEGATE";
+        break;
+      }
+      case OpCode::OP_RETURN: {
+        std::cout << "OP_RETURN";
+        break;
+      }
+      default: {
+        std::cout << "Unknown instruction";
+        break;
+      }
+    }
+
+    // 打印本条“指令”的源码行号,不是操作数的行号
+    std::cout << " [line " << chunk.LineAt(ip) << "]" << std::endl;
+  }
 }
 
 }  // namespace cilly
