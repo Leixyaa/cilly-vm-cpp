@@ -46,6 +46,32 @@ bool VM::Step_(const Function& fn) {
       stack_.Push(Value::Num(lhs.AsNum() + rhs.AsNum()));
       break;
     }
+    
+    case OpCode::OP_SUB: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      assert(rhs.IsNum() && lhs.IsNum());
+      stack_.Push(Value::Num(lhs.AsNum() - rhs.AsNum()));
+      break;
+    }
+    
+    case OpCode::OP_MUL: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      assert(rhs.IsNum() && lhs.IsNum());
+      stack_.Push(Value::Num(lhs.AsNum() * rhs.AsNum()));
+      break;
+    }
+
+    case OpCode::OP_DIV: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      assert(rhs.IsNum() && lhs.IsNum());
+      assert(rhs.AsNum() != 0 && "除数不可为0");
+      stack_.Push(Value::Num(lhs.AsNum() / rhs.AsNum()));
+      break;
+    }
+    
     case OpCode::OP_PRINT: {
       Value v = stack_.Top();
       std::cout << v.ToRepr() << std::endl;
@@ -62,6 +88,7 @@ bool VM::Step_(const Function& fn) {
       std::cout << "Return value: " << v.ToRepr() << std::endl;
       return false;  // 终止执行
     }
+
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
   }
