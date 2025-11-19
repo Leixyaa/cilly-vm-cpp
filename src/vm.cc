@@ -27,6 +27,14 @@ int32_t VM::ReadOpnd_(const Chunk& ch) {
   return ReadI32_(ch);
 }
 
+int VM::PushCount() const { return stack_.PushCount(); }
+
+int VM::PopCount() const { return stack_.PopCount(); }
+
+int VM::Depth() const { return stack_.Depth(); }
+
+int VM::MaxDepth() const { return stack_.MaxDepth(); }
+
 bool VM::Step_(const Function& fn) {
   const Chunk& ch = fn.chunk();
   int32_t raw = ReadI32_(ch);

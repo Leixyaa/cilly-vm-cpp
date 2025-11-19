@@ -115,16 +115,21 @@ void VMTest() {
 // 10 - 2 * 3 / 2 = 12
 fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c0, 1);   // 10
 fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c1, 1);   // 2
-fn.Emit(OpCode::OP_SUB, 1);       // 10 - 2 = 8
+fn.Emit(OpCode::OP_SUB, 1);                           // 10 - 2 = 8
 fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c2, 1);   // 3
-fn.Emit(OpCode::OP_MUL, 1);       // 8 * 3 = 24
+fn.Emit(OpCode::OP_MUL, 1);                           // 8 * 3 = 24
 fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c3, 1);   // 2
-fn.Emit(OpCode::OP_DIV, 1);       // 24 / 2 = 12
-fn.Emit(OpCode::OP_PRINT, 1);     // 打印结果
+fn.Emit(OpCode::OP_DIV, 1);                           // 24 / 2 = 12
+fn.Emit(OpCode::OP_PRINT, 1);                         // 打印结果
 fn.Emit(OpCode::OP_RETURN, 1);
 
   VM vm;
   vm.Run(fn);  //12
+
+std::cout << "PushCount = "   << vm.PushCount() 
+          << ", PopCount = "  << vm.PopCount()
+          << ", Depth = "     << vm.Depth()
+          << ", MaxDepth = "  << vm.MaxDepth() << std::endl;
 }
 
 
