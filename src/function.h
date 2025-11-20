@@ -41,10 +41,14 @@ class Function {
   void EmitI32(int32_t v, int src_line);
   int AddConst(const Value& v);
 
+  void SetLocalCount(int count);
+  int LocalCount() const;
+
  private:
   std::string name_;
   int arity_ = 0;
   std::unique_ptr<Chunk> chunk_;  // Î¨Ò»ÓµÓÐ×Ö½ÚÂë¿é
+  int load_count_ = 0;
 };
 
 }  // namespace cilly

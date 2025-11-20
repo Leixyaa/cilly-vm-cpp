@@ -12,6 +12,8 @@ void VM::Run(const Function& fn) {
   stack_.ResetStats();
   ip_ = 0;
 
+  locals_.assign(fn.LocalCount(), Value::Null());  //初始化locals变量表
+
   while (ip_ < ch.CodeSize()) {
     bool cont = Step_(fn);
     if (!cont) break;
@@ -96,6 +98,22 @@ bool VM::Step_(const Function& fn) {
       std::cout << "Return value: " << v.ToRepr() << std::endl;
       return false;  // 终止执行
     }
+
+    case OpCode::OP_LOAD_VAR: {
+      int index = ReadOpnd_(ch);
+      assert(index >= 0 && index < locals_.size());
+      stack_.Push(locals_[index]);
+      break;
+    }
+
+    case OpCode::OP_STORE_VAR: {
+      int index = ReadOpnd_(ch);
+      assert(index >= 0 && index < locals_.size());
+      Value v = stack_.Pop();
+      locals_[index] = v;
+      break;
+    }
+    
 
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");

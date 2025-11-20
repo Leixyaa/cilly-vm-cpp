@@ -37,6 +37,8 @@ class VM {
  private:
   StackStats stack_;  // 运行时栈（带统计）
   int ip_ = 0;        // 指令指针（index into chunk.code_）
+  std::vector<Value> locals_;
+  
 };
 
 }  // namespace cilly

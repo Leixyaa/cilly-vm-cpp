@@ -43,4 +43,12 @@ void Function::EmitI32(int32_t v, int src_line) { chunk_->EmitI32(v, src_line); 
 
 int Function::AddConst(const Value& v) { return chunk_->AddConst(v); }
 
+void Function::SetLocalCount(int count){
+  load_count_ = count;
+}
+
+int Function::LocalCount() const{
+    return load_count_;
+}
+
 }  // namespace cilly

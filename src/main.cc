@@ -120,7 +120,7 @@ fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c2, 1);   // 3
 fn.Emit(OpCode::OP_MUL, 1);                           // 8 * 3 = 24
 fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c3, 1);   // 2
 fn.Emit(OpCode::OP_DIV, 1);                           // 24 / 2 = 12
-fn.Emit(OpCode::OP_PRINT, 1);                         // 打印结果
+fn.Emit(OpCode::OP_PRINT, 1);                         // 打印结果s
 fn.Emit(OpCode::OP_RETURN, 1);
 
   VM vm;
@@ -130,6 +130,43 @@ std::cout << "PushCount = "   << vm.PushCount()
           << ", PopCount = "  << vm.PopCount()
           << ", Depth = "     << vm.Depth()
           << ", MaxDepth = "  << vm.MaxDepth() << std::endl;
+
+  std::cout << "---------------------------------------------\n";
+}
+
+
+//变量系统自测
+void VarTest() {
+  using namespace cilly;
+
+  Function fn("main", /*arity=*/0);
+  fn.SetLocalCount(2);  // 我们有两个局部变量
+
+  // locals_[0] = 10
+  int c10 = fn.AddConst(Value::Num(10));
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c10, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(0, 1);   // local[0]
+
+  // locals_[1] = 20
+  int c20 = fn.AddConst(Value::Num(20));
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c20, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(1, 1);
+
+  // print locals_[0] + locals_[1]
+  fn.Emit(OpCode::OP_LOAD_VAR, 1); fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1); fn.EmitI32(1, 1);
+  fn.Emit(OpCode::OP_ADD, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // return final value
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  VM vm;
+  vm.Run(fn);
 }
 
 
@@ -141,4 +178,5 @@ int main() {
   ChunkTest();
   FunctionTest();
   VMTest();
+  VarTest();
 }

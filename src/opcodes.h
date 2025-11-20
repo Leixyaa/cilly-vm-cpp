@@ -32,6 +32,10 @@ enum class OpCode : int32_t {
 
   //特殊
   OP_NOOP,       // 空操作，占位
+
+  //变量系统
+  OP_LOAD_VAR,
+  OP_STORE_VAR
 };
 
 }
