@@ -20,7 +20,7 @@ enum class OpCode : int32_t {
   OP_NEGATE,     // 取负
 
   //比较与逻辑
-  OP_EQUAL,      // 判断相等（==）
+  OP_EQ,         // 比较相等，结果是布尔值
   OP_NOT_EQUAL,  // 判断不等（!=）
   OP_GREATER,    // 大于（>）
   OP_LESS,       // 小于（<）
@@ -39,6 +39,7 @@ enum class OpCode : int32_t {
 
   //帧调用
   OP_CALL,       // 调用另一个函数，操作数是函数 ID
+
 };
 
 }

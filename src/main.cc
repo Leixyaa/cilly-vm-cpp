@@ -212,12 +212,17 @@ void CallTest() {
 
   // 运行主函数
   vm.Run(main_fn);
+
+
+  std::cout << "---------------------------------------------\n";
 }
 
 
 // ---------------- 带一个参数的函数调用自测 ----------------
 void CallWithArgTest() {
   using namespace cilly;
+
+  std::cout << "带一个参数的函数调用自测:\n" << std::endl;
 
   Function add1("add1", 1);  //创建函数add1(n)
   add1.SetLocalCount(1);     //规定变量一共一个
@@ -245,10 +250,48 @@ void CallWithArgTest() {
   main.EmitI32(add1_id, 1);
 
   main.Emit(OpCode::OP_PRINT, 1);
-  main.Emit(OpCode::OP_RETURN, 1);
+  main.Emit(OpCode::OP_RETURN, 1);         // 返回 42 + 1 = 42
   
   vm.Run(main);
+
+  std::cout << "---------------------------------------------\n";
 }
+
+
+// ---------------- 相等命令自测 ----------------
+void Eqtest() {
+  using namespace cilly;
+  
+  std::cout << "相等命令自测:\n" << std::endl;
+  
+  Function main("main", 0);
+  main.SetLocalCount(0);
+
+  int c1 = main.AddConst(Value::Num(1));
+  int c2 = main.AddConst(Value::Num(2));
+  
+  main.Emit(OpCode::OP_CONSTANT, 1);  // 1
+  main.EmitI32(c1, 1);
+  main.Emit(OpCode::OP_CONSTANT, 1);  // 1
+  main.EmitI32(c1, 1);
+  main.Emit(OpCode::OP_EQ, 1);        // 1 == 1
+  main.Emit(OpCode::OP_PRINT, 1);     // true
+
+  main.Emit(OpCode::OP_CONSTANT, 1);  // 1
+  main.EmitI32(c1, 1);
+  main.Emit(OpCode::OP_CONSTANT, 1);  // 2
+  main.EmitI32(c2, 1);  
+  main.Emit(OpCode::OP_EQ, 1);        // 1 == 2
+  main.Emit(OpCode::OP_PRINT, 1);     // false
+
+  main.Emit(OpCode::OP_RETURN, 1);    // 随便 return 一个值，这里返回最后一次比较结果
+
+  VM vm;
+  vm.Run(main);  
+
+  std::cout << "---------------------------------------------\n";
+}
+
 
 
 int main() {
@@ -260,4 +303,5 @@ int main() {
   VarTest();
   CallTest();
   CallWithArgTest();
+  Eqtest();
 }

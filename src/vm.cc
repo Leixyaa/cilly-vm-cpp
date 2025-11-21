@@ -99,6 +99,14 @@ bool VM::Step_() {
       break;
     }
     
+    case OpCode::OP_EQ: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      bool result = (lhs == rhs);
+      stack_.Push(Value::Bool(result));  // 用Value类自己的重载==判断
+      break;
+    }
+
     case OpCode::OP_PRINT: {
       Value v = stack_.Top();
       std::cout << v.ToRepr() << std::endl;
@@ -114,7 +122,6 @@ bool VM::Step_() {
 
     case OpCode::OP_RETURN: {
       Value ret = stack_.Pop();          // 先弹出返回值；
-      CallFrame& cf = CurrentFrame();    // 弹出当前调用帧；
       frames_.pop_back();
       if(frames_.empty()) {              // 如果已经没有上层调用帧了，说明返回的是最外层函数
         std::cout << "Return value: " << ret.ToRepr() << std::endl;  // 打印返回值
@@ -128,14 +135,14 @@ bool VM::Step_() {
 
     case OpCode::OP_LOAD_VAR: {
       int index = ReadOpnd_();
-      assert(index >= 0 && index < cf.locals_.size());
+      assert(index >= 0 && index < static_cast<int>(cf.locals_.size()));
       stack_.Push(cf.locals_[index]);
       break;
     }
 
     case OpCode::OP_STORE_VAR: {
       int index = ReadOpnd_();
-      assert(index >= 0 && index < cf.locals_.size());
+      assert(index >= 0 && index < static_cast<int>(cf.locals_.size()));
       Value v = stack_.Pop();
       cf.locals_[index] = v;
       break;
@@ -144,7 +151,7 @@ bool VM::Step_() {
     case OpCode::OP_CALL: {
       // 读取要调用的函数 ID（
       int func_index = ReadOpnd_();
-      assert(func_index >= 0 && func_index < functions_.size());
+      assert(func_index >= 0 && func_index < static_cast<int>(functions_.size()));
 
       const Function* callee = functions_[func_index];
       assert(callee != nullptr);
