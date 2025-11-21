@@ -13,6 +13,8 @@
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
+  std::cout << "Value 封装自测 :\n" << std::endl;
+
   cilly::Value vnull = cilly::Value::Null();
   cilly::Value vtrue = cilly::Value::Bool(true);
   cilly::Value vnum  = cilly::Value::Num(10);
@@ -29,6 +31,8 @@ void ValueTest(){
 
 // ---------------- Stack 封装自测 ----------------
 void StackTest(){
+  std::cout << "Stack 封装自测 :\n" << std::endl;
+
   cilly::StackStats s;
   s.Push(cilly::Value::Num(10));
   s.Push(cilly::Value::Num(10));
@@ -41,6 +45,7 @@ void StackTest(){
 // ---------------- Chunk 封装自测 ----------------
 void ChunkTest() {
   using namespace cilly;
+  std::cout << "Chunk 封装自测 :\n" << std::endl;
 
   Chunk ch;
 
@@ -73,6 +78,7 @@ void ChunkTest() {
 // ---------------- Function 封装自测 ----------------
 void FunctionTest() {
   using namespace cilly;
+  std::cout << "Function 封装自测 :\n" << std::endl;
 
   Function fn("main", /*arity=*/0);
 
@@ -102,9 +108,10 @@ void FunctionTest() {
   std::cout << "---------------------------------------------\n";
 }
 
-//VM 最小执行循环自测 
+//---------------- VM 最小执行循环自测 ----------------
 void VMTest() {
   using namespace cilly;
+  std::cout << "VM 最小执行循环自测 :\n" << std::endl;
 
   Function fn("main", /*arity=*/0);
   
@@ -135,9 +142,10 @@ std::cout << "PushCount = "   << vm.PushCount()
 }
 
 
-//变量系统自测
+//---------------- 变量系统自测 ---------------- 
 void VarTest() {
   using namespace cilly;
+  std::cout << "变量系统自测:\n" << std::endl;
 
   Function fn("main", /*arity=*/0);
   fn.SetLocalCount(2);  // 我们有两个局部变量
@@ -167,9 +175,80 @@ void VarTest() {
 
   VM vm;
   vm.Run(fn);
+
+  std::cout << "---------------------------------------------\n";
+
+}
+
+// ---------------- 简单函数调用自测 ----------------
+//被调用函数返回 42，主函数调用并打印
+void CallTest() {
+  using namespace cilly;
+  std::cout << "简单函数调用自测:\n" << std::endl;
+
+  // 准备一个被调用函数：返回常量 42
+  Function callee("const42", /*arity=*/0);
+  int c42 = callee.AddConst(Value::Num(42));
+  callee.Emit(OpCode::OP_CONSTANT, 1);
+  callee.EmitI32(c42, 1);
+  callee.Emit(OpCode::OP_RETURN, 1);  // 返回栈顶  42
+
+  // 准备主函数,调用 callee，打印返回值，然后返回
+  Function main_fn("main", /*arity=*/0);
+
+  VM vm;
+  int callee_id = vm.RegisterFunction(&callee);  // 注册被调用函数
+
+  // main_fn 的字节码：
+  // call const42
+  main_fn.Emit(OpCode::OP_CALL, 1);
+  main_fn.EmitI32(callee_id, 1);
+
+  // print 返回值, 此时返回值已压回栈顶
+  main_fn.Emit(OpCode::OP_PRINT, 1);
+
+  // main 返回
+  main_fn.Emit(OpCode::OP_RETURN, 1);
+
+  // 运行主函数
+  vm.Run(main_fn);
 }
 
 
+// ---------------- 带一个参数的函数调用自测 ----------------
+void CallWithArgTest() {
+  using namespace cilly;
+
+  Function add1("add1", 1);  //创建函数add1(n)
+  add1.SetLocalCount(1);     //规定变量一共一个
+
+  int c1 = add1.AddConst(Value::Num(1));  // 把1加入常量池
+  add1.Emit(OpCode::OP_LOAD_VAR, 1);      // 载入变量n
+  add1.EmitI32(0, 1);   
+  add1.Emit(OpCode::OP_CONSTANT, 1);      // 1
+  add1.EmitI32(c1, 1);
+  add1.Emit(OpCode::OP_ADD, 1);           // n + 1
+  add1.Emit(OpCode::OP_RETURN, 1);        // 返回 n + 1
+
+  Function main("main", 1);   //创建函数 main
+  main.SetLocalCount(0);
+
+  VM vm;
+
+  int add1_id = vm.RegisterFunction(&add1);
+
+  int c42 = main.AddConst(Value::Num(42)); // 压入实参 42
+  main.Emit(OpCode::OP_CONSTANT, 1);
+  main.EmitI32(c42, 1);
+
+  main.Emit(OpCode::OP_CALL, 1);
+  main.EmitI32(add1_id, 1);
+
+  main.Emit(OpCode::OP_PRINT, 1);
+  main.Emit(OpCode::OP_RETURN, 1);
+  
+  vm.Run(main);
+}
 
 
 int main() {
@@ -179,4 +258,6 @@ int main() {
   FunctionTest();
   VMTest();
   VarTest();
+  CallTest();
+  CallWithArgTest();
 }

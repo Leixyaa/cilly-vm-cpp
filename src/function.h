@@ -46,9 +46,9 @@ class Function {
 
  private:
   std::string name_;
-  int arity_ = 0;
+  int arity_ = 0; // 参数个数
   std::unique_ptr<Chunk> chunk_;  // 唯一拥有字节码块
-  int load_count_ = 0;
+  int load_count_ = 0;			  // 变量个数（参数个数 + 局部变量）
 };
 
 }  // namespace cilly

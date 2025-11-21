@@ -7,6 +7,7 @@
 #include "opcodes.h"
 #include "stack_stats.h"
 #include "value.h"
+#include "call_frame.h"
 
 namespace cilly {
 
@@ -24,21 +25,26 @@ class VM {
   int Depth() const;
   int MaxDepth() const;
 
+  int RegisterFunction(const Function* fn); // 注册函数并且返回索引 
+  
  private:
   // 取下一条指令（从 code_ 读取，并自增 ip_）。
-  int32_t ReadI32_(const Chunk& ch);
+  int32_t ReadI32_();
 
   // 取下一条操作数（32 位整型，自增 ip_）。
-  int32_t ReadOpnd_(const Chunk& ch);
+  int32_t ReadOpnd_();
 
   // 执行一条指令；返回是否继续执行。
-  bool Step_(const Function& fn);
+  bool Step_();
 
- private:
+  CallFrame& CurrentFrame();
+  const CallFrame& CurrentFrame() const;
+
+
   StackStats stack_;  // 运行时栈（带统计）
-  int ip_ = 0;        // 指令指针（index into chunk.code_）
-  std::vector<Value> locals_;
-  
+  std::vector<CallFrame> frames_;
+  std::vector<const Function*> functions_;
+
 };
 
 }  // namespace cilly

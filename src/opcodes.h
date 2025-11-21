@@ -35,7 +35,10 @@ enum class OpCode : int32_t {
 
   //变量系统
   OP_LOAD_VAR,
-  OP_STORE_VAR
+  OP_STORE_VAR,
+
+  //帧调用
+  OP_CALL,       // 调用另一个函数，操作数是函数 ID
 };
 
 }
