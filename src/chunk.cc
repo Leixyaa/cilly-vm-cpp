@@ -20,6 +20,11 @@ int Chunk::AddConst(const Value& v) {
   return idx - 1;
 }
 
+void Chunk::PatchI32(int index, int32_t value) {
+  assert(index >= 0 && index < static_cast<int>(code_.size()));
+  code_[index] = value; 
+}
+
 int Chunk::CodeSize() const {
   return static_cast<int>(code_.size());
 }
@@ -42,5 +47,7 @@ int Chunk::LineAt(int index) const {
   assert(index >= 0 && index < static_cast<int>(line_info_.size()));
   return line_info_[index];
 }
+
+
 
 }  // namespace cilly

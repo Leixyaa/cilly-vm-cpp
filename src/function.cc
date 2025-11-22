@@ -43,12 +43,18 @@ void Function::EmitI32(int32_t v, int src_line) { chunk_->EmitI32(v, src_line); 
 
 int Function::AddConst(const Value& v) { return chunk_->AddConst(v); }
 
+int Function::CodeSize() const { return chunk_ -> CodeSize(); }
+
 void Function::SetLocalCount(int count){
   load_count_ = count;
 }
 
 int Function::LocalCount() const{
     return load_count_;
+}
+
+void Function::PatchI32(int index, int32_t value) {
+  chunk_ -> PatchI32(index, value);
 }
 
 }  // namespace cilly

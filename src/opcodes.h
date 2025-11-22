@@ -26,6 +26,10 @@ enum class OpCode : int32_t {
   OP_LESS,       // 小于（<）
   OP_NOT,        // 逻辑非（!）
 
+  // 条件
+  OP_JUMP,
+  OP_JUMP_IF_FALSE,
+
   //I/O 与控制
   OP_PRINT,      // 打印栈顶
   OP_RETURN,     // 程序返回

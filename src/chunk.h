@@ -22,6 +22,9 @@ class Chunk {
   // 向常量池添加一个常量，并返回它的索引。
   int AddConst(const Value& v);
 
+  // 占位回填
+  void PatchI32(int index, int32_t value); 
+
   // 查询接口
   int CodeSize() const;                   // code_ 元素个数（含指令和操作数）
   int ConstSize() const;                  // 常量数量

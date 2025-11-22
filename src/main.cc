@@ -1,15 +1,16 @@
 // cilly-vm-cpp
 // Author: Leixyaa
-// Date: 11.6
+// Date: 2024-11-06
 // Description: Entry point for testing environment.
 
-#include "vm.h"
-#include "chunk.h"
-#include "opcodes.h"
-#include "value.h"
-#include "stack_stats.h"
-#include "function.h"
 #include <iostream>
+
+#include "chunk.h"
+#include "function.h"
+#include "opcodes.h"
+#include "stack_stats.h"
+#include "value.h"
+#include "vm.h"
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -293,6 +294,169 @@ void Eqtest() {
 }
 
 
+// ---------------- 条件跳转命令自测 ----------------
+void IfTest() {
+  using namespace cilly;
+
+  std::cout << "条件跳转命令自测:\n" << std::endl;
+
+  Function fn("if_test", 0);
+  fn.SetLocalCount(0);
+
+  // 常量
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+  int c888 = fn.AddConst(Value::Num(888));
+  int c999 = fn.AddConst(Value::Num(999));
+
+  // 如果 (1 == 2)
+  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_EQ, 1);                      // 栈顶 = false
+
+  // JUMP_IF_FALSE <else_label>
+  fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
+
+  int if_else_pos = fn.CodeSize();
+  fn.EmitI32(0, 1);
+
+  // then: print(999)
+  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c999, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // JUMP end
+  fn.Emit(OpCode::OP_JUMP, 1);
+  
+  int if_end_pos = fn.CodeSize();
+  fn.EmitI32(0, 1);
+
+  fn.PatchI32(if_else_pos, fn.CodeSize());
+
+  // else_label:
+  // print(888)
+  // ——此处就是 else_label 的位置——
+  // 真实位置 = fn.CodeSize()
+  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c888, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  fn.PatchI32(if_end_pos, fn.CodeSize());
+
+  // end_label:
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  VM vm;
+  vm.Run(fn);
+
+ std::cout << "---------------------------------------------\n";
+}
+
+
+// ---------------- odd/even 互递归自测 ----------------
+void OddEvenTest() {
+  using namespace cilly;
+
+  // 1. 创建三个函数对象：odd, even, main
+  Function odd_fn("odd", 1);      // 1 个参数：n
+  Function even_fn("even", 1);    // 1 个参数：n
+  Function main_fn("main", 0);    // 无参数
+
+  // 每个函数至少有与参数个数一致的 locals
+  odd_fn.SetLocalCount(1);   // locals_[0] = n
+  even_fn.SetLocalCount(1);  // locals_[0] = n
+  main_fn.SetLocalCount(0);
+
+  // 2. 创建 VM，并注册可被调用的函数
+  VM vm;
+  int odd_id = vm.RegisterFunction(&odd_fn);
+  int even_id = vm.RegisterFunction(&even_fn);
+
+  // 3. 下面我们要分三部分填字节码：
+  //    (1) even_fn 的函数体
+  int c0 = even_fn.AddConst(Value::Num(0));
+  int c1 = even_fn.AddConst(Value::Num(1));
+  int c_true = even_fn.AddConst(Value::Bool(true));
+
+  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);  even_fn.EmitI32(0, 1);
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c0, 1);
+  even_fn.Emit(OpCode::OP_EQ, 1);
+ 
+  // if(n == 0)
+  even_fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
+  int if_else_pos = even_fn.CodeSize();  
+  even_fn.EmitI32(0, 1);
+  
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c_true, 1);
+  even_fn.Emit(OpCode::OP_RETURN, 1);
+  
+  even_fn.PatchI32(if_else_pos, even_fn.CodeSize());
+
+  //else
+  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);  even_fn.EmitI32(0, 1);
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c1, 1);
+  even_fn.Emit(OpCode::OP_SUB, 1);
+  even_fn.Emit(OpCode::OP_CALL, 1);
+  even_fn.EmitI32(odd_id, 1);
+
+  even_fn.Emit(OpCode::OP_RETURN, 1);
+
+
+
+  //    (2) odd_fn 的函数体
+  c0 = odd_fn.AddConst(Value::Num(0));
+  c1 = odd_fn.AddConst(Value::Num(1));
+  c_true = odd_fn.AddConst(Value::Bool(false));
+
+  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);  odd_fn.EmitI32(0, 1);
+  odd_fn.Emit(OpCode::OP_CONSTANT, 1);  odd_fn.EmitI32(c0, 1);
+  odd_fn.Emit(OpCode::OP_EQ, 1);
+ 
+  // if(n == 0)
+  odd_fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
+  if_else_pos = odd_fn.CodeSize();  odd_fn.EmitI32(0, 1);
+  
+  odd_fn.Emit(OpCode::OP_CONSTANT, 1);
+  odd_fn.EmitI32(c_true, 1);
+  odd_fn.Emit(OpCode::OP_RETURN, 1);
+  
+  odd_fn.PatchI32(if_else_pos, odd_fn.CodeSize());
+
+  //else
+  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);  odd_fn.EmitI32(0, 1);
+  odd_fn.Emit(OpCode::OP_CONSTANT, 1);  odd_fn.EmitI32(c1, 1);
+  odd_fn.Emit(OpCode::OP_SUB, 1);
+  odd_fn.Emit(OpCode::OP_CALL, 1);
+  odd_fn.EmitI32(even_id, 1);
+
+  odd_fn.Emit(OpCode::OP_RETURN, 1);
+
+  //    (3) main_fn：调用 even(3) 和 odd(3)
+  int c3 = main_fn.AddConst(Value::Num(3));
+
+  main_fn.Emit(OpCode::OP_CONSTANT, 1);
+  main_fn.EmitI32(c3, 1);
+  main_fn.Emit(OpCode::OP_CALL, 1);
+  main_fn.EmitI32(even_id, 1);
+  main_fn.Emit(OpCode::OP_PRINT, 1);
+  
+  main_fn.Emit(OpCode::OP_CONSTANT, 1);
+  main_fn.EmitI32(c3, 1);
+  main_fn.Emit(OpCode::OP_CALL, 1);
+  main_fn.EmitI32(odd_id, 1);
+  main_fn.Emit(OpCode::OP_PRINT, 1);
+
+ main_fn.Emit(OpCode::OP_RETURN, 1);
+
+  // TODO: 填 even_fn 的字节码
+
+  // TODO: 填 odd_fn 的字节码
+
+  // TODO: 填 main_fn 的字节码
+
+  // 4. 运行 main_fn
+  vm.Run(main_fn);
+}
+
+
 
 int main() {
   ValueTest();
@@ -304,4 +468,6 @@ int main() {
   CallTest();
   CallWithArgTest();
   Eqtest();
+  IfTest();
+  OddEvenTest();
 }

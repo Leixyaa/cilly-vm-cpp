@@ -107,6 +107,22 @@ bool VM::Step_() {
       break;
     }
 
+    case OpCode::OP_JUMP: {
+      int target = ReadOpnd_();
+      cf.ip = target;
+      break;
+    }
+
+    case OpCode::OP_JUMP_IF_FALSE: {
+      int target = ReadOpnd_();
+      Value value = stack_.Pop();
+      
+      if(value.IsBool() && value.AsBool() == false) {
+        cf.ip = target;
+      }
+      break;
+    }
+
     case OpCode::OP_PRINT: {
       Value v = stack_.Top();
       std::cout << v.ToRepr() << std::endl;
