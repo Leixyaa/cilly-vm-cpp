@@ -48,6 +48,4 @@ int Chunk::LineAt(int index) const {
   return line_info_[index];
 }
 
-
-
 }  // namespace cilly

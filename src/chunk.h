@@ -1,10 +1,11 @@
 #ifndef CILLY_VM_CPP_CHUNK_H_
 #define CILLY_VM_CPP_CHUNK_H_
 
-//chunk是可执行字节码的容器
+//chunk是可执行字节码的容器，保存指令序列、常量池和行号信息
 
 #include <cstdint>
 #include <vector>
+
 #include "value.h"
 #include "opcodes.h"
 

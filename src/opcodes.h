@@ -5,47 +5,46 @@
 
 namespace cilly {
 
-//预留了int32_t的存储空间，但是用到的时候还是要进行显式转换
+// 所有虚拟机指令的枚举。底层类型固定为 int32_t，方便统一存入 code_。
 enum class OpCode : int32_t {
-  //常量与栈操作
-  OP_CONSTANT,   // 将常量池中的一个值压入栈
-  OP_POP,        // 弹出栈顶元素
-  OP_DUP,        // 复制栈顶元素
+  // 常量与栈操作。
+  OP_CONSTANT,   // 将常量池中的一个值压入栈。
+  OP_POP,        // 弹出栈顶元素。
+  OP_DUP,        // 复制栈顶元素。
 
-  //算术运算
-  OP_ADD,        // 加法
-  OP_SUB,        // 减法
-  OP_MUL,        // 乘法
-  OP_DIV,        // 除法
-  OP_NEGATE,     // 取负
+  // 算术运算。
+  OP_ADD,        // 加法。
+  OP_SUB,        // 减法。
+  OP_MUL,        // 乘法。
+  OP_DIV,        // 除法。
+  OP_NEGATE,     // 取负。
 
-  //比较与逻辑
-  OP_EQ,         // 比较相等，结果是布尔值
-  OP_NOT_EQUAL,  // 判断不等（!=）
-  OP_GREATER,    // 大于（>）
-  OP_LESS,       // 小于（<）
-  OP_NOT,        // 逻辑非（!）
+  // 比较与逻辑。
+  OP_EQ,         // 比较相等，结果是布尔值。
+  OP_NOT_EQUAL,  // 判断不等（!=）。
+  OP_GREATER,    // 大于（>）。
+  OP_LESS,       // 小于（<）。
+  OP_NOT,        // 逻辑非（!）。
 
-  // 条件
-  OP_JUMP,
-  OP_JUMP_IF_FALSE,
+  // 条件跳转。
+  OP_JUMP,           // 无条件跳转。
+  OP_JUMP_IF_FALSE,  // 栈顶为 false 时跳转。
 
-  //I/O 与控制
-  OP_PRINT,      // 打印栈顶
-  OP_RETURN,     // 程序返回
+  // I/O 与控制。
+  OP_PRINT,      // 打印栈顶。
+  OP_RETURN,     // 函数返回。
 
-  //特殊
-  OP_NOOP,       // 空操作，占位
+  // 特殊。
+  OP_NOOP,       // 空操作，占位。
 
-  //变量系统
-  OP_LOAD_VAR,
-  OP_STORE_VAR,
+  // 变量系统。
+  OP_LOAD_VAR,   // 按索引读取局部变量，压入栈。
+  OP_STORE_VAR,  // 从栈顶弹出一个值，写入指定局部变量。
 
-  //帧调用
-  OP_CALL,       // 调用另一个函数，操作数是函数 ID
-
+  // 函数调用。
+  OP_CALL,       // 调用另一个函数，操作数是函数 ID。
 };
 
-}
+}  // namespace cilly
 
 #endif  // CILLY_VM_CPP_OPCODES_H_
