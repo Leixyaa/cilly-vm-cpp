@@ -107,6 +107,43 @@ bool VM::Step_() {
       break;
     }
 
+    case OpCode::OP_NOT_EQUAL: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      bool result = (lhs != rhs);
+      stack_.Push(Value::Bool(result));  
+      break;
+    }
+
+    case OpCode::OP_GREATER: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      // 类型检查：只能比较数字
+      assert(lhs.IsNum() && rhs.IsNum() && "OP_GREATER expects two numbers");
+
+      bool result = (lhs.AsNum() > rhs.AsNum());
+      stack_.Push(Value::Bool(result));  
+      break;
+    }
+
+    case OpCode::OP_LESS: {
+      Value rhs = stack_.Pop();
+      Value lhs = stack_.Pop();
+      // 类型检查：只能比较数字
+      assert(lhs.IsNum() && rhs.IsNum() && "OP_LESS expects two numbers");
+      bool result = (lhs.AsNum() < rhs.AsNum());
+      stack_.Push(Value::Bool(result));  
+      break;
+    }
+
+    case OpCode::OP_NOT: {
+      Value v = stack_.Pop();
+      assert(v.IsBool() && "OP_NOT expects a bool");
+      bool result = (!v.AsBool());
+      stack_.Push(Value::Bool(result));  
+      break;
+    }
+
     case OpCode::OP_JUMP: {
       int target = ReadOpnd_();
       cf.ip = target;

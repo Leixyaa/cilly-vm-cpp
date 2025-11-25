@@ -354,6 +354,7 @@ void IfTest() {
 // ---------------- odd/even 互递归自测 ----------------
 void OddEvenTest() {
   using namespace cilly;
+  std::cout << "odd/even 互递归自测:\n" << std::endl;
 
   // 1. 创建三个函数对象：odd, even, main
   Function odd_fn("odd", 1);      // 1 个参数：n
@@ -454,8 +455,53 @@ void OddEvenTest() {
 
   // 4. 运行 main_fn
   vm.Run(main_fn);
+
+ std::cout << "---------------------------------------------\n";
 }
 
+// ---------------- 比较指令自测 ----------------
+void CompareTest() {
+  using namespace cilly;
+  std::cout << "补全比较指令自测:\n" << std::endl;
+
+  Function fn("compare_test", /*arity*/0);
+  fn.SetLocalCount(0);
+
+  // 创建常量
+  int c2 = fn.AddConst(Value::Num(2));
+  int c3 = fn.AddConst(Value::Num(3));
+  int cfalse = fn.AddConst(Value::Bool(false));
+
+  // ----- print(3 > 2) -----
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_GREATER, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // ----- print(3 < 2) -----
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_LESS, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // ----- print(3 != 2) -----
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_NOT_EQUAL, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // ----- print(!false) -----
+  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(cfalse, 1);
+  fn.Emit(OpCode::OP_NOT, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // return
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  VM vm;
+  vm.Run(fn);
+  std::cout << "---------------------------------------------\n";
+}
 
 
 int main() {
@@ -470,4 +516,5 @@ int main() {
   Eqtest();
   IfTest();
   OddEvenTest();
+  CompareTest();
 }
