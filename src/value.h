@@ -8,6 +8,8 @@
 #include <string>
 #include <variant>
 
+#include "bytecode_stream.h"
+
 namespace cilly {
 
 // 运行时值的类型枚举。
@@ -55,6 +57,17 @@ class Value {
   // 仅在类型相同情况下比较；类型不同直接返回 false。
   bool operator==(const Value& rhs) const;
   bool operator!=(const Value& rhs) const;
+
+
+
+  // 序列化接口
+  // Load 是静态的，因为我们还不知道读出来的是什么，
+  // 所以要通过工厂模式生产出一个新的 Value 对象返回。
+  // static:不需要创建对象，直接用类名就可以使用
+  void Save(BytecodeWriter& writer) const;
+  static Value Load(BytecodeReader& reader);
+
+
 
  private:
   ValueType type_ = ValueType::kNull;  // 当前值类型。

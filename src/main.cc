@@ -11,6 +11,8 @@
 #include "stack_stats.h"
 #include "value.h"
 #include "vm.h"
+#include "bytecode_stream.h" 
+
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -503,9 +505,84 @@ void CompareTest() {
   std::cout << "---------------------------------------------\n";
 }
 
+//---------------- 二进制文件读写 ----------------
+void StreamTest() {
+  std::cout << "Step 1:二进制文件读写..." << std::endl;
+  using namespace cilly;
+  // 写入测试
+  {
+    BytecodeWriter writer("test.bin"); // 会在目录下生成 test.bin
+    writer.Write<int>(12345);                 // 写入整数
+    writer.Write<double>(3.14159);            // 写入浮点数
+    writer.WriteString("Hello C++");          // 写入字符串
+  } // writer 析构，文件自动关闭
+
+  // 读取测试
+  {
+    BytecodeReader reader("test.bin");
+    int i = reader.Read<int>();
+    double d = reader.Read<double>();
+    std::string s = reader.ReadString();
+
+    // 验证
+    if (i == 12345 && d == 3.14159 && s == "Hello C++") {
+      std::cout << "成功写入读取！\n";
+    } else {
+      std::cout << "失败，文件类型不匹配！\n";
+      std::cout << "Read: " << i << ", " << d << ", " << s << "\n";
+    }
+  }
+  std::cout << "---------------------------------------------\n";
+}
+
+void ValueSerializationTest() {
+  std::cout << "Step 2: 值序列化测试...\n";
+  
+  // 准备数据：包含 Null, Bool, Num, Str 混合情况
+  std::vector<cilly::Value> values;
+  values.push_back(cilly::Value::Null());
+  values.push_back(cilly::Value::Bool(true));
+  values.push_back(cilly::Value::Num(123.456));
+  values.push_back(cilly::Value::Str("C++ Variant Magic"));
+
+  // 写入文件
+  {
+    cilly::BytecodeWriter writer("value_test.bin");
+    // 手动模拟写入一个 vector 的过程
+    writer.Write<int32_t>(values.size()); 
+    for (const auto& v : values) {
+      v.Save(writer); // 调用 Save
+    }
+  }
+
+  // 读取文件
+  {
+    cilly::BytecodeReader reader("value_test.bin");
+    int32_t count = reader.Read<int32_t>();
+    
+    if (count != values.size()) std::cout << "FAIL: 数量不匹配!\n";
+
+    for (int i = 0; i < count; ++i) {
+      cilly::Value loaded = cilly::Value::Load(reader); // 调用 Load
+      
+      // 验证是否相等
+      if (loaded != values[i]) {
+        std::cout << "FAIL: 同一索引 Value 不匹配 " << i << "\n";
+        std::cout << "Expected: " << values[i].ToRepr() << "\n";
+        std::cout << "Got: " << loaded.ToRepr() << "\n";
+        return;
+      }
+    }
+  }
+  
+  std::cout << "所有Value值都被正确存入!\n";
+  std::cout << "---------------------------------------------\n";
+}
+
+
 
 int main() {
-  ValueTest();
+  /*ValueTest();
   StackTest();
   ChunkTest();
   FunctionTest();
@@ -516,5 +593,8 @@ int main() {
   Eqtest();
   IfTest();
   OddEvenTest();
-  CompareTest();
+  CompareTest();*/
+
+  StreamTest();
+  ValueSerializationTest();
 }

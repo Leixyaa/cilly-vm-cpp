@@ -2,13 +2,15 @@
 // Author: Leixyaa
 // Date: 11.6
 
-#include "value.h"
 #include <cassert>   // 类型断言
 #include <sstream>   // 数字转字符串
 #include <iomanip>   // 控制数字格式
 #include <string>
 #include <utility>   //move()移动语义
+#include <iostream>
 
+#include "bytecode_stream.h"
+#include "value.h"
 
 namespace cilly {
 
@@ -117,6 +119,62 @@ bool Value::operator==(const Value& rhs) const{
 
 bool Value::operator!=(const Value& rhs) const{
   return !(*this == rhs); //这里的“==”是 operator== 重载的比较
+}
+
+
+// 序列化:将 Value 写入字节流
+void Value::Save(BytecodeWriter& writer) const {
+  // 先写入类型标记 (Tag)。
+  writer.Write<uint8_t>(static_cast<uint8_t>(type_));    // uint8_t 只占一位字节，节省空间
+
+  // 根据类型写入实际数据 (Payload)。
+  switch (type_) {
+    case ValueType::kNull :
+      break;
+
+    case ValueType::kBool :
+      writer.Write<bool>(AsBool());     //以bool的形式取出
+      break;
+
+    case ValueType::kNum :
+      writer.Write<double>(AsNum());
+      break;
+
+    case ValueType::kStr :
+      writer.WriteString(AsStr());
+      break;
+
+    default:  // 防御性机制
+      break; 
+  }
+}
+
+Value Value::Load(BytecodeReader& reader) {
+  // 读取类型标记
+  uint8_t raw_tag = reader.Read<uint8_t>();
+  ValueType type = static_cast<ValueType>(raw_tag);
+
+  // 根据标记还原对象
+  switch (type) {
+    case ValueType::kNull :                 
+      return Null();                        // 读取相应类型并直接创建
+
+    case ValueType::kBool :
+      return Bool(reader.Read<bool>());
+
+    case ValueType::kNum :
+      return Num(reader.Read<double>());
+
+    case ValueType::kStr :
+      return Str(reader.ReadString());
+    
+    default:  // 如果读到了未知的 Tag，不要让程序崩溃，而是报错并返回一个安全的空值。
+      std::cout << "未知或错误的 ValueTag: " 
+                << static_cast<int>(raw_tag) << std::endl;
+      return Null();
+      break; 
+
+  }
 }
 
 
