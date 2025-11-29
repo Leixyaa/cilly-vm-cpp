@@ -8,6 +8,7 @@
 
 #include "value.h"
 #include "opcodes.h"
+#include "bytecode_stream.h"
 
 namespace cilly {
 
@@ -32,6 +33,9 @@ class Chunk {
   int32_t CodeAt(int index) const;        // 获取指定位置的指令或操作数
   const Value& ConstAt(int index) const;  // 读取常量池中的值
   int LineAt(int index) const;            // 获取行号
+
+  void Save(BytecodeWriter& writer) const;   // 将整个 Chunk 写入二进制流
+  static Chunk Load(BytecodeReader& reader); // 从二进制流中读出一个 Chunk（静态工厂函数）
 
  private:
   std::vector<int32_t> code_;        // 指令序列（包含操作数）

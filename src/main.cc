@@ -507,7 +507,7 @@ void CompareTest() {
 
 //---------------- 二进制文件读写 ----------------
 void StreamTest() {
-  std::cout << "Step 1:二进制文件读写..." << std::endl;
+  std::cout << "二进制文件读写..." << std::endl;
   using namespace cilly;
   // 写入测试
   {
@@ -536,7 +536,7 @@ void StreamTest() {
 }
 
 void ValueSerializationTest() {
-  std::cout << "Step 2: 值序列化测试...\n";
+  std::cout << "值序列化测试...\n";
   
   // 准备数据：包含 Null, Bool, Num, Str 混合情况
   std::vector<cilly::Value> values;
@@ -581,6 +581,105 @@ void ValueSerializationTest() {
 
 
 
+
+void ChunkSerializationTest() {
+  using namespace cilly;
+
+  std::cout << "Chunk 序列化自测..." << std::endl;
+
+  //  构造一个简单的 Function，并往里面填充一段可执行的字节码
+  //  ((0 + 1) - 2) + 1，然后打印结果并 return。
+  Function fn("main", 0);
+  fn.SetLocalCount(0);
+
+  // 常量池：0, 1, 2
+  int c0 = fn.AddConst(Value::Num(0));
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+
+  // 生成字节码：
+  // push 0
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);
+
+  // push 1
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+
+  // 0 + 1
+  fn.Emit(OpCode::OP_ADD, 1);
+
+  // push 2
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+
+  // (0 + 1) - 2
+  fn.Emit(OpCode::OP_SUB, 1);
+
+  // push 1
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+
+  // ((0 + 1) - 2) + 1
+  fn.Emit(OpCode::OP_ADD, 1);
+
+  // print 结果
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // return
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  // 将 fn 对应的 Chunk 序列化到文件
+  {
+    BytecodeWriter writer("chunk_test.bin");
+    fn.chunk().Save(writer);
+  }
+
+  // 从文件中反序列化出一个新的 Chunk
+  BytecodeReader reader("chunk_test.bin");
+  Chunk loaded = Chunk::Load(reader);
+
+  // 依次对比：代码长度、常量池长度
+  if (fn.CodeSize() != loaded.CodeSize()) {
+    std::cout << "错误：代码长度不一致" << std::endl;
+    return;
+  }
+
+  if (fn.ConstSize() != loaded.ConstSize()) {
+    std::cout << "错误：常量数量不一致" << std::endl;
+    return;
+  }
+
+  // 对比每一个字节码指令/操作数
+  for (int i = 0; i < fn.CodeSize(); ++i) {
+    if (fn.chunk().CodeAt(i) != loaded.CodeAt(i)) {
+      std::cout << "错误：第 " << i << " 个字节码不一致" << std::endl;
+      return;
+    }
+  }
+
+  // 对比每一个常量值
+  for (int i = 0; i < fn.ConstSize(); ++i) {
+    if (fn.chunk().ConstAt(i) != loaded.ConstAt(i)) {
+      std::cout << "错误：第 " << i << " 个常量不一致" << std::endl;
+      return;
+    }
+  }
+
+  // 对比每一个行号
+  for (int i = 0; i < fn.CodeSize(); ++i) {
+    if (fn.chunk().LineAt(i) != loaded.LineAt(i)) {
+      std::cout << "错误：第 " << i << " 个行号不一致" << std::endl;
+      return;
+    }
+  }
+
+  std::cout << "Chunk 序列化通过！" << std::endl;
+}
+
+
+
+
 int main() {
   /*ValueTest();
   StackTest();
@@ -595,6 +694,7 @@ int main() {
   OddEvenTest();
   CompareTest();*/
 
-  StreamTest();
-  ValueSerializationTest();
+  //StreamTest();
+  //ValueSerializationTest();
+  ChunkSerializationTest();
 }

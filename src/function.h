@@ -42,6 +42,7 @@ class Function {
   void EmitI32(int32_t v, int src_line);
   int AddConst(const Value& v);
   int CodeSize() const;
+  int ConstSize() const;
 
   // 局部变量（含参数）个数。
   void SetLocalCount(int count);

@@ -56,6 +56,10 @@ int Function::CodeSize() const {
   return chunk_->CodeSize();
 }
 
+int Function::ConstSize() const {
+  return chunk_->ConstSize();
+}
+
 void Function::SetLocalCount(int count) {
   local_count_ = count;
 }

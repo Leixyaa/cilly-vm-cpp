@@ -48,4 +48,62 @@ int Chunk::LineAt(int index) const {
   return line_info_[index];
 }
 
+void Chunk::Save(BytecodeWriter& writer) const {
+  // 保存常量池大小
+  int32_t const_pool_size = static_cast<int32_t>(ConstSize());
+  writer.Write<int32_t>(const_pool_size);
+
+  // 按顺序保存每一个常量 Value
+  for (int32_t i = 0; i < const_pool_size; ++i) {
+    ConstAt(i).Save(writer);
+  }
+
+  // 保存指令序列长度（code_ 中元素个数）
+  int32_t code_size = static_cast<int32_t>(CodeSize());
+  writer.Write<int32_t>(code_size);
+
+  // 依次保存每一个指令或操作数（都是 int32_t）
+  for (int32_t i = 0; i < code_size; ++i) {
+    writer.Write<int32_t>(CodeAt(i));
+  }
+
+  // 保存行号表长度（当前约定 == code_size）
+  int32_t line_info_size = code_size;
+  writer.Write<int32_t>(line_info_size);
+
+  // 依次保存与每个 code 元素对应的源码行号
+  for (int32_t i = 0; i < line_info_size; ++i) {
+    writer.Write<int32_t>(LineAt(i));
+  }
+}
+
+Chunk Chunk::Load(BytecodeReader& reader) {
+  Chunk chunk;
+
+  // 读取常量池大小，并按顺序恢复每一个 Value
+  int32_t const_pool_size = reader.Read<int32_t>();
+  for (int32_t i = 0; i < const_pool_size; ++i) {
+    // 保持与正常编译时 AddConst 的行为一致
+    chunk.AddConst(Value::Load(reader));
+  }
+
+  // 读取指令序列长度，并恢复每一个 int32_t 指令/操作数
+  int32_t code_size = reader.Read<int32_t>();
+  chunk.code_.resize(code_size);
+  for (int32_t i = 0; i < code_size; ++i) {
+    chunk.code_[i] = reader.Read<int32_t>();
+  }
+
+  // 读取行号表长度，并恢复每一个行号
+  int32_t line_info_size = reader.Read<int32_t>();
+  chunk.line_info_.resize(line_info_size);
+  for (int32_t i = 0; i < line_info_size; ++i) {
+    chunk.line_info_[i] = reader.Read<int32_t>();
+  }
+
+  return chunk;
+}
+
+
+
 }  // namespace cilly
