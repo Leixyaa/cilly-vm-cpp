@@ -678,6 +678,120 @@ void ChunkSerializationTest() {
 }
 
 
+void FunctionSerializationTest() {
+  using namespace cilly;
+
+  std::cout << "Function 序列化自测..." << std::endl;
+
+  // 构造一个简单的函数：((0 + 1) - 2) + 1，然后 print 再 return
+  Function fn("main", 0);
+  fn.SetLocalCount(0);
+
+  // 常量池：0, 1, 2
+  int c0 = fn.AddConst(Value::Num(0));
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+
+  // 生成字节码：
+  // push 0
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);
+
+  // push 1
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+
+  // 0 + 1
+  fn.Emit(OpCode::OP_ADD, 1);
+
+  // push 2
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+
+  // (0 + 1) - 2
+  fn.Emit(OpCode::OP_SUB, 1);
+
+  // push 1
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+
+  // ((0 + 1) - 2) + 1
+  fn.Emit(OpCode::OP_ADD, 1);
+
+  // 打印结果
+  fn.Emit(OpCode::OP_PRINT, 1);
+
+  // 返回
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  // 将 Function 序列化到二进制文件
+  {
+    BytecodeWriter writer("function_test.bin");
+    fn.Save(writer);
+  }
+
+  // 从二进制文件中反序列化得到一个新的 Function
+  BytecodeReader reader("function_test.bin");
+  Function loaded = Function::Load(reader);
+
+  // 检查函数元信息是否一致（名称 / 形参个数 / 局部变量个数）
+  if (fn.name() != loaded.name()) {
+    std::cout << "错误：函数名称不一致" << std::endl;
+    return;
+  }
+
+  if (fn.arity() != loaded.arity()) {
+    std::cout << "错误：形参数量不一致" << std::endl;
+    return;
+  }
+
+  if (fn.LocalCount() != loaded.LocalCount()) {
+    std::cout << "错误：局部变量数量不一致" << std::endl;
+    return;
+  }
+
+  // 进一步检查底层 Chunk：常量池 + 指令流 + 行号信息
+  const Chunk& ch0 = fn.chunk();
+  const Chunk& ch1 = loaded.chunk();
+
+  if (ch0.ConstSize() != ch1.ConstSize()) {
+    std::cout << "错误：常量池大小不一致" << std::endl;
+    return;
+  }
+
+  if (ch0.CodeSize() != ch1.CodeSize()) {
+    std::cout << "错误：指令序列长度不一致" << std::endl;
+    return;
+  }
+
+  // 对比每一个常量
+  for (int i = 0; i < ch0.ConstSize(); ++i) {
+    if (ch0.ConstAt(i) != ch1.ConstAt(i)) {
+      std::cout << "错误：常量池内容不一致，索引 = " << i << std::endl;
+      return;
+    }
+  }
+
+  // 对比每一条指令
+  for (int i = 0; i < ch0.CodeSize(); ++i) {
+    if (ch0.CodeAt(i) != ch1.CodeAt(i)) {
+      std::cout << "错误：指令序列不一致，索引 = " << i << std::endl;
+      return;
+    }
+  }
+
+  // 对比每一条行号（这里假设两边 CodeSize 一致）
+  for (int i = 0; i < ch0.CodeSize(); ++i) {
+    if (ch0.LineAt(i) != ch1.LineAt(i)) {
+      std::cout << "错误：行号信息不一致，索引 = " << i << std::endl;
+      return;
+    }
+  }
+
+  std::cout << "Function 序列化通过！" << std::endl;
+}
+
+
 
 
 int main() {
@@ -696,5 +810,6 @@ int main() {
 
   //StreamTest();
   //ValueSerializationTest();
-  ChunkSerializationTest();
+  //ChunkSerializationTest();
+  FunctionSerializationTest();
 }

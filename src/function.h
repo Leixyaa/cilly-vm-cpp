@@ -43,6 +43,8 @@ class Function {
   int AddConst(const Value& v);
   int CodeSize() const;
   int ConstSize() const;
+  std::string Name() const;
+
 
   // 局部变量（含参数）个数。
   void SetLocalCount(int count);
@@ -50,6 +52,9 @@ class Function {
 
   // 回填 32 位操作数（常用于跳转）。
   void PatchI32(int index, int32_t value);
+
+  void Save(BytecodeWriter &writer) const;
+  static Function Load(BytecodeReader &reader);
 
  private:
   std::string name_;

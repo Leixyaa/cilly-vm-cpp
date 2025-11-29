@@ -214,7 +214,7 @@ bool VM::Step_() {
 
       // 为被调用函数创建一个新的调用帧
       CallFrame frame;
-      frame.fn = callee;
+      frame.fn = callee; 
       frame.ip = 0;       // 被调用函数从头开始执行
       frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
 
