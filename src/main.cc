@@ -12,7 +12,7 @@
 #include "value.h"
 #include "vm.h"
 #include "bytecode_stream.h" 
-
+#include "object.h"
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -791,6 +791,50 @@ void FunctionSerializationTest() {
   std::cout << "Function 序列化通过！" << std::endl;
 }
 
+void VarValueSemanticsTest() {
+  using namespace cilly;
+  std::cout << "变量值语义自测...\n";
+
+  Function fn("main", 0);
+  fn.SetLocalCount(2);  // local[0] = a, local[1] = b
+
+  // 常量池：1 和 2
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+
+  // var a = 1;
+  fn.Emit(OpCode::OP_CONSTANT, 1);  // push 1
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1); // a = 1
+  fn.EmitI32(0, 1);                 // local[0]
+
+  // var b = a;
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);  // push a
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1); // b = a
+  fn.EmitI32(1, 1);                 // local[1]
+
+  // b = 2;
+  fn.Emit(OpCode::OP_CONSTANT, 1);  // push 2
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1); // b = 2
+  fn.EmitI32(1, 1);                 // local[1]
+
+  // print(a);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);  // push a
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);     // 打印 a（期望：1）
+
+  // return
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  VM vm;
+  vm.Run(fn);
+
+  std::cout << "变量值语义自测结束（预期输出：1）\n";
+  std::cout << "---------------------------------------------\n";
+}
+
 
 
 
@@ -811,5 +855,6 @@ int main() {
   //StreamTest();
   //ValueSerializationTest();
   //ChunkSerializationTest();
-  FunctionSerializationTest();
+  //FunctionSerializationTest();
+  VarValueSemanticsTest();
 }

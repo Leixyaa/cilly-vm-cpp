@@ -2,6 +2,23 @@
 // Author: Leixyaa
 // Date: 11.6
 
+// Value 语义说明（当前版本）
+//
+// - Value 是一个小型动态类型容器，内部用 std::variant 存放：
+//   - null / bool / double / std::string 等基础类型
+// - 在当前实现中：
+//   - 所有 Value 都是值类型（copy 时会复制内部的数据，例如 double、string）
+//   - 虚拟机中的栈、局部变量、函数参数，都是按值传递 Value
+// - 未来扩展：
+//   - 我们会在 Value 中加入“堆对象引用”（例如 list / dict）
+//   - 对这些堆对象采用“引用语义”：多个 Value 可以共享同一个堆上的对象
+//   - 这样就能实现：修改 list / dict 的内容能在多个变量之间共享
+
+
+// 前向声明堆对象结构，避免头文件循环依赖。
+// 未来 list / dict 等容器会放在堆上，由 Value 通过指针/智能指针来引用。
+struct Obj;
+
 #ifndef CILLY_VM_CPP_VALUE_H_
 #define CILLY_VM_CPP_VALUE_H_
 

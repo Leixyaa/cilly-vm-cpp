@@ -201,6 +201,10 @@ bool VM::Step_() {
       break;
     }
 
+// 调用时把参数 Value 从调用者栈复制到被调函数的 frame 中
+// 这里是值拷贝（copy Value），未来当 Value 里有“对象引用”时，
+// 参数会共享底层堆对象，实现类似 Python 的引用语义。
+
     case OpCode::OP_CALL: {
       // 读取要调用的函数 ID（
       int func_index = ReadOpnd_();

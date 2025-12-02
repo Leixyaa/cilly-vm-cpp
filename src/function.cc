@@ -93,6 +93,9 @@ void Function::Save(BytecodeWriter& writer) const {
   }
 }
 
+// 调用时把参数 Value 从调用者栈复制到被调函数的 frame 中
+// 这里是值拷贝（copy Value），未来当 Value 里有“对象引用”时，
+// 参数会共享底层堆对象，实现类似 Python 的引用语义。
 
 Function Function::Load(BytecodeReader& reader) {
   // 读取函数名
