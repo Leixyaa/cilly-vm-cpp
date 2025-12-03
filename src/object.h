@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <memory>
 #include "value.h"
 
 
@@ -19,13 +20,18 @@ namespace cilly {
 
 enum class ObjType { kString, kList, kDict};  //暂时先实现List Dict
 
-class object {
+class Object {
  public:
-  object(ObjType type_, int ref_count_) :  type_(type_), ref_count_(ref_count_){}
+
+  Object(ObjType type, int ref_count) :  type_(type), ref_count_(ref_count){}
+
+  ObjType Type() const{ return type_; }
+
+  int RefCount() const{ return ref_count_; }
 
   virtual std::string ToRepr() const = 0;
 
-  virtual ~object() = default;
+  virtual ~Object() = default;
   //mark bit,next	 // 以后可添加mark bit(GC 用)，指针next等
 
  protected:
@@ -33,23 +39,49 @@ class object {
    int ref_count_;     // 为gc做准备
 };
  
-class ObjString : public object {
+
+
+class ObjString : public Object {
 public:
-  ObjString(std::string string_value) : object(ObjType::kString, 1), value_(std::move(string_value)) {}
 
-  ObjType Type() const;
-  int RefCount() const;
+  explicit ObjString(std::string string_value) 
+    : Object(ObjType::kString, 1), value_(std::move(string_value)) {}
 
-  std::string ToRepr() const override;
+  std::string ToRepr() const override{ return value_; }
 
 private:
   std::string value_;
 };
 
 
-class ObjList : public object { std::vector<Value> element; /*......*/ };   // List
 
-class ObjDic : public object {std::unordered_map<std::string, Value> entries; /*......*/ };  //Dic
+
+class ObjList : public Object { 
+public:
+
+  ObjList() : Object(ObjType::kList, 1), element() {};
+  
+  explicit ObjList(std::vector<Value> elem) 
+    : Object(ObjType::kList, 1), element(std::move(elem)) {};
+
+  int Size() const { return element.size(); }
+
+  void Push(const Value& v) {element.push_back(v); }
+
+  const Value& At(int index) const { return element[index]; }
+
+  void Set(int index, const Value& v) { element[index] = v; }
+
+  std::string ToRepr() const override;
+
+private:
+  std::vector<Value> element;
+};   // List
+
+
+
+
+class ObjDic : public Object {std::unordered_map<std::string, Value> entries; /*......*/ };  //Dic
 
 }  // namespace cilly
 

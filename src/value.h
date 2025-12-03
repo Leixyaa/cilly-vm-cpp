@@ -15,23 +15,23 @@
 //   - 这样就能实现：修改 list / dict 的内容能在多个变量之间共享
 
 
-// 前向声明堆对象结构，避免头文件循环依赖。
-// 未来 list / dict 等容器会放在堆上，由 Value 通过指针/智能指针来引用。
-struct Obj;
-
 #ifndef CILLY_VM_CPP_VALUE_H_
 #define CILLY_VM_CPP_VALUE_H_
 
 #include <string>
 #include <variant>
+#include <memory> 
 
 #include "bytecode_stream.h"
 
 namespace cilly {
 
+// 前向声明堆对象结构
+class Object;
+
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
-enum class ValueType { kNull, kBool, kNum, kStr };
+enum class ValueType { kNull, kBool, kNum, kStr, kObj};
 
 // 运行时的通用值类型。
 // 可存放 null、bool、number、string 四种数据。
@@ -39,12 +39,12 @@ class Value {
  public:
   // 构造与工厂方法
   Value();  // 默认构造成 Null。
-  Value(ValueType x, std::variant<std::monostate, bool, double, std::string> y);
+  Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> y);
   static Value Null();
   static Value Bool(bool b);
   static Value Num(double d);
   static Value Str(std::string s);
-
+  static Value Obj(std::shared_ptr<Object> object);
 
   // 类型判断
   ValueType type() const;
@@ -52,6 +52,7 @@ class Value {
   bool IsBool() const;
   bool IsNum() const;
   bool IsStr() const;
+  bool IsObj() const;
 
 
   // 取值接口
@@ -59,6 +60,7 @@ class Value {
   bool AsBool() const;
   double AsNum() const;
   const std::string& AsStr() const;
+  std::shared_ptr<Object> AsObj() const;
 
 
   // 文本表示
@@ -88,7 +90,7 @@ class Value {
 
  private:
   ValueType type_ = ValueType::kNull;  // 当前值类型。
-  std::variant<std::monostate, bool, double, std::string> data_;  // 存储实际数据。
+  std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> data_;  // 存储实际数据。
 };
 
 }  // namespace cilly

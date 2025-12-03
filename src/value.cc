@@ -16,8 +16,6 @@ namespace cilly {
 
 Value::Value() : type_(ValueType::kNull), data_(std::monostate{}) {}
 
-Value::Value(ValueType x, std::variant<std::monostate, bool, double, std::string> y) : type_(x), data_(std::move(y)) {}
-
 Value Value::Null() {
   Value v;
   v.type_ = ValueType::kNull;
@@ -46,6 +44,13 @@ Value Value::Str(std::string s) {
   return v;
 }
 
+Value Value::Obj(std::shared_ptr<Object> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
 ValueType Value::type() const {
   return type_;
 }
@@ -66,6 +71,10 @@ bool Value::IsStr() const {
   return type_ == ValueType::kStr;
 }
 
+bool Value::IsObj() const {
+  return type_ == ValueType::kObj;
+}
+
 bool Value::AsBool() const{
   assert(IsBool() && "这不是Bool类型的数据");
   return std::get<bool>(data_);
@@ -79,6 +88,11 @@ double Value::AsNum() const {
 const std::string&  Value::AsStr() const {
   assert(IsStr() && "这不是Str类型的数据");
   return std::get<std::string>(data_);
+}
+
+std::shared_ptr<Object> Value::AsObj() const {
+  assert(IsObj() && "这不是Object类型的数据");
+  return std::get<std::shared_ptr<Object>>(data_);
 }
 
 std::string Value::ToRepr() const{
