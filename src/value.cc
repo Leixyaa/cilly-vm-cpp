@@ -2,6 +2,8 @@
 // Author: Leixyaa
 // Date: 11.6
 
+//value.cc
+
 #include <cassert>   // 类型断言
 #include <sstream>   // 数字转字符串
 #include <iomanip>   // 控制数字格式
@@ -11,10 +13,13 @@
 
 #include "bytecode_stream.h"
 #include "value.h"
+#include "object.h"
 
 namespace cilly {
 
 Value::Value() : type_(ValueType::kNull), data_(std::monostate{}) {}
+
+Value::Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> y) : type_(x), data_(std::move(y)) {}
 
 Value Value::Null() {
   Value v;
@@ -44,7 +49,14 @@ Value Value::Str(std::string s) {
   return v;
 }
 
-Value Value::Obj(std::shared_ptr<Object> object) {
+Value Value::Obj(std::shared_ptr<ObjList> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
+Value Value::Obj(std::shared_ptr<ObjString> object) {
   Value v;
   v.type_ = ValueType::kObj;
   v.data_ = object;
@@ -73,6 +85,14 @@ bool Value::IsStr() const {
 
 bool Value::IsObj() const {
   return type_ == ValueType::kObj;
+}
+
+bool Value::IsList() const {
+  return IsObj() && AsObj() -> Type() == ObjType::kList;
+}
+
+bool Value::IsString() const {
+  return IsObj() && AsObj() -> Type() == ObjType::kString;
 }
 
 bool Value::AsBool() const{
@@ -113,6 +133,9 @@ std::string Value::ToRepr() const{
         s.pop_back();
     }
     return s;
+  } else if(IsObj()) {
+    auto obj = AsObj();
+    return obj -> ToRepr();
   } 
   //Str
   return std::get<std::string>(data_);
@@ -127,6 +150,7 @@ bool Value::operator==(const Value& rhs) const{
     case ValueType::kBool: return AsBool() == rhs.AsBool();
     case ValueType::kNum: return AsNum() == rhs.AsNum();
     case ValueType::kStr: return AsStr() == rhs.AsStr();
+    //case ValueType::kObj:  暂未实现
     default: return false;
   }
 }
@@ -182,6 +206,10 @@ Value Value::Load(BytecodeReader& reader) {
     case ValueType::kStr :
       return Str(reader.ReadString());
     
+    case ValueType::kObj : 
+      assert(false && "对象类型暂不支持序列化");  // 复杂对象暂未实现
+      break; 
+
     default:  // 如果读到了未知的 Tag，不要让程序崩溃，而是报错并返回一个安全的空值。
       std::cout << "未知或错误的 ValueTag: " 
                 << static_cast<int>(raw_tag) << std::endl;

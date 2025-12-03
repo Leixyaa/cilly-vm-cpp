@@ -2,6 +2,8 @@
 // Author: Leixyaa
 // Date: 11.6
 
+//value.h
+
 // Value 语义说明（当前版本）
 //
 // - Value 是一个小型动态类型容器，内部用 std::variant 存放：
@@ -21,13 +23,14 @@
 #include <string>
 #include <variant>
 #include <memory> 
-
 #include "bytecode_stream.h"
 
 namespace cilly {
 
 // 前向声明堆对象结构
 class Object;
+class ObjList;
+class ObjString;
 
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
@@ -44,7 +47,8 @@ class Value {
   static Value Bool(bool b);
   static Value Num(double d);
   static Value Str(std::string s);
-  static Value Obj(std::shared_ptr<Object> object);
+  static Value Obj(std::shared_ptr<ObjList> object);
+  static Value Obj(std::shared_ptr<ObjString> object);
 
   // 类型判断
   ValueType type() const;
@@ -53,7 +57,8 @@ class Value {
   bool IsNum() const;
   bool IsStr() const;
   bool IsObj() const;
-
+  bool IsList() const;
+  bool IsString() const;
 
   // 取值接口
   // 类型不匹配时，可选择断言或异常（实现中保持一致）。

@@ -835,6 +835,30 @@ void VarValueSemanticsTest() {
   std::cout << "---------------------------------------------\n";
 }
 
+void ObjSmokeTest() {
+  using namespace cilly;
+  std::cout << "测试ObjList ObjString 是否成功定义\n";
+  std::cout << "测试ObjList\n";
+
+  auto obj = std::make_shared<ObjList>();
+  obj -> Push(Value::Num(1));
+  obj -> Push(Value::Str("hello"));
+  obj -> Push(Value::Bool(true));
+  std::cout << obj -> ToRepr() << std::endl;
+
+  Value v1 = Value::Obj(obj);
+  std::cout << v1.ToRepr() << std::endl;
+
+
+  std::cout << "测试ObjString\n";
+
+  auto obj_string = std::make_shared<ObjString>();
+  obj_string -> Set("hello");
+  std::cout << obj_string -> ToRepr() << std::endl;
+
+  Value v2 = Value::Obj(obj_string);
+  std::cout << v2.ToRepr() << std::endl;
+}
 
 
 
@@ -856,5 +880,6 @@ int main() {
   //ValueSerializationTest();
   //ChunkSerializationTest();
   //FunctionSerializationTest();
-  VarValueSemanticsTest();
+  //VarValueSemanticsTest();
+  ObjSmokeTest();
 }

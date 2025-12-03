@@ -1,3 +1,4 @@
+//object.h
 #ifndef CILLY_VM_CPP_OBJECT_H_
 #define CILLY_VM_CPP_OBJECT_H_
 //内存所有权
@@ -25,11 +26,8 @@ class Object {
 
   Object(ObjType type, int ref_count) :  type_(type), ref_count_(ref_count){}
 
-  ObjType Type() const{ return type_; }
-
-  int RefCount() const{ return ref_count_; }
-
-  virtual std::string ToRepr() const = 0;
+  virtual ObjType Type() const{ return type_; }
+  virtual std::string ToRepr() const { return ""; }
 
   virtual ~Object() = default;
   //mark bit,next	 // 以后可添加mark bit(GC 用)，指针next等
@@ -44,10 +42,17 @@ class Object {
 class ObjString : public Object {
 public:
 
-  explicit ObjString(std::string string_value) 
-    : Object(ObjType::kString, 1), value_(std::move(string_value)) {}
+  ObjString() : Object(ObjType::kString, 1), value_(""){};
 
+  explicit ObjString(std::string string_value) 
+    : Object(ObjType::kString, 1), value_(std::move(string_value)) {}  
+  
+  void Set(const std::string& s) { value_ = s; }
+
+  ObjType Type() const override { return type_; }
   std::string ToRepr() const override{ return value_; }
+
+  ~ObjString() override = default;
 
 private:
   std::string value_;
@@ -64,16 +69,15 @@ public:
   explicit ObjList(std::vector<Value> elem) 
     : Object(ObjType::kList, 1), element(std::move(elem)) {};
 
-  int Size() const { return element.size(); }
-
+  int Size() const { return static_cast<int>(element.size()); }
   void Push(const Value& v) {element.push_back(v); }
-
   const Value& At(int index) const { return element[index]; }
-
   void Set(int index, const Value& v) { element[index] = v; }
 
+  ObjType Type() const override { return type_; };
   std::string ToRepr() const override;
 
+  ~ObjList() override = default;
 private:
   std::vector<Value> element;
 };   // List
