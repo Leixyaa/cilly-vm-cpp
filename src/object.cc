@@ -1,3 +1,4 @@
+#include <iterator>
 #include "object.h"
 
 namespace cilly {
@@ -8,7 +9,7 @@ std::string ObjList::ToRepr() const {
   std::string s;
   s += "[";
   int n = static_cast<int>(element.size());
-  for(int i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
     s += element[i].ToRepr();
     if (i != n - 1) { s += ", "; }
   }
@@ -19,7 +20,7 @@ std::string ObjList::ToRepr() const {
 
 
 Value ObjDict::Get(const std::string& key) const {
-  auto it =entries_.find(key);  
+  auto it = entries_.find(key);  
   if(it != entries_.end()) return it->second;
   else return Value::Null();
 }
@@ -28,7 +29,7 @@ std::string ObjDict::ToRepr() const {
   std::string s;
   s += "{ ";
   for (auto i = entries_.begin(); i != entries_.end(); i++) {
-    s +="\"";
+    s += "\"";
     s += i->first;
     s += "\" : ";
     s += i->second.ToRepr();
