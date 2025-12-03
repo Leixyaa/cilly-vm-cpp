@@ -26,7 +26,7 @@ class Object {
 
   Object(ObjType type, int ref_count) :  type_(type), ref_count_(ref_count){}
 
-  virtual ObjType Type() const{ return type_; }
+  ObjType Type() const{ return type_; }
   virtual std::string ToRepr() const { return ""; }
 
   virtual ~Object() = default;
@@ -51,7 +51,6 @@ public:
   
   void Set(const std::string& s) { value_ = s; }
 
-  ObjType Type() const override { return type_; }
   std::string ToRepr() const override{ return value_; }
 
   ~ObjString() override = default;
@@ -65,7 +64,6 @@ private:
 
 class ObjList : public Object { 
 public:
-
   ObjList() : Object(ObjType::kList, 1), element() {};
   
   explicit ObjList(std::vector<Value> elem) 
@@ -76,18 +74,46 @@ public:
   const Value& At(int index) const { return element[index]; }
   void Set(int index, const Value& v) { element[index] = v; }
 
-  ObjType Type() const override { return type_; };
   std::string ToRepr() const override;
 
   ~ObjList() override = default;
-private:
+private: 
   std::vector<Value> element;
 };   // List
 
 
 
 
-class ObjDict : public Object {std::unordered_map<std::string, Value> entries; /*......*/ };  //Dic
+class ObjDict : public Object {
+public:
+  ObjDict() : Object(ObjType::kDict, 1), entries_() {};
+  
+  explicit ObjDict(std::unordered_map<std::string, Value> index) 
+      : Object(ObjType::kDict, 1), entries_(std::move(index)) {}
+
+  // 写入/修改键值
+  // 如果 key 已存在，就覆盖原来的值。
+  void Set(const std::string& key, const Value& value) { entries_[key] = value; }
+
+  // 查询是否存在
+  bool Has(const std::string& key) const { return entries_.find(key) != entries_.end(); }
+
+  // 读取：返回指定 key 对应的 Value
+  // 如果不存在，就返回 Value::Null()
+  Value Get(const std::string& key) const;
+
+  void Erase(const std::string& key) { entries_.erase(key); }
+
+  int Size() const { return static_cast<int>(entries_.size()); }
+
+  std::string ToRepr() const override;
+
+  ~ObjDict() override = default;
+
+private:
+  std::unordered_map<std::string, Value> entries_;
+
+ };  //Dic
 
 }  // namespace cilly
 

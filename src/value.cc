@@ -96,15 +96,15 @@ bool Value::IsObj() const {
 }
 
 bool Value::IsList() const {
-  return IsObj() && AsList() -> Type() == ObjType::kList;
+  return IsObj() && AsObj() -> Type() == ObjType::kList;
 }
 
 bool Value::IsString() const {
-  return IsObj() && AsString() -> Type() == ObjType::kString;
+  return IsObj() && AsObj() -> Type() == ObjType::kString;
 }
 
 bool Value::IsDict() const {
-  return IsObj() && AsDict() -> Type() == ObjType::kDict;
+  return IsObj() && AsObj() -> Type() == ObjType::kDict;
 }
 
 bool Value::AsBool() const{
@@ -126,6 +126,7 @@ std::shared_ptr<Object> Value::AsObj() const {
   assert(IsObj() && "这不是Object类型的数据");
   return std::get<std::shared_ptr<Object>>(data_);
 }
+
 std::shared_ptr<ObjList> Value::AsList() const {
   assert(IsList() && "这不是 List 类型的数据");
   return std::static_pointer_cast<ObjList>(AsObj());

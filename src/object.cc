@@ -17,4 +17,26 @@ std::string ObjList::ToRepr() const {
 }
 
 
+
+Value ObjDict::Get(const std::string& key) const {
+  auto it =entries_.find(key);  
+  if(it != entries_.end()) return it->second;
+  else return Value::Null();
+}
+
+std::string ObjDict::ToRepr() const {
+  std::string s;
+  s += "{ ";
+  for (auto i = entries_.begin(); i != entries_.end(); i++) {
+    s +="\"";
+    s += i->first;
+    s += "\" : ";
+    s += i->second.ToRepr();
+    // 判断是不是最后一个
+    if(std::next(i) != entries_.end()) { s += ", "; }
+  }
+  s += " }";
+  return s;
+}
+
 } //namespace cilly

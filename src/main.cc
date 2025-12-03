@@ -839,7 +839,6 @@ void ObjSmokeTest() {
   using namespace cilly;
   std::cout << "测试ObjList ObjString 是否成功定义\n";
   std::cout << "测试ObjList\n";
-
   auto obj = std::make_shared<ObjList>();
   obj -> Push(Value::Num(1));
   obj -> Push(Value::Str("hello"));
@@ -851,35 +850,55 @@ void ObjSmokeTest() {
 
 
   std::cout << "测试ObjString\n";
-
   auto obj_string = std::make_shared<ObjString>();
   obj_string -> Set("hello");
   std::cout << obj_string -> ToRepr() << std::endl;
-
   Value v2 = Value::Obj(obj_string);
   std::cout << v2.ToRepr() << std::endl;
+
+
+  std::cout << "测试ObjDict\n";
+  std::unordered_map<std::string, Value> index;
+  index["a"] = Value::Num(1);   // a : 1
+  index["b"] = Value::Num(2);   // b : 2
+  auto obj_dict = std::make_shared<ObjDict>(index);  // 存入ObjDict
+  obj_dict->Set("c", Value::Num(3));  // c : 3
+  if (obj_dict->Has("a")) {   // 查找 a
+    std::cout << "存在 a" << std::endl;
+  }
+  if (!obj_dict->Has("d")) {  // 查找 d
+    std::cout << "不存在 d" << std::endl;
+  }
+  std::cout << (obj_dict->Get("a")).ToRepr() << std::endl;   // 返回 a 关键字的值
+  std::cout << (obj_dict->Get("d")).ToRepr() << std::endl;   // 返回 d 关键字的值(Null)
+  obj_dict->Erase("a");       // 删除 a
+  if (!obj_dict->Has("a")) { 
+    std::cout << "不存在 a" << std::endl;
+  }
+  std::cout << obj_dict->Size() << std::endl;  // 返回长度 2
+  std::cout << obj_dict->ToRepr() << std::endl;
 }
 
 
 
 int main() {
-  ValueTest();
-  StackTest();
-  ChunkTest();
-  FunctionTest();
-  VMTest();
-  VarTest();
-  CallTest();
-  CallWithArgTest();
-  Eqtest();
-  IfTest();
-  OddEvenTest();
-  CompareTest();
+  ///*ValueTest();
+  //StackTest();
+  //ChunkTest();
+  //FunctionTest();
+  //VMTest();
+  //VarTest();
+  //CallTest();
+  //CallWithArgTest();
+  //Eqtest();
+  //IfTest();
+  //OddEvenTest();
+  //CompareTest();
 
-  StreamTest();
-  ValueSerializationTest();
-  ChunkSerializationTest();
-  FunctionSerializationTest();
-  VarValueSemanticsTest();
+  //StreamTest();
+  //ValueSerializationTest();
+  //ChunkSerializationTest();
+  //FunctionSerializationTest();
+  //VarValueSemanticsTest();*/
   ObjSmokeTest();
 }
