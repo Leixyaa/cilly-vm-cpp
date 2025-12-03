@@ -10,6 +10,7 @@
 #include <string>
 #include <utility>   //move()移动语义
 #include <iostream>
+#include <memory>
 
 #include "bytecode_stream.h"
 #include "value.h"
@@ -63,6 +64,13 @@ Value Value::Obj(std::shared_ptr<ObjString> object) {
   return v;
 }
 
+Value Value::Obj(std::shared_ptr<ObjDict> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
 ValueType Value::type() const {
   return type_;
 }
@@ -88,11 +96,15 @@ bool Value::IsObj() const {
 }
 
 bool Value::IsList() const {
-  return IsObj() && AsObj() -> Type() == ObjType::kList;
+  return IsObj() && AsList() -> Type() == ObjType::kList;
 }
 
 bool Value::IsString() const {
-  return IsObj() && AsObj() -> Type() == ObjType::kString;
+  return IsObj() && AsString() -> Type() == ObjType::kString;
+}
+
+bool Value::IsDict() const {
+  return IsObj() && AsDict() -> Type() == ObjType::kDict;
 }
 
 bool Value::AsBool() const{
@@ -113,6 +125,20 @@ const std::string&  Value::AsStr() const {
 std::shared_ptr<Object> Value::AsObj() const {
   assert(IsObj() && "这不是Object类型的数据");
   return std::get<std::shared_ptr<Object>>(data_);
+}
+std::shared_ptr<ObjList> Value::AsList() const {
+  assert(IsList() && "这不是 List 类型的数据");
+  return std::static_pointer_cast<ObjList>(AsObj());
+}
+
+std::shared_ptr<ObjString> Value::AsString() const {
+  assert(IsString() && "这不是 String 对象");
+  return std::static_pointer_cast<ObjString>(AsObj());
+}
+
+std::shared_ptr<ObjDict> Value::AsDict() const {
+  assert(IsDict() && "这不是 Dict 对象");
+  return std::static_pointer_cast<ObjDict>(AsObj());
 }
 
 std::string Value::ToRepr() const{

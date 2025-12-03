@@ -16,8 +16,8 @@ void VM::Run(const Function& fn) {
   frame.locals_.assign(fn.LocalCount(), Value::Null());  //初始化locals变量表
   frames_.push_back(frame);
 
-
-  stack_.ResetStats();
+  // 每次运行前清空栈
+  stack_.Clear();
 
   while (true) {
     CallFrame& cf = CurrentFrame();

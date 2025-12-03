@@ -863,7 +863,7 @@ void ObjSmokeTest() {
 
 
 int main() {
-  /*ValueTest();
+  ValueTest();
   StackTest();
   ChunkTest();
   FunctionTest();
@@ -874,12 +874,12 @@ int main() {
   Eqtest();
   IfTest();
   OddEvenTest();
-  CompareTest();*/
+  CompareTest();
 
-  //StreamTest();
-  //ValueSerializationTest();
-  //ChunkSerializationTest();
-  //FunctionSerializationTest();
-  //VarValueSemanticsTest();
+  StreamTest();
+  ValueSerializationTest();
+  ChunkSerializationTest();
+  FunctionSerializationTest();
+  VarValueSemanticsTest();
   ObjSmokeTest();
 }

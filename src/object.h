@@ -34,7 +34,9 @@ class Object {
 
  protected:
    ObjType type_;     // 表示类型
-   int ref_count_;     // 为gc做准备
+   // 当前阶段：真正的内存管理交给 std::shared_ptr<Object>，
+   // 这里的 ref_count_ 暂时不使用，留给以后实现自定义 GC / 引用计数。
+   int ref_count_;     
 };
  
 
@@ -85,7 +87,7 @@ private:
 
 
 
-class ObjDic : public Object {std::unordered_map<std::string, Value> entries; /*......*/ };  //Dic
+class ObjDict : public Object {std::unordered_map<std::string, Value> entries; /*......*/ };  //Dic
 
 }  // namespace cilly
 

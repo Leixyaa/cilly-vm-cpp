@@ -42,6 +42,11 @@ int StackStats::PopCount() const {
   return pop_count_;
 }
 
+void StackStats::Clear() {
+  stack_.clear();
+  ResetStats();
+}
+
 void StackStats::ResetStats() {
   max_depth_ = 0;
   push_count_ = 0;

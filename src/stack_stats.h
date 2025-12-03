@@ -22,6 +22,9 @@ class StackStats {
   int PushCount() const;
   int PopCount() const;
 
+  // 清空栈并重置统计数据
+  void Clear();
+
   // 仅重置统计数据（不清空栈元素）
   void ResetStats();
 
