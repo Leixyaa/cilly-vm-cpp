@@ -10,7 +10,7 @@
 #include "opcodes.h"
 #include "stack_stats.h"
 #include "value.h"
-
+#include "object.h"
 
 namespace cilly {
 

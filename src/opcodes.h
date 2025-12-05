@@ -43,6 +43,16 @@ enum class OpCode : int32_t {
 
   // 函数调用。
   OP_CALL,       // 调用另一个函数，操作数是函数 ID。
+
+
+
+  // List
+  OP_LIST_NEW,      // 栈: ... -> ..., list
+  OP_LIST_PUSH,     // 栈: ..., list, value -> ..., list
+  OP_LIST_GET,      // 栈: ..., list, index -> ..., element
+  OP_LIST_SET,      // 栈: ..., list, index, value -> ...     
+  OP_LIST_LEN,      // 栈: ..., list -> ..., length
+
 };
 
 }  // namespace cilly

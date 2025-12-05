@@ -881,24 +881,82 @@ void ObjSmokeTest() {
 
 
 
-int main() {
-  ///*ValueTest();
-  //StackTest();
-  //ChunkTest();
-  //FunctionTest();
-  //VMTest();
-  //VarTest();
-  //CallTest();
-  //CallWithArgTest();
-  //Eqtest();
-  //IfTest();
-  //OddEvenTest();
-  //CompareTest();
 
-  //StreamTest();
-  //ValueSerializationTest();
-  //ChunkSerializationTest();
-  //FunctionSerializationTest();
-  //VarValueSemanticsTest();*/
-  ObjSmokeTest();
+void ListOpcodeTest() {
+  using namespace cilly;
+  std::cout << "List 指令自测:\n";
+
+  VM vm;
+
+  Function fn("main", 0);
+  fn.SetLocalCount(1);
+
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+  int c0 = fn.AddConst(Value::Num(0));
+
+  fn.Emit(OpCode::OP_LIST_NEW, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(0, 1);
+    
+  // 推入1，2
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_LIST_PUSH, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_LIST_PUSH, 1);
+  
+  // 显示当前列表长度
+  fn.Emit(OpCode::OP_LIST_LEN, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_POP, 1);
+
+  // 将索引为0的值改为2  1->2
+  fn.Emit(OpCode::OP_LOAD_VAR,1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_LIST_SET, 1);
+
+  // 获取索引为0的值打印
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);  
+  fn.Emit(OpCode::OP_LIST_GET, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  
+
+  fn.Emit(OpCode::OP_RETURN, 1);
+  
+  vm.Run(fn);
+}
+
+
+int main() {
+  /*ValueTest();
+  StackTest();
+  ChunkTest();
+  FunctionTest();
+  VMTest();
+  VarTest();
+  CallTest();
+  CallWithArgTest();
+  Eqtest();
+  IfTest();
+  OddEvenTest();
+  CompareTest();
+
+  StreamTest();
+  ValueSerializationTest();
+  ChunkSerializationTest();
+  FunctionSerializationTest();
+  VarValueSemanticsTest();
+  ObjSmokeTest();*/
+  ListOpcodeTest();
 }

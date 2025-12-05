@@ -60,7 +60,18 @@ bool VM::Step_() {
   OpCode op = static_cast<OpCode>(raw);
 
   switch (op) {
-    case OpCode::OP_CONSTANT: {
+    case OpCode::OP_POP: {
+      stack_.Pop();
+      break;
+    }
+    
+    case OpCode::OP_DUP: {
+      Value v = stack_.Top();  
+      stack_.Push(v);      
+      break;
+    }
+
+    case OpCode::OP_CONSTANT : {
       int index = ReadOpnd_();
       stack_.Push(ch.ConstAt(index));
       break;
@@ -167,7 +178,7 @@ bool VM::Step_() {
     }
 
     case OpCode::OP_NEGATE: {
-      Value v = stack_.Pop();
+      Value v = stack_.Top();
       assert(v.IsNum() && "Attempted to negate a non-number value");
       stack_.Push(Value::Num(-v.AsNum()));
       break;
@@ -235,6 +246,57 @@ bool VM::Step_() {
       break;
     }
     
+
+    // List相关
+    // 创建新列表
+    case OpCode::OP_LIST_NEW: {
+      auto list = std::make_shared<ObjList>();
+      stack_.Push(Value::Obj(list));
+      break;
+    }
+    
+    // 在list中加入数据
+    case OpCode::OP_LIST_PUSH : {
+      Value value = stack_.Pop();
+      Value list_v = stack_.Pop();
+      auto list = list_v.AsList();
+      list->Push(value);
+      stack_.Push(list_v);
+      break;
+    }
+      
+    // 获取对应索引的数据
+    case OpCode::OP_LIST_GET : {
+      Value index_v = stack_.Pop();
+      assert(index_v.IsNum() && "索引输入错误！");
+      int index = static_cast<int>(index_v.AsNum());
+      Value list_v = stack_.Pop();
+      auto list = list_v.AsList();
+      const Value& elem = list->At(index);
+      stack_.Push(elem);
+      break;
+    }
+   
+    // 替换/覆盖对应索引位置的数据
+    case OpCode::OP_LIST_SET : {
+      Value value = stack_.Pop();
+      Value index_v = stack_.Pop();
+      assert(index_v.IsNum() && "索引输入错误！");
+      int index = static_cast<int>(index_v.AsNum());
+      Value list_v = stack_.Pop();
+      auto list = list_v.AsList();
+      list->Set(index, value);
+      break;
+    }
+
+    // 返回list长度
+    case OpCode::OP_LIST_LEN: {
+      Value list_v = stack_.Pop();
+      auto list = list_v.AsList();
+      stack_.Push(Value::Num(list->Size()));
+      break;
+    }
+
 
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
