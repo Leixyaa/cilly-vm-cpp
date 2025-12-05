@@ -296,6 +296,74 @@ void Eqtest() {
 }
 
 
+void ForLoopTest() {
+  using namespace cilly;
+  std::cout << "for 循环字节码自测:\n" << std::endl;
+
+  Function fn("for_test", 0);
+  fn.SetLocalCount(1);  // local[0] 用作 i
+
+  // 1. 常量：0,1,3
+  // 2. 初始化 i = 0;
+  // 3. 记录 loop_start 位置
+  // 4. 条件 i < 3
+  // 5. JUMP_IF_FALSE 跳到 end_label（占位 + 回填）
+  // 6. 循环体：print(i)
+  // 7. i = i + 1
+  // 8. 无条件跳回 loop_start
+  // 9. end_label: 回填 JUMP_IF_FALSE 的目标
+  // 10. OP_RETURN
+
+  int c0 = fn.AddConst(Value::Num(0));
+  int c1 = fn.AddConst(Value::Num(1));
+  int c3 = fn.AddConst(Value::Num(3));
+
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(0, 1);
+
+  int loop_start = fn.CodeSize();
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_LESS, 1);
+  fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
+  int end_lable = fn.CodeSize();
+  fn.EmitI32(0, 1);
+  
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_POP, 1);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_ADD, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(0, 1);
+  
+  fn.Emit(OpCode::OP_JUMP, 1);
+  fn.EmitI32(loop_start, 1);
+  
+  fn.PatchI32(end_lable, fn.CodeSize());
+
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_RETURN, 1);
+
+  VM vm;
+  vm.Run(fn);
+
+  std::cout << "For 循环自测 (预期 print: 0,1,2; return: 3)\n";
+  std::cout << "---------------------------------------------\n";
+}
+
+
+
+
 // ---------------- 条件跳转命令自测 ----------------
 void IfTest() {
   using namespace cilly;
@@ -1028,17 +1096,17 @@ int main() {
   VarTest();
   CallTest();
   CallWithArgTest();
-  Eqtest();
-  IfTest();
+  Eqtest();*/
+  ForLoopTest();
+  /*IfTest();
   OddEvenTest();
   CompareTest();
-
   StreamTest();
   ValueSerializationTest();
   ChunkSerializationTest();
   FunctionSerializationTest();
   VarValueSemanticsTest();
-  ObjSmokeTest();*/
+  ObjSmokeTest();
   ListOpcodeTest();
-  DictOpcodeTest();
+  DictOpcodeTest();*/
 }
