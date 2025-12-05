@@ -877,6 +877,7 @@ void ObjSmokeTest() {
   }
   std::cout << obj_dict->Size() << std::endl;  // 返回长度 2
   std::cout << obj_dict->ToRepr() << std::endl;
+  std::cout << "---------------------------------------------\n";
 }
 
 
@@ -935,7 +936,87 @@ void ListOpcodeTest() {
   fn.Emit(OpCode::OP_RETURN, 1);
   
   vm.Run(fn);
+
+  std::cout << "List 指令自测(预期结果：print: 2, 2;  return: 2)\n";
+  std::cout << "---------------------------------------------\n";
 }
+
+
+
+void DictOpcodeTest() {
+  using namespace cilly;
+  std::cout << "Dict 指令自测:" << std::endl;
+
+  Function fn("main", 0);
+  fn.SetLocalCount(1);
+
+  int c1 = fn.AddConst(Value::Num(1));
+  int c2 = fn.AddConst(Value::Num(2));
+  int c_a = fn.AddConst(Value::Str("a"));
+  int c_b = fn.AddConst(Value::Str("b"));
+  int c_c = fn.AddConst(Value::Str("c"));
+  
+  // 创建新字典并存入变量表
+  fn.Emit(OpCode::OP_DICT_NEW, 1);
+  fn.Emit(OpCode::OP_STORE_VAR, 1);
+  fn.EmitI32(0, 1);
+
+  // 设置 a = 1，b = 2
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_DUP, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_a, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_DICT_SET, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_b, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_DICT_SET, 1);
+  
+  // 打印 a 
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_a, 1);
+  fn.Emit(OpCode::OP_DICT_GET, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_POP, 1);
+  
+  // 把 a 改成 2 并且打印
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_DUP, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_a, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_DICT_SET, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_a, 1);
+  fn.Emit(OpCode::OP_DICT_GET, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  fn.Emit(OpCode::OP_POP, 1);
+
+  // 查找c
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c_c, 1);
+  fn.Emit(OpCode::OP_DICT_HAS, 1);
+  fn.Emit(OpCode::OP_PRINT, 1);
+  
+  fn.Emit(OpCode::OP_RETURN, 1);
+  
+  VM vm;
+  vm.Run(fn);
+
+  std::cout << "Dict 指令自测 (预期结果：print: 1, 2,false;  return: false)\n";
+  std::cout << "---------------------------------------------\n";
+}
+
 
 
 int main() {
@@ -959,4 +1040,5 @@ int main() {
   VarValueSemanticsTest();
   ObjSmokeTest();*/
   ListOpcodeTest();
+  DictOpcodeTest();
 }

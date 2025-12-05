@@ -178,7 +178,7 @@ bool VM::Step_() {
     }
 
     case OpCode::OP_NEGATE: {
-      Value v = stack_.Top();
+      Value v = stack_.Pop();
       assert(v.IsNum() && "Attempted to negate a non-number value");
       stack_.Push(Value::Num(-v.AsNum()));
       break;
@@ -297,6 +297,50 @@ bool VM::Step_() {
       break;
     }
 
+
+
+
+    // Dict相关
+    // 创建新Dict
+    case OpCode::OP_DICT_NEW: {
+      auto dict = std::make_shared<ObjDict>();
+      stack_.Push(Value::Obj(dict));
+      break;
+    }
+
+    // 将关键字为key的索引内容替换，如果未添加该关键字则创建
+    case OpCode::OP_DICT_SET: {
+      Value value = stack_.Pop();
+      Value key_v = stack_.Pop();
+      assert(key_v.IsStr() && "关键词输入错误！");
+      std::string key = key_v.AsStr();
+      Value dict_v = stack_.Pop();
+      auto dict = dict_v.AsDict();
+      dict->Set(key, value);
+      break;
+    }
+
+    case OpCode::OP_DICT_GET: {
+      Value key_v = stack_.Pop();
+      assert(key_v.IsStr() && "关键词输入错误！");
+      std::string key = key_v.AsStr();
+      Value dict_v = stack_.Pop();
+      auto dict = dict_v.AsDict();
+      const Value& elem = dict->Get(key);
+      stack_.Push(elem);
+      break;
+    }
+
+    case OpCode::OP_DICT_HAS: {
+      Value key_v = stack_.Pop();
+      assert(key_v.IsStr() && "关键词输入错误！");
+      std::string key = key_v.AsStr();
+      Value dict_v = stack_.Pop();
+      auto dict = dict_v.AsDict();
+      bool exists = dict->Has(key);
+      stack_.Push(Value::Bool(exists));
+      break;
+    }
 
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");

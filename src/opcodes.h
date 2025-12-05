@@ -46,12 +46,20 @@ enum class OpCode : int32_t {
 
 
 
-  // List
+  // ListÏà¹ØÃüÁî
   OP_LIST_NEW,      // Õ»: ... -> ..., list
   OP_LIST_PUSH,     // Õ»: ..., list, value -> ..., list
   OP_LIST_GET,      // Õ»: ..., list, index -> ..., element
   OP_LIST_SET,      // Õ»: ..., list, index, value -> ...     
   OP_LIST_LEN,      // Õ»: ..., list -> ..., length
+
+
+  // Dict Ïà¹ØÖ¸Áî
+  OP_DICT_NEW,    // Õ»: ...                -> ..., dict
+  OP_DICT_SET,    // Õ»: ..., dict, key, value -> ...
+  OP_DICT_GET,    // Õ»: ..., dict, key     -> ..., value
+  OP_DICT_HAS,    // Õ»: ..., dict, key     -> ..., bool
+
 
 };
 
