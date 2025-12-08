@@ -13,6 +13,8 @@
 #include "vm.h"
 #include "bytecode_stream.h" 
 #include "object.h"
+#include "frontend/lexer.h"
+
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -1087,6 +1089,23 @@ void DictOpcodeTest() {
 
 
 
+void LexerSmokeTest() {
+  using namespace cilly;
+
+  std::string source = "var _x = 1; print _x; // comment\n";
+  Lexer lexer(source);
+  auto tokens = lexer.ScanAll();
+
+  std::cout << "Lexer 自测：token 数量 = " << tokens.size() << std::endl;
+  if (!tokens.empty()) {
+    std::cout << "第一个 token kind (int) = "
+              << static_cast<int>(tokens[0].kind)
+              << ", lexeme = \"" << tokens[0].lexeme << "\""
+              << std::endl;
+  }
+}
+
+
 int main() {
   /*ValueTest();
   StackTest();
@@ -1096,9 +1115,9 @@ int main() {
   VarTest();
   CallTest();
   CallWithArgTest();
-  Eqtest();*/
+  Eqtest();
   ForLoopTest();
-  /*IfTest();
+  IfTest();
   OddEvenTest();
   CompareTest();
   StreamTest();
@@ -1109,4 +1128,6 @@ int main() {
   ObjSmokeTest();
   ListOpcodeTest();
   DictOpcodeTest();*/
+  LexerSmokeTest();
+  
 }
