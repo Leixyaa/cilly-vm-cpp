@@ -17,6 +17,10 @@ struct Stmt;
 using ExprPtr = std::unique_ptr<Expr>;
 using StmtPtr = std::unique_ptr<Stmt>;
 
+
+
+
+
 // ======================
 // 表达式（Expression）
 // ======================
@@ -34,6 +38,8 @@ struct Expr {
 
   Kind kind;
 };
+
+
 
 // 字面量类型：数字 / 布尔 / null
 struct LiteralExpr : public Expr {
@@ -54,6 +60,10 @@ struct LiteralExpr : public Expr {
   std::string lexeme;
 };
 
+
+
+
+
 // 变量引用：例如表达式里出现 x、y_1 这种
 struct VariableExpr : public Expr {
   explicit VariableExpr(Token name)
@@ -62,6 +72,10 @@ struct VariableExpr : public Expr {
   // 记录变量名对应的 token，方便以后报错（行号、列号）
   Token name;
 };
+
+
+
+
 
 // 二元表达式：left op right，例如 1 + 2 或 x == 3
 struct BinaryExpr : public Expr {
@@ -75,6 +89,11 @@ struct BinaryExpr : public Expr {
   Token op;     // 运算符对应的 token（比如 +、-、==）
   ExprPtr right;
 };
+
+
+
+
+
 
 // ======================
 // 语句（Statement）

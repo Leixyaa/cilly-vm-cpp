@@ -1,6 +1,7 @@
 #ifndef CILLY_VM_CPP_PARSER_H_
 #define CILLY_VM_CPP_PARSER_H_
 
+#include <initializer_list>
 #include <string>
 #include <vector>
 
@@ -72,6 +73,7 @@ class Parser {
 
   // 块语句：{ stmt* }
   StmtPtr BlockStatement();
+
 
   // ========== 表达式语法 ==========
 
