@@ -14,7 +14,7 @@
 #include "bytecode_stream.h" 
 #include "object.h"
 #include "frontend/lexer.h"
-
+#include "frontend/parser.h"
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -1106,6 +1106,35 @@ void LexerSmokeTest() {
 }
 
 
+
+void ParserExprSmokeTest() {
+  using namespace cilly;
+
+  std::cout << "Parser 表达式自测:\n";
+
+  // 源码字符串（就是“自测输入”）
+  std::string source =
+      "print 1 + 2 * 3;\n"
+      "print (1 + 2) * 3;\n"
+      "var x = 10;\n"
+      "print x + 5 * 2;\n"
+      "print -x + 3;\n";
+
+  // 先词法分析 → tokens
+  Lexer lexer(source);
+  std::vector<Token> tokens = lexer.ScanAll();
+
+  // 再语法分析 → AST（语句列表）
+  Parser parser(std::move(tokens));
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 打印简单信息确认解析成功
+  std::cout << "解析成功，语句条数 = " << program.size() << "\n";
+  std::cout << "---------------------------------------------\n";
+}
+
+
+
 int main() {
   /*ValueTest();
   StackTest();
@@ -1128,6 +1157,6 @@ int main() {
   ObjSmokeTest();
   ListOpcodeTest();
   DictOpcodeTest();*/
-  LexerSmokeTest();
-  
+  //LexerSmokeTest();
+  ParserExprSmokeTest();
 }

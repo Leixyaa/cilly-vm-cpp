@@ -6,8 +6,12 @@ namespace cilly {
 Parser::Parser(std::vector<Token> tokens) : tokens_(std::move(tokens)), current_(0) {};
 
 bool Parser::IsAtEnd() const {
-  return current_ >= static_cast<int>(tokens_.size());
+  if (current_ >= static_cast<int>(tokens_.size())) {
+    return true;
+  }
+  return tokens_[current_].kind == TokenKind::kEof;
 }
+
 
 const Token& Parser::Peek() const {
   return tokens_[current_];
@@ -98,8 +102,43 @@ const Token& Parser::Consume(TokenKind kind, const std::string& message) {
 }
 
 ExprPtr Parser::Expression() {
-  return Primary();
+  return Term();
 }
+
+// È¡¸º
+ExprPtr Parser::Unary() {   
+  if (Match(TokenKind::kMinus)) {
+    Token op = Previous();
+    ExprPtr right = Unary();
+    ExprPtr zero = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber, "0");
+    return std::make_unique<BinaryExpr> (std::move(zero), op, std::move(right));
+  } else {
+    return Primary();
+  }
+}
+
+// ³Ë³ý
+ExprPtr Parser::Factor() {
+  ExprPtr left = Unary();
+  while (Match(TokenKind::kStar) || Match(TokenKind::kSlash)) {
+    Token op = Previous();
+    ExprPtr right = Unary();
+    left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+  }
+    return left;
+}
+
+// ¼Ó¼õ
+ExprPtr Parser::Term() {
+  ExprPtr left = Factor(); 
+  while (Match(TokenKind::kPlus) || Match(TokenKind::kMinus)) {
+    Token op = Previous();
+    ExprPtr right = Factor();
+    left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+  }
+   return left;
+ }
+
 
 ExprPtr Parser::Primary() {
   if (Match(TokenKind::kNumber)) {

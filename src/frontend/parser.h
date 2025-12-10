@@ -86,8 +86,8 @@ class Parser {
   // 典型表达式优先级结构（从高到低）大概是：
   //   Primary -> Unary -> Factor(* /) -> Term(+ -) -> ... -> Expression
 
-  ExprPtr Equality();    // ==, !=（以后用）
-  ExprPtr Comparison();  // <, <=, >, >=（以后用）
+  //ExprPtr Equality();    // ==, !=（以后用）
+  //ExprPtr Comparison();  // <, <=, >, >=（以后用）
   ExprPtr Term();        // +, -
   ExprPtr Factor();      // *, /
   ExprPtr Unary();       // 一元运算：-expr, !expr（以后用）
