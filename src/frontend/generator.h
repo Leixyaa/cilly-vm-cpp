@@ -16,12 +16,12 @@ class Generator {
   // 生成器不一定需要 VM，先不依赖 VM，只生成 Function。
   Generator();
 
-  // 输入：一整棵 AST（顶层语句列表）
-  // 输出：一个可在 VM 中执行的 Function（类似 main 函数）
+  // 输入：一整棵 AST
+  // 输出：一个可在 VM 中执行的 Function
   Function Generate(const std::vector<StmtPtr>& program);
 
  private:
-  // 当前正在生成字节码的函数（例如 main）
+  // 当前正在生成字节码的函数
   Function* current_fn_;
 
   // 工具：生成一条语句

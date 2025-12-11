@@ -26,7 +26,7 @@ class Parser {
   std::vector<StmtPtr> ParseProgram();
 
  private:
-  // ========== 基础游标工具（在 token 列表上走来走去） ==========
+  // 基础游标工具:
 
   // 当前是否已经到达 token 列表末尾（通常是遇到 kEof）
   bool IsAtEnd() const;
@@ -53,13 +53,12 @@ class Parser {
   // 检查当前 token 的 kind 是否是给定 kind（不前进）
   bool Check(TokenKind kind) const;
 
-  // ========== 语法分析入口：语句 / 声明 ==========
+  // 语法分析入口
 
-  // 解析一条“声明语句”：例如 var 声明，或其他声明。
-  // 将来我们会让 ParseProgram() 反复调用 Declaration()。
+  // 解析一条“声明语句”,例如 var 声明，或其他声明。
   StmtPtr Declaration();
 
-  // 解析一条“普通语句”：例如表达式语句、print 语句、块语句等。
+  // 解析一条“普通语句”,例如表达式语句、print 语句、块语句等。
   StmtPtr Statement();
 
   // var 声明语句：var x = expr;

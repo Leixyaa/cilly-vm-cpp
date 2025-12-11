@@ -1,10 +1,12 @@
+#include <string>
 #include "generator.h"
 
 namespace cilly {
 
 Generator::Generator() : current_fn_(nullptr) {}
 
-Function Generator::Generate(const std::vector<StmtPtr>& program) {
+// 主调用函数
+Function Generator::Generate(const std::vector<StmtPtr>& program) { 
   Function script;
   script.SetLocalCount(0);
   current_fn_ = &script;
@@ -65,10 +67,7 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
 }
 
 void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
-  double num = 0;
-  for (char c : expr->lexeme) {
-    num = num * 10 + (c - '0');
-  }
+  double num = std::stod(expr->lexeme);    // stod将字符串转化为double
   Value v = Value::Num(num);
   EmitConst(v);
   return;

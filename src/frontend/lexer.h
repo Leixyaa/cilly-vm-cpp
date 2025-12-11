@@ -53,7 +53,7 @@ struct Token {
   int col;            // 出现在这一行的第几列（从 1 开始）
 };
 
-// Lexer 类：负责“拿到整段代码字符串，然后切成一串 Token”
+// Lexer 类：负责拿到整段代码字符串，然后切成一串 Token
 class Lexer {
  public:
   // 构造函数：把源码字符串丢进来存起来。
