@@ -1145,9 +1145,12 @@ void FrontendEndToEndTest() {
   std::cout << "前端→VM 全链路自测:\n";
   
   std::string source =
-    "var x = 10;\n"
+    "var x = 1;\n"
     "print x;\n"
-    "print x + 2 * 3;\n";
+    "x = x + 1;\n"
+    "print x;\n"
+    "x = x * 10;\n"  
+    "print x;";
 
 
   //词法分析
@@ -1164,7 +1167,7 @@ void FrontendEndToEndTest() {
   
   VM vm;
   vm.Run(main);
-  std::cout << "（预期输出两行：10 和 16）\n";
+  std::cout << "（预期输出三行，1，2，20）\n";
   std::cout << "---------------------------------------------\n";
 }
 

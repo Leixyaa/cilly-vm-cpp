@@ -105,6 +105,7 @@ struct Stmt {
     kExpr,    // 表达式语句：expr;
     kPrint,   // print 语句：print expr;
     kBlock,   // 复合语句：{ stmt* }
+    kAssign   // 赋值语句：x = expr;
     // 后面还会加 if / for / while 等
   };
 
@@ -147,6 +148,16 @@ struct BlockStmt : public Stmt {
   BlockStmt() : Stmt(Kind::kBlock) {}
 
   std::vector<StmtPtr> statements;
+};
+
+struct AssignStmt : public Stmt {
+  AssignStmt(Token name, ExprPtr expr) 
+      : Stmt(Kind::kAssign), 
+        name(std::move(name)), 
+        expr(std::move(expr)){}
+  
+  Token name;
+  ExprPtr expr;
 };
 
 }  // namespace cilly

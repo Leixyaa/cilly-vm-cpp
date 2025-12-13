@@ -1,4 +1,5 @@
 #include <initializer_list>
+#include <iostream>
 #include "parser.h"
 
 namespace cilly {
@@ -30,6 +31,13 @@ const Token& Parser::Advance() {
   return Previous();
 }
 
+const Token& Parser::LookAhead(int offset) const {
+  if (current_ + offset >= static_cast<int>(tokens_.size())) {
+    return tokens_.back();
+  }
+  return tokens_[current_ + offset];
+}
+
 bool Parser::Check(TokenKind kind) const {
   if(IsAtEnd()) return false;
   return Peek().kind == kind;
@@ -54,23 +62,6 @@ bool Parser::MatchAny(std::initializer_list<TokenKind> kinds) {
   return false;
 }
 
-// 主要调用函数
-std::vector<StmtPtr> Parser::ParseProgram() {
-  std::vector<StmtPtr> result;
-  while (!IsAtEnd()) {
-    StmtPtr stmt = Declaration();
-    result.push_back(std::move(stmt));
-  }
-  return result;
-}
-
-StmtPtr Parser::Declaration() {
-  if(Match(TokenKind::kVar)) {
-    return VarDeclaration();
-  } else {
-    return Statement();
-  }
-}
 
 StmtPtr Parser::VarDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect variable name.");
@@ -87,6 +78,8 @@ StmtPtr Parser::Statement() {
     return PrintStatement();
   } else if (Match(TokenKind::kLBrace)) {  // 块语句
     return BlockStatement();
+  } else if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
+    return AssignStatement();
   } else {  
     return ExprStatement();
   }
@@ -96,6 +89,7 @@ const Token& Parser::Consume(TokenKind kind, const std::string& message) {
   if (Check(kind)) {
     return Advance();
   } else {
+    std::cerr << "Error: " << message << std::endl; //std::cerr 是专门用来输出错误信息的流，它与 std::cout 是分开的，通常会在终端显示不同的颜色或标记，使得错误信息更加显眼。
     assert(false && message.c_str());  // 用c_str转换成const char* 类型，主要可以转换成bool使用 而 string类型不可以，所以一定要用c_str
     return tokens_[current_]; 
   }
@@ -140,6 +134,7 @@ ExprPtr Parser::Term() {
  }
 
 
+
 ExprPtr Parser::Primary() {
   if (Match(TokenKind::kNumber)) {
     return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber,Previous().lexeme);
@@ -172,10 +167,38 @@ StmtPtr Parser::BlockStatement() {
   return block;
 }
 
+StmtPtr Parser::AssignStatement() {
+  Token name;
+  ExprPtr expr;
+  name = Advance();
+  Consume(TokenKind::kEqual, "Expect '=' after value.");
+  expr = Expression();
+  Consume(TokenKind::kSemicolon, "Expect ';' after value.");
+  return std::make_unique<AssignStmt>(std::move(name), std::move(expr));
+}
+
 StmtPtr Parser::ExprStatement() {
   ExprPtr value = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after value.");
   return std::make_unique<ExprStmt>(std::move(value));
+}
+
+// 主要调用函数
+std::vector<StmtPtr> Parser::ParseProgram() {
+  std::vector<StmtPtr> result;
+  while (!IsAtEnd()) {
+    StmtPtr stmt = Declaration();
+    result.push_back(std::move(stmt));
+  }
+  return result;
+}
+
+StmtPtr Parser::Declaration() {
+  if(Match(TokenKind::kVar)) {
+    return VarDeclaration();
+  } else {
+    return Statement();
+  }
 }
 
 }  // namespace cilly

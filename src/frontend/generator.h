@@ -34,6 +34,7 @@ class Generator {
   void EmitPrintStmt(const PrintStmt* stmt);
   void EmitExprStmt(const ExprStmt* stmt);
   void EmitVarStmt(const VarStmt* stmt);
+  void EmitAssignStmt(const AssignStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);

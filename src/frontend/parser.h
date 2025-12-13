@@ -50,6 +50,8 @@ class Parser {
   // 前进一步：返回当前 token，然后 current_++
   const Token& Advance();
 
+  const Token& LookAhead(int offset) const;
+
   // 检查当前 token 的 kind 是否是给定 kind（不前进）
   bool Check(TokenKind kind) const;
 
@@ -73,6 +75,8 @@ class Parser {
   // 块语句：{ stmt* }
   StmtPtr BlockStatement();
 
+  // 赋值语句：x = expr;
+  StmtPtr AssignStatement();
 
   // ========== 表达式语法 ==========
 

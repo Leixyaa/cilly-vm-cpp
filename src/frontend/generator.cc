@@ -9,7 +9,7 @@ Generator::Generator()
 
 // 主调用函数
 Function Generator::Generate(const std::vector<StmtPtr>& program) { 
-  Function script("script", 1);
+  Function script("script", 0);
   script.SetLocalCount(0);
   current_fn_ = &script;
   for (const auto& i : program) {
@@ -36,6 +36,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
     case Stmt::Kind::kVar: {
       auto p = static_cast<VarStmt*>(stmt.get());
       EmitVarStmt(p);
+      break;
+    }
+    case Stmt::Kind::kAssign: {
+      auto p = static_cast<AssignStmt*>(stmt.get());
+      EmitAssignStmt(p);
       break;
     }
     default:
@@ -73,6 +78,18 @@ void Generator::EmitVarStmt(const VarStmt* stmt) {
   return;
 }
 
+void Generator::EmitAssignStmt(const AssignStmt* stmt) {
+  const std::string& name = stmt->name.lexeme;
+  EmitExpr(stmt->expr);
+  auto it = local_.find(name);
+  if (it == local_.end()) {
+    assert(false && "该变量未定义！");
+  }
+  EmitOp(OpCode::OP_STORE_VAR);
+  EmitI32(it->second);
+  return;
+}
+
 void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
   switch (expr->kind) {
   case Expr::Kind::kLiteral: {
@@ -90,6 +107,8 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
     EmitVariableExpr(p);
     break;
   }
+  default:
+    assert(false && "未找到此类表达式！");
   }
 }
 
