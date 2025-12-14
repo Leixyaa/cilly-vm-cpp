@@ -62,6 +62,11 @@ bool Parser::MatchAny(std::initializer_list<TokenKind> kinds) {
   return false;
 }
 
+std::string Parser::StripQuotes(const std::string& s) {
+  assert(s.size() >= 2 && s.front() == '"' && s.back() == '"');
+  return s.substr(1, s.size() - 2);
+}
+
 
 StmtPtr Parser::VarDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect variable name.");
@@ -136,15 +141,41 @@ ExprPtr Parser::Term() {
 
 
 ExprPtr Parser::Primary() {
-  if (Match(TokenKind::kNumber)) {
+  if (Match(TokenKind::kNumber)) {  // 数字
     return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber,Previous().lexeme);
-  } else if (Match(TokenKind::kIdentifier)) {
+  } else if (Match(TokenKind::kIdentifier)) {  // 关键字
     return std::make_unique<VariableExpr>(Previous());
-  } else if (Match(TokenKind::kLParen)) {
+  } else if (Match(TokenKind::kLParen)) {      // "("
     ExprPtr value = Expression();
     Consume(TokenKind::kRParen, "Expect ')' after expression.");
     return value;
-  } else {
+  } else if (Match(TokenKind::kLBracket)) {    // "["
+    std::vector<ExprPtr> elements;
+    while (!Match(TokenKind::kRBracket)) {
+      elements.emplace_back(Expression());
+      if (Match(TokenKind::kRBracket)) {
+        break;
+      }
+      Consume(TokenKind::kComma, "Expect ',' after expression.");
+    }
+    return std::make_unique<ListExpr>(std::move(elements));
+  } else if (Match(TokenKind::kLBrace)) {     // "{"
+    std::vector<std::pair<std::string, ExprPtr>> entries;
+    while (!Match(TokenKind::kRBrace)) {
+      Token key = Consume(TokenKind::kString, "Dict key must be string.");
+      std::string str;
+      str = StripQuotes(key.lexeme);
+      Consume(TokenKind::kColon, "Expect ':' after key.");
+      ExprPtr value = Expression();
+      entries.emplace_back(std::move(str), std::move(value));
+      if (Match(TokenKind::kRBrace)) {
+        break;
+      } 
+      Consume(TokenKind::kComma, "Expect ',' after expression.");
+    }
+    return std::make_unique<DictExpr>(std::move(entries));
+  }
+    else {
     assert(false && "未找到此种类型!");
     return nullptr;
   }

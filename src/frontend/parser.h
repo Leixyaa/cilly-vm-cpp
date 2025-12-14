@@ -44,6 +44,9 @@ class Parser {
   // 和上面类似，但是可以传入多个候选 kind，只要匹配任意一个就消费掉。
   bool MatchAny(std::initializer_list<TokenKind> kinds);
 
+  // 除去string两边引号 "abc"->abc
+  std::string StripQuotes(const std::string& s);  
+
   // 如果当前 token 是 kind，就消费掉；否则报错（以后再实现具体错误处理）。
   const Token& Consume(TokenKind kind, const std::string& message);
 

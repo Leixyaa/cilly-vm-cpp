@@ -30,6 +30,8 @@ struct Expr {
     kLiteral,   // 字面量：数字、true、false、null
     kVariable,  // 变量引用：x
     kBinary,    // 二元表达式：a + b
+    kList,
+    kDict
     // 后面还会加：一元表达式、赋值表达式、函数调用等等
   };
 
@@ -91,6 +93,20 @@ struct BinaryExpr : public Expr {
 };
 
 
+
+struct ListExpr : public Expr {
+    ListExpr(std::vector<ExprPtr> elements_) : Expr(Kind::kList), elements(std::move(elements_)) {}
+  std::vector<ExprPtr> elements;
+};
+
+
+struct DictExpr : public Expr {
+  DictExpr(std::vector<std::pair<std::string, ExprPtr>> entries_)
+      : Expr(Kind::kDict),
+      entries(std::move(entries_)) {
+  }
+  std::vector<std::pair<std::string, ExprPtr>> entries;
+};
 
 
 
