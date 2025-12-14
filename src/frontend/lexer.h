@@ -35,6 +35,9 @@ enum class TokenKind {
   kRBrace,    // }
   kComma,     // ,
   kSemicolon, // ;
+  kLBracket,  // [
+  kRBracket,  // ]
+  kColon,     // :
 
   // 运算符
   kPlus,       // +
@@ -89,6 +92,9 @@ class Lexer {
   // 判断是不是数字
   static bool IsDigit(char c);
 
+  // 判断是不是字符串
+  static bool IsString(char c);
+
   // 判断是不是字母 / 下划线 / 数字（适合作为标识符的后续字符）
   static bool IsAlphaNumeric(char c);
 
@@ -96,6 +102,8 @@ class Lexer {
   Token ScanIdentifier();
 
   Token ScanNumber();
+  
+  Token ScanString();
 
   // 构造一个 Token（后面会复用）
   Token MakeToken(TokenKind kind);
@@ -113,6 +121,9 @@ class Lexer {
   int line_;
   // 当前行里的列号，从 1 开始
   int col_;
+
+  int token_start_line;
+  int token_start_col;
 };
 
 }  // namespace cilly

@@ -8,10 +8,12 @@ Lexer::Lexer(std::string source)
       current_(0),
       start_(0),
       line_(1),
-      col_(1) {}
+      col_(1),
+      token_start_col_(1),
+      token_start_line_(1) {}
 
 bool Lexer::IsAtEnd() const {
-  return current_ >= static_cast<int> (source_.size());
+  return current_ >= static_cast<int>(source_.size());
 }
 
 char Lexer::Peek() const {
@@ -19,7 +21,7 @@ char Lexer::Peek() const {
 }
 
 char Lexer::PeekNext() const {
-  return current_ + 1 >= static_cast<int> (source_.size()) ? '\0' : source_[current_ + 1];
+  return current_ + 1 >= static_cast<int>(source_.size()) ? '\0' : source_[current_ + 1];
 }
 
 char Lexer::Advance() {
@@ -51,7 +53,7 @@ void Lexer::SkipWhitespace() {
       Advance();
       continue;
     } else if (ch == '/' && PeekNext() == '/') {
-      while(ch != '\n' && !IsAtEnd()) {
+      while (ch != '\n' && !IsAtEnd()) {
         ch = Peek();
         Advance();
       }
@@ -68,6 +70,10 @@ bool Lexer::IsAlpha(char c) {
 
 bool Lexer::IsDigit(char c) {
   return c >= '0' && c <= '9';
+}
+
+bool Lexer::IsString(char c) {
+  return c == '"';
 }
 
 bool Lexer::IsAlphaNumeric(char c) {
@@ -107,14 +113,28 @@ Token Lexer::ScanNumber() {
   return MakeToken(TokenKind::kNumber);
 }
 
+Token Lexer::ScanString() {
+  while (!IsAtEnd() && Peek() != '\n' && Peek() != '"') {   // ÔÝÊ±½ûÖ¹¿çÐÐ
+    Advance();
+  }
+  if (IsAtEnd()) {
+      assert(false && "×Ö·û´®Î´±ÕºÏ!");
+  }
+  if (Peek() == '\n') {
+      assert(false && "×Ö·û´®½ûÖ¹¿çÐÐ!");
+  }
+  Advance();
+  return MakeToken(TokenKind::kString);
+}
+
 
 
 Token Lexer::MakeToken(TokenKind kind) {
   Token token;
   token.kind = kind;
   token.lexeme = std::move(source_.substr(start_, current_ - start_));
-  token.col = col_;
-  token.line = line_;
+  token.col = token_start_col_;
+  token.line = token_start_line_;
   return token;
 }
 
@@ -125,9 +145,10 @@ Token Lexer::ScanToken() {
   if (IsAlpha(ch)) {
     return ScanIdentifier();
   } else if (IsDigit(ch)) {
-      return ScanNumber();
-    }
-    else{
+    return ScanNumber();
+  } else if (IsString(ch)) {
+    return ScanString();
+  } else{
       switch (ch){
         case '(' : 
           return MakeToken(TokenKind::kLParen);
@@ -151,6 +172,12 @@ Token Lexer::ScanToken() {
           return MakeToken(TokenKind::kSlash);
         case '=' :
           return MakeToken(TokenKind::kEqual);
+        case '[' :
+          return MakeToken(TokenKind::kLBracket);
+        case ']' :
+          return MakeToken(TokenKind::kRBracket);
+        case ':' :
+          return MakeToken(TokenKind::kColon);
         default :
           assert(false && "»¹ÎÞ·¨Ê¶±ðÆäËû×Ö·û£¡");
       }
@@ -168,6 +195,8 @@ std::vector<Token> Lexer::ScanAll() {
     SkipWhitespace();
     if(IsAtEnd()) break;
     start_ = current_;
+    token_start_col_ = col_;
+    token_start_line_ = line_;
     token = std::move(ScanToken());
     tokens.emplace_back(token);
   }
