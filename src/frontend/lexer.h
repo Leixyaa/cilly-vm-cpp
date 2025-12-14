@@ -122,8 +122,8 @@ class Lexer {
   // 当前行里的列号，从 1 开始
   int col_;
 
-  int token_start_line;
-  int token_start_col;
+  int token_start_line_;
+  int token_start_col_;
 };
 
 }  // namespace cilly

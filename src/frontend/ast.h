@@ -95,7 +95,7 @@ struct BinaryExpr : public Expr {
 
 
 struct ListExpr : public Expr {
-    ListExpr(std::vector<ExprPtr> elements_) : Expr(Kind::kList), elements(std::move(elements_)) {}
+  ListExpr(std::vector<ExprPtr> elements_) : Expr(Kind::kList), elements(std::move(elements_)) {}
   std::vector<ExprPtr> elements;
 };
 

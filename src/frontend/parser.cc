@@ -143,13 +143,25 @@ ExprPtr Parser::Term() {
 ExprPtr Parser::Primary() {
   if (Match(TokenKind::kNumber)) {  // Êý×Ö
     return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber,Previous().lexeme);
-  } else if (Match(TokenKind::kIdentifier)) {  // ¹Ø¼ü×Ö
+  } 
+  else if (Match(TokenKind::kIdentifier)) {  // ¹Ø¼ü×Ö
     return std::make_unique<VariableExpr>(Previous());
-  } else if (Match(TokenKind::kLParen)) {      // "("
+  } 
+  else if (Match(TokenKind::kTrue)) {                        // true
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,Previous().lexeme);
+  } 
+  else if (Match(TokenKind::kFalse)) {                        // false
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,Previous().lexeme);
+  } 
+  else if (Match(TokenKind::kNull)) {                        // null
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNull,Previous().lexeme);
+  } 
+  else if (Match(TokenKind::kLParen)) {      // "("
     ExprPtr value = Expression();
     Consume(TokenKind::kRParen, "Expect ')' after expression.");
     return value;
-  } else if (Match(TokenKind::kLBracket)) {    // "["
+  }
+  else if (Match(TokenKind::kLBracket)) {    // "["
     std::vector<ExprPtr> elements;
     while (!Match(TokenKind::kRBracket)) {
       elements.emplace_back(Expression());
@@ -159,7 +171,8 @@ ExprPtr Parser::Primary() {
       Consume(TokenKind::kComma, "Expect ',' after expression.");
     }
     return std::make_unique<ListExpr>(std::move(elements));
-  } else if (Match(TokenKind::kLBrace)) {     // "{"
+  } 
+  else if (Match(TokenKind::kLBrace)) {     // "{"
     std::vector<std::pair<std::string, ExprPtr>> entries;
     while (!Match(TokenKind::kRBrace)) {
       Token key = Consume(TokenKind::kString, "Dict key must be string.");

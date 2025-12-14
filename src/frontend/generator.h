@@ -41,6 +41,8 @@ class Generator {
   void EmitLiteralExpr(const LiteralExpr* expr);
   void EmitVariableExpr(const VariableExpr* expr);
   void EmitBinaryExpr(const BinaryExpr* expr);
+  void EmitListExpr(const ListExpr* expr);
+  void EmitDictExpr(const DictExpr* expr);
   // 以后可能会有 UnaryExpr / AssignExpr 等
 
   // 往 current_fn_ 里 emit 指令

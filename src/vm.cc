@@ -314,7 +314,7 @@ bool VM::Step_() {
       Value key_v = stack_.Pop();
       assert(key_v.IsStr() && "¹Ø¼ü´ÊÊäÈë´íÎó£¡");
       std::string key = key_v.AsStr();
-      Value dict_v = stack_.Pop();
+      Value dict_v = stack_.Top();
       auto dict = dict_v.AsDict();
       dict->Set(key, value);
       break;

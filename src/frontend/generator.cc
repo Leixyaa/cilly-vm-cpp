@@ -107,16 +107,43 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
     EmitVariableExpr(p);
     break;
   }
+  case Expr::Kind::kList: {
+    auto p = static_cast<ListExpr*>(expr.get());
+    EmitListExpr(p);
+    break;
+  }
+  case Expr::Kind::kDict: {
+    auto p = static_cast<DictExpr*>(expr.get());
+    EmitDictExpr(p);
+    break;
+  }
   default:
     assert(false && "未找到此类表达式！");
   }
 }
 
-void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
-  double num = std::stod(expr->lexeme);    // stod将字符串转化为double
-  Value v = Value::Num(num);
-  EmitConst(v);
-  return;
+void Generator::EmitLiteralExpr(const LiteralExpr* expr) {\
+  switch (expr->literal_kind) {
+    case LiteralExpr::LiteralKind::kNumber: {
+      double num = std::stod(expr->lexeme);    // stod将字符串转化为double
+      Value v = Value::Num(num);
+      EmitConst(v);
+      return;
+    }
+    case LiteralExpr::LiteralKind::kBool: {
+      Value v = Value::Bool(expr->lexeme == "true");
+      EmitConst(v);
+      return;
+    }
+    case LiteralExpr::LiteralKind::kNull: {
+      Value v = Value::Null();
+      EmitConst(v);
+      return;
+    }
+    default: 
+      assert(false && "未定义此种字面量!");
+  }
+  
 }
 
 void Generator::EmitVariableExpr(const VariableExpr* expr) {
@@ -146,6 +173,25 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
     case TokenKind::kSlash:
       EmitOp(OpCode::OP_DIV);
       break;
+  }
+  return;
+}
+
+void Generator::EmitListExpr(const ListExpr* expr) {
+  EmitOp(OpCode::OP_LIST_NEW);
+  for (auto& i : expr->elements) {
+    EmitExpr(i);
+    EmitOp(OpCode::OP_LIST_PUSH);
+  }
+  return;
+}
+
+void Generator::EmitDictExpr(const DictExpr* expr) {
+  EmitOp(OpCode::OP_DICT_NEW);
+  for (auto& i : expr->entries) {
+    EmitConst(Value::Str(i.first));
+    EmitExpr(i.second);
+    EmitOp(OpCode::OP_DICT_SET);
   }
   return;
 }

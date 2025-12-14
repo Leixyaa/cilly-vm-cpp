@@ -1145,12 +1145,34 @@ void FrontendEndToEndTest() {
   std::cout << "前端→VM 全链路自测:\n";
   
   std::string source =
-    "var x = 1;\n"
-    "print x;\n"
-    "x = x + 1;\n"
-    "print x;\n"
-    "x = x * 10;\n"  
-    "print x;";
+  // A. 回归：变量/赋值/四则
+  "var x = 1;\n"
+  "print x;\n"
+  "x = x + 1;\n"
+  "print x;\n"
+  "x = x * 10;\n"
+  "print x;\n"
+
+  // B. List 字面量
+  "print [];\n"
+  "print [1, 2, 3];\n"
+  "print [x, x + 1, x * 2, (x - 3) / 7];\n"
+
+  // C. Dict 字面量（key 必须是字符串）
+  "print {};\n"
+  "print {\"a\": 1};\n"
+  "print {\"a\": x, \"b\": x + 1, \"c\": x * 2};\n"
+
+  // D. Bool / Null
+  "print true;\n"
+  "print false;\n"
+  "print null;\n"
+  "print [true, null, false];\n"
+  "print {\"t\": true, \"n\": null};\n"
+
+  // E. 组合：dict value 是 list
+  "print {\"nums\": [x, x + 1, x + 2], \"double\": x * 2};\n";
+
 
 
   //词法分析
@@ -1167,7 +1189,6 @@ void FrontendEndToEndTest() {
   
   VM vm;
   vm.Run(main);
-  std::cout << "（预期输出三行，1，2，20）\n";
   std::cout << "---------------------------------------------\n";
 }
 
