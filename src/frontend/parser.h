@@ -55,6 +55,8 @@ class Parser {
 
   const Token& LookAhead(int offset) const;
 
+  bool IsAssignmentAhead() const;
+
   // 检查当前 token 的 kind 是否是给定 kind（不前进）
   bool Check(TokenKind kind) const;
 
@@ -77,12 +79,15 @@ class Parser {
 
   StmtPtr WhileStatement();
 
+  StmtPtr ForStatement();
+
   // 块语句：{ stmt* }
   StmtPtr BlockStatement();
 
   // 赋值语句：x = expr;
   StmtPtr AssignStatement();
 
+  StmtPtr AssignStatement(bool require_semicolon); // 重载，应对赋值表达式情况
 
   // ========== 表达式语法 ==========
 

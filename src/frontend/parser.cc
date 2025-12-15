@@ -38,6 +38,11 @@ const Token& Parser::LookAhead(int offset) const {
   return tokens_[current_ + offset];
 }
 
+bool Parser::IsAssignmentAhead() const {
+  return Check(TokenKind::kIdentifier) &&
+         LookAhead(1).kind == TokenKind::kEqual;
+}
+
 bool Parser::Check(TokenKind kind) const {
   if(IsAtEnd()) return false;
   return Peek().kind == kind;
@@ -79,17 +84,22 @@ StmtPtr Parser::VarDeclaration() {
 }
 
 StmtPtr Parser::Statement() {
-  if (Match(TokenKind::kPrint)) {   // 打印语句
-    return PrintStatement();
-  } else if (Match(TokenKind::kWhile)) {
-    return WhileStatement();
-  } else if (Match(TokenKind::kLBrace)) {  // 块语句
+  if (Match(TokenKind::kLBrace)) {
     return BlockStatement();
-  } else if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
-    return AssignStatement();
-  } else {  
-    return ExprStatement();
   }
+  if (Match(TokenKind::kPrint)) {
+    return PrintStatement();
+  }
+  if (Match(TokenKind::kWhile)) {
+    return WhileStatement();
+  }
+  if (Match(TokenKind::kFor)) {
+    return ForStatement();
+  }
+  if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
+    return AssignStatement();
+  }
+  return ExprStatement();
 }
 
 const Token& Parser::Consume(TokenKind kind, const std::string& message) {
@@ -226,12 +236,16 @@ StmtPtr Parser::BlockStatement() {
 }
 
 StmtPtr Parser::AssignStatement() {
-  Token name;
-  ExprPtr expr;
-  name = Advance();
+  return AssignStatement(true);
+}
+
+StmtPtr Parser::AssignStatement(bool require_semicolon) {
+  Token name = Advance();
   Consume(TokenKind::kEqual, "Expect '=' after value.");
-  expr = Expression();
-  Consume(TokenKind::kSemicolon, "Expect ';' after value.");
+  ExprPtr expr = Expression();
+  if (require_semicolon) {
+    Consume(TokenKind::kSemicolon, "Expect ';' after value.");
+  }
   return std::make_unique<AssignStmt>(std::move(name), std::move(expr));
 }
 
@@ -242,11 +256,79 @@ StmtPtr Parser::ExprStatement() {
 }
 
 StmtPtr Parser::WhileStatement() {
+  Consume(TokenKind::kLParen, "Expect '(' after while.");
   ExprPtr cond = Expression();
-  Consume(TokenKind::kLBrace, "Expect '{' after cond.");
-  StmtPtr body = BlockStatement();
+  Consume(TokenKind::kRParen, "Expect ')' after cond.");
+  StmtPtr body = Statement();    // 这里也是，不能直接去确定是块语句
   return std::make_unique<WhileStmt>(std::move(cond), std::move(body));
 }
+
+
+
+// for
+StmtPtr Parser::ForStatement() {
+  // 拆分
+  Consume(TokenKind::kLParen, "Expect '(' after for.");
+  StmtPtr init = nullptr;
+  if (!Check(TokenKind::kSemicolon)) {
+    if (Match(TokenKind::kVar)) {
+      init = VarDeclaration();
+    } else {
+      init = AssignStatement();
+    }
+  } else {
+    Consume(TokenKind::kSemicolon,"Expect ';' after init.");
+  }
+
+
+
+  ExprPtr cond = nullptr;
+  if (!Check(TokenKind::kSemicolon)) {
+    cond = Expression();
+  }
+  Consume(TokenKind::kSemicolon,"Expect ';' after cond.");
+
+
+  StmtPtr step = nullptr;
+  if (!Check(TokenKind::kRParen)) {
+    if (IsAssignmentAhead()) {
+      step = AssignStatement(false);
+    } else {
+      step = std::make_unique<ExprStmt>(std::move(Expression()));
+    }
+  }
+  Consume(TokenKind::kRParen, "Expect ')' after step.");
+
+
+
+  StmtPtr body;  
+  body = Statement();  // 可以是单句，不一定是块语句，所以不直接等于BlockStatment
+  // 组装
+  if (step) {   
+    auto block = std::make_unique<BlockStmt>();
+    block->statements.emplace_back(std::move(body));
+    block->statements.emplace_back(std::move(step));
+    body = std::move(block);
+  }
+  
+  if (!cond) {
+    cond = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,"true");
+  }
+  
+  StmtPtr while_stmt = std::make_unique<WhileStmt>(std::move(cond), std::move(body));
+
+  if (init) {
+    auto block = std::make_unique<BlockStmt>();
+    block->statements.emplace_back(std::move(init));
+    block->statements.emplace_back(std::move(while_stmt));
+    while_stmt = std::move(block);
+  }
+  return while_stmt;
+}
+
+
+
+
 
 // 主要调用函数
 std::vector<StmtPtr> Parser::ParseProgram() {

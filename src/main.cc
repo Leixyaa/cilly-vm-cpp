@@ -1208,12 +1208,11 @@ void FrontendEndToEndBlockTest() {
   std::cout << "前端→VM 全链路自测:\n";
   
   std::string source =
-  "var x = 1;"
-  "while (false) {"
-  "x = x + 1;"
-  "}"
-  "print x;";
-;
+  "var x = 0;\n"
+  "for (x = 123; false; x = x + 1) {\n"
+  "  print x;\n"
+  "}\n"
+  "print x;\n";
 
 
 
@@ -1257,8 +1256,8 @@ int main() {
   ObjSmokeTest();
   ListOpcodeTest();
   DictOpcodeTest();*/
-  /*LexerSmokeTest();
-  ParserExprSmokeTest();
-  FrontendEndToEndTest();*/
+  //LexerSmokeTest();
+  //ParserExprSmokeTest();
+  //FrontendEndToEndTest();
   FrontendEndToEndBlockTest();
 }

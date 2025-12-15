@@ -29,9 +29,7 @@ class Generator {
 
   // 工具：生成一条语句
   void EmitStmt(const StmtPtr& stmt);
-  int EmitJump(OpCode op);
   void PatchJump(int jump_pos);
-  void EmitLoop(int loop_start);
 
 
   // 未来会扩展：var/if/while/for 等
