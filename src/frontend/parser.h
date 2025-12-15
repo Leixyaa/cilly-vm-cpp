@@ -75,6 +75,8 @@ class Parser {
   // ±í´ïÊ½Óï¾ä£ºexpr;
   StmtPtr ExprStatement();
 
+  StmtPtr WhileStatement();
+
   // ¿éÓï¾ä£º{ stmt* }
   StmtPtr BlockStatement();
 

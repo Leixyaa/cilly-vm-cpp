@@ -29,12 +29,18 @@ class Generator {
 
   // 工具：生成一条语句
   void EmitStmt(const StmtPtr& stmt);
+  int EmitJump(OpCode op);
+  void PatchJump(int jump_pos);
+  void EmitLoop(int loop_start);
+
 
   // 未来会扩展：var/if/while/for 等
   void EmitPrintStmt(const PrintStmt* stmt);
   void EmitExprStmt(const ExprStmt* stmt);
   void EmitVarStmt(const VarStmt* stmt);
   void EmitAssignStmt(const AssignStmt* stmt);
+  void EmitWhileStmt(const WhileStmt* stmt);
+  void EmitBlockStmt(const BlockStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);

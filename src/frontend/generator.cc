@@ -43,9 +43,25 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitAssignStmt(p);
       break;
     }
+    case Stmt::Kind::kWhile: {
+      auto p = static_cast<WhileStmt*>(stmt.get());
+      EmitWhileStmt(p);
+      break;
+    }
+    case Stmt::Kind::kBlock: {
+      auto p = static_cast<BlockStmt*>(stmt.get());
+      EmitBlockStmt(p);
+      break;
+    }
     default:
       assert(false && "当前无法处理此类语句");
   }
+}
+
+
+void Generator::PatchJump(int jump_pos) {
+  current_fn_->PatchI32(jump_pos, current_fn_->CodeSize());
+  return;
 }
 
 void Generator::EmitPrintStmt(const PrintStmt* stmt) {
@@ -87,6 +103,26 @@ void Generator::EmitAssignStmt(const AssignStmt* stmt) {
   }
   EmitOp(OpCode::OP_STORE_VAR);
   EmitI32(it->second);
+  return;
+}
+
+void Generator::EmitWhileStmt(const WhileStmt* stmt) {
+  int loop_start = current_fn_->CodeSize();
+  EmitExpr(stmt->cond);
+  EmitOp(OpCode::OP_JUMP_IF_FALSE);
+  int end_lable = current_fn_->CodeSize();
+  EmitI32(0);
+  EmitStmt(stmt->body);
+  EmitOp(OpCode::OP_JUMP);
+  EmitI32(loop_start);
+  PatchJump(end_lable);
+  return;
+}
+
+void Generator::EmitBlockStmt(const BlockStmt* stmt) {
+  for (auto& i : stmt->statements) {
+    EmitStmt(i);
+  }
   return;
 }
 

@@ -1202,6 +1202,38 @@ void FrontendEndToEndTest() {
 }
 
 
+void FrontendEndToEndBlockTest() {
+  using namespace cilly;
+
+  std::cout << "前端→VM 全链路自测:\n";
+  
+  std::string source =
+  "var x = 1;"
+  "while (false) {"
+  "x = x + 1;"
+  "}"
+  "print x;";
+;
+
+
+
+  //词法分析
+  Lexer lexer(source);
+  std::vector<Token>tokens_ = lexer.ScanAll();
+
+  //语法分析
+  Parser parser(tokens_);
+  std::vector<StmtPtr>program = parser.ParseProgram();
+  
+  //生成字节码
+  Generator generator;
+  Function main = generator.Generate(program);
+  
+  VM vm;
+  vm.Run(main);
+  std::cout << "---------------------------------------------\n";
+}
+
 
 int main() {
   /*ValueTest();
@@ -1225,7 +1257,8 @@ int main() {
   ObjSmokeTest();
   ListOpcodeTest();
   DictOpcodeTest();*/
-  LexerSmokeTest();
+  /*LexerSmokeTest();
   ParserExprSmokeTest();
-  FrontendEndToEndTest();
+  FrontendEndToEndTest();*/
+  FrontendEndToEndBlockTest();
 }

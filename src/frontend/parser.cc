@@ -81,6 +81,8 @@ StmtPtr Parser::VarDeclaration() {
 StmtPtr Parser::Statement() {
   if (Match(TokenKind::kPrint)) {   // 打印语句
     return PrintStatement();
+  } else if (Match(TokenKind::kWhile)) {
+    return WhileStatement();
   } else if (Match(TokenKind::kLBrace)) {  // 块语句
     return BlockStatement();
   } else if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
@@ -213,13 +215,12 @@ StmtPtr Parser::PrintStatement() {
   return std::make_unique<PrintStmt>(std::move(value));
 }
 
-// 未完全定义
+
 StmtPtr Parser::BlockStatement() {
-  // 暂时先返回一个空 BlockStmt
   auto block = std::make_unique<BlockStmt>();
-  
-  // 未来这里会解析语句直到遇到 }
-  // 现在我们只是为了不报错
+  while (!IsAtEnd() && !Check(TokenKind::kRBrace)) {
+    block->statements.emplace_back(Declaration());
+  }
   Consume(TokenKind::kRBrace, "Expect '}' after block.");
   return block;
 }
@@ -238,6 +239,13 @@ StmtPtr Parser::ExprStatement() {
   ExprPtr value = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after value.");
   return std::make_unique<ExprStmt>(std::move(value));
+}
+
+StmtPtr Parser::WhileStatement() {
+  ExprPtr cond = Expression();
+  Consume(TokenKind::kLBrace, "Expect '{' after cond.");
+  StmtPtr body = BlockStatement();
+  return std::make_unique<WhileStmt>(std::move(cond), std::move(body));
 }
 
 // 主要调用函数

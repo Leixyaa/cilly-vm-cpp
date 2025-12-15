@@ -32,7 +32,7 @@ struct Expr {
     kBinary,    // 二元表达式：a + b
     kList,
     kDict,
-    kIndex
+    kIndex,
     // 后面还会加：一元表达式、赋值表达式、函数调用等等
   };
 
@@ -132,7 +132,8 @@ struct Stmt {
     kExpr,    // 表达式语句：expr;
     kPrint,   // print 语句：print expr;
     kBlock,   // 复合语句：{ stmt* }
-    kAssign   // 赋值语句：x = expr;
+    kAssign,   // 赋值语句：x = expr;
+    kWhile,
     // 后面还会加 if / for / while 等
   };
 
@@ -170,10 +171,19 @@ struct PrintStmt : public Stmt {
   ExprPtr expr;
 };
 
+struct WhileStmt : public Stmt {
+  WhileStmt(ExprPtr cond_, StmtPtr body_)
+      : Stmt(Kind::kWhile),
+        cond(std::move(cond_)),
+        body(std::move(body_)){}
+  ExprPtr cond;
+  StmtPtr body;
+};
+
+
 // 代码块：{ stmt1; stmt2; ... }
 struct BlockStmt : public Stmt {
   BlockStmt() : Stmt(Kind::kBlock) {}
-
   std::vector<StmtPtr> statements;
 };
 
