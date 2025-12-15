@@ -81,6 +81,7 @@ class Parser {
   // 赋值语句：x = expr;
   StmtPtr AssignStatement();
 
+
   // ========== 表达式语法 ==========
 
   // 总入口：表达式
@@ -98,6 +99,7 @@ class Parser {
   ExprPtr Factor();      // *, /
   ExprPtr Unary();       // 一元运算：-expr, !expr（以后用）
   ExprPtr Primary();     // 最底层：字面量、变量名、括号表达式
+  ExprPtr ProFix();
 
   // ========== 成员数据 ==========
 

@@ -1001,7 +1001,7 @@ void ListOpcodeTest() {
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c0, 1);  
-  fn.Emit(OpCode::OP_LIST_GET, 1);
+  fn.Emit(OpCode::OP_INDEX_GET, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
   
 
@@ -1053,7 +1053,7 @@ void DictOpcodeTest() {
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c_a, 1);
-  fn.Emit(OpCode::OP_DICT_GET, 1);
+  fn.Emit(OpCode::OP_INDEX_GET, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
   fn.Emit(OpCode::OP_POP, 1);
   
@@ -1068,7 +1068,7 @@ void DictOpcodeTest() {
   fn.Emit(OpCode::OP_DICT_SET, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c_a, 1);
-  fn.Emit(OpCode::OP_DICT_GET, 1);
+  fn.Emit(OpCode::OP_INDEX_GET, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
   fn.Emit(OpCode::OP_POP, 1);
 
@@ -1152,7 +1152,7 @@ void FrontendEndToEndTest() {
   "print x;\n"
   "x = x * 10;\n"
   "print x;\n"
-
+  
   // B. List 字面量
   "print [];\n"
   "print [1, 2, 3];\n"
@@ -1171,7 +1171,16 @@ void FrontendEndToEndTest() {
   "print {\"t\": true, \"n\": null};\n"
 
   // E. 组合：dict value 是 list
-  "print {\"nums\": [x, x + 1, x + 2], \"double\": x * 2};\n";
+  "print {\"nums\": [x, x + 1, x + 2], \"double\": x * 2};\n"
+
+  // F. 索引功能
+  "var a = [10, 20, 30];\n"
+  "print a[0];\n"
+  "print a[2];\n"
+  "var d = {\"a\": 1, \"b\": 2};\n"
+  "print d[\"a\"];\n"
+  "print d[\"b\"];\n"
+  "print {\"nums\": a}[\"nums\"][1];\n";
 
 
 

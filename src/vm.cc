@@ -265,17 +265,17 @@ bool VM::Step_() {
       break;
     }
       
-    // 获取对应索引的数据
-    case OpCode::OP_LIST_GET : {
-      Value index_v = stack_.Pop();
-      assert(index_v.IsNum() && "索引输入错误！");
-      int index = static_cast<int>(index_v.AsNum());
-      Value list_v = stack_.Pop();
-      auto list = list_v.AsList();
-      const Value& elem = list->At(index);
-      stack_.Push(elem);
-      break;
-    }
+    //// 获取对应索引的数据
+    //case OpCode::OP_LIST_GET : {
+    //  Value index_v = stack_.Pop();
+    //  assert(index_v.IsNum() && "索引输入错误！");
+    //  int index = static_cast<int>(index_v.AsNum());
+    //  Value list_v = stack_.Pop();
+    //  auto list = list_v.AsList();
+    //  const Value& elem = list->At(index);
+    //  stack_.Push(elem);
+    //  break;
+    //}
    
     // 替换/覆盖对应索引位置的数据
     case OpCode::OP_LIST_SET : {
@@ -320,7 +320,7 @@ bool VM::Step_() {
       break;
     }
 
-    case OpCode::OP_DICT_GET: {
+    /*case OpCode::OP_DICT_GET: {
       Value key_v = stack_.Pop();
       assert(key_v.IsStr() && "关键词输入错误！");
       std::string key = key_v.AsStr();
@@ -329,7 +329,7 @@ bool VM::Step_() {
       const Value& elem = dict->Get(key);
       stack_.Push(elem);
       break;
-    }
+    }*/
 
     case OpCode::OP_DICT_HAS: {
       Value key_v = stack_.Pop();
@@ -341,9 +341,36 @@ bool VM::Step_() {
       stack_.Push(Value::Bool(exists));
       break;
     }
+    case OpCode::OP_INDEX_GET: {
+      Value index_v = stack_.Pop();
+      Value object_v = stack_.Pop();
+      switch (object_v.AsObj()->Type()) {
+        case ObjType::kList: {
+          assert(index_v.IsNum() && "索引输入错误！");
+          int index = static_cast<int>(index_v.AsNum());
+          auto list = object_v.AsList();
+          const Value& elem = list->At(index);
+          stack_.Push(elem);
+          break;
+        }
+        case ObjType::kDict: {
+          assert(index_v.IsStr() && "索引输入错误！");
+          std::string index = static_cast<std::string>(index_v.AsStr());
+          auto dict = object_v.AsDict();
+          const Value& elem = dict->Get(index);
+          stack_.Push(elem);
+          break;
+        }
+        default:
+          assert(false && "未找到此类型！");
+          break;
+      }
+      break;
+    }
 
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
+      break;
   }
 
   return true;  // 当前没有函数调用栈，持续执行到字节码末尾

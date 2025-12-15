@@ -117,8 +117,14 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
     EmitDictExpr(p);
     break;
   }
+  case Expr::Kind::kIndex: {
+    auto p = static_cast<IndexExpr*>(expr.get());
+    EmitIndexExpr(p);
+    break;
+  }
   default:
     assert(false && "未找到此类表达式！");
+    break;
   }
 }
 
@@ -127,6 +133,12 @@ void Generator::EmitLiteralExpr(const LiteralExpr* expr) {\
     case LiteralExpr::LiteralKind::kNumber: {
       double num = std::stod(expr->lexeme);    // stod将字符串转化为double
       Value v = Value::Num(num);
+      EmitConst(v);
+      return;
+    }
+    case LiteralExpr::LiteralKind::kString: {
+      std::string s = expr->lexeme;
+      Value v = Value::Str(s);
       EmitConst(v);
       return;
     }
@@ -194,6 +206,12 @@ void Generator::EmitDictExpr(const DictExpr* expr) {
     EmitOp(OpCode::OP_DICT_SET);
   }
   return;
+}
+
+void Generator::EmitIndexExpr(const IndexExpr* expr) {
+  EmitExpr(expr->object);
+  EmitExpr(expr->expr);
+  EmitOp(OpCode::OP_INDEX_GET);
 }
 
 void Generator::EmitOp(OpCode op) {

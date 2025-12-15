@@ -112,7 +112,7 @@ ExprPtr Parser::Unary() {
     ExprPtr zero = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber, "0");
     return std::make_unique<BinaryExpr> (std::move(zero), op, std::move(right));
   } else {
-    return Primary();
+    return ProFix();
   }
 }
 
@@ -147,6 +147,9 @@ ExprPtr Parser::Primary() {
   else if (Match(TokenKind::kIdentifier)) {  // 关键字
     return std::make_unique<VariableExpr>(Previous());
   } 
+  else if (Match(TokenKind::kString)) {
+      return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kString,StripQuotes(Previous().lexeme));
+  }
   else if (Match(TokenKind::kTrue)) {                        // true
     return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,Previous().lexeme);
   } 
@@ -192,6 +195,16 @@ ExprPtr Parser::Primary() {
     assert(false && "未找到此种类型!");
     return nullptr;
   }
+}
+
+ExprPtr Parser::ProFix() {
+  ExprPtr expr = Primary();
+  while (Match(TokenKind::kLBracket)) {
+    ExprPtr idx = Expression();
+    Consume(TokenKind::kRBracket,"Exprct ']' after expression.");
+    expr = std::make_unique<IndexExpr>(std::move(expr), std::move(idx));
+  }
+  return expr;
 }
 
 StmtPtr Parser::PrintStatement() {

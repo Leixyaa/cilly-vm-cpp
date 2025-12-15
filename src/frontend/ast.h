@@ -31,7 +31,8 @@ struct Expr {
     kVariable,  // 变量引用：x
     kBinary,    // 二元表达式：a + b
     kList,
-    kDict
+    kDict,
+    kIndex
     // 后面还会加：一元表达式、赋值表达式、函数调用等等
   };
 
@@ -49,7 +50,7 @@ struct LiteralExpr : public Expr {
     kNumber,
     kBool,
     kNull,
-    // 将来可以加 kString
+    kString,
   };
 
   LiteralExpr(LiteralKind literal_kind, std::string lexeme)
@@ -108,6 +109,16 @@ struct DictExpr : public Expr {
   std::vector<std::pair<std::string, ExprPtr>> entries;
 };
 
+
+struct IndexExpr : public Expr {
+  IndexExpr(ExprPtr object_, ExprPtr expr_) 
+      : Expr(Kind::kIndex),
+      object(std::move(object_)),
+      expr(std::move(expr_)) {
+  }
+  ExprPtr object;
+  ExprPtr expr;
+};
 
 
 
