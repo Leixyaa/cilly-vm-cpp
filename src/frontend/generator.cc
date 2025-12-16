@@ -221,6 +221,12 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
     case TokenKind::kSlash:
       EmitOp(OpCode::OP_DIV);
       break;
+    case TokenKind::kLess:
+      EmitOp(OpCode::OP_LESS);
+      break;
+    case TokenKind::kEqualEqual:
+      EmitOp(OpCode::OP_EQ);
+      break;
   }
   return;
 }

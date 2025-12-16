@@ -46,6 +46,7 @@ enum class TokenKind {
   kSlash,      // /
   kEqual,      // =
   kEqualEqual, // ==
+  kLess,	   // <
 };
 
 // Token：一个单词的具体信息。

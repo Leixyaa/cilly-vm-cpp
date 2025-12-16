@@ -1208,11 +1208,10 @@ void FrontendEndToEndBlockTest() {
   std::cout << "前端→VM 全链路自测:\n";
   
   std::string source =
-  "var x = 0;\n"
-  "for (x = 123; false; x = x + 1) {\n"
-  "  print x;\n"
-  "}\n"
-  "print x;\n";
+  "var i = 0;\n"
+  "for (i = 0; i < 3; i = i + 1) {\n"
+  "  print i;\n"
+  "}\n";
 
 
 

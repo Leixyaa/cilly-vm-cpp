@@ -170,8 +170,15 @@ Token Lexer::ScanToken() {
           return MakeToken(TokenKind::kStar);
         case '/' :
           return MakeToken(TokenKind::kSlash);
-        case '=' :
-          return MakeToken(TokenKind::kEqual);
+        case '<' :
+          return MakeToken(TokenKind::kLess);
+        case '=': {
+          if (PeekNext() == '=') {
+            return MakeToken(TokenKind::kEqualEqual);
+          } else {
+            return MakeToken(TokenKind::kEqual);
+          }
+        }
         case '[' :
           return MakeToken(TokenKind::kLBracket);
         case ']' :

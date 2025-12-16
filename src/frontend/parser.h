@@ -107,6 +107,8 @@ class Parser {
   ExprPtr Unary();       // 一元运算：-expr, !expr（以后用）
   ExprPtr Primary();     // 最底层：字面量、变量名、括号表达式
   ExprPtr ProFix();
+  ExprPtr Equality();
+  ExprPtr Comparison();
 
   // ========== 成员数据 ==========
 

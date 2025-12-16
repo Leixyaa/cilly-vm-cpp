@@ -113,7 +113,7 @@ const Token& Parser::Consume(TokenKind kind, const std::string& message) {
 }
 
 ExprPtr Parser::Expression() {
-  return Term();
+  return Equality();
 }
 
 // È¡¸º
@@ -149,6 +149,27 @@ ExprPtr Parser::Term() {
   }
    return left;
  }
+
+ExprPtr Parser::Comparison() {
+  ExprPtr left = Term();
+  while (Match(TokenKind::kLess)) {
+    Token op = Previous();
+    ExprPtr right = Term();
+    left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+  }
+  return left;
+}
+
+
+ExprPtr Parser::Equality() {
+  ExprPtr left = Comparison();
+  while (Match(TokenKind::kEqualEqual)) {
+    Token op = Previous();
+    ExprPtr right = Comparison();
+    left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
+  }
+  return left;
+}
 
 
 
