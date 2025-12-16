@@ -135,7 +135,7 @@ struct Stmt {
     kAssign,   // 赋值语句：x = expr;
     kIndexAssign, // 索引赋值语句 x[i] = expr;
     kWhile,
-    // 后面还会加 if / for / while 等
+    kIf,
   };
 
   explicit Stmt(Kind kind) : kind(kind) {}
@@ -188,6 +188,7 @@ struct BlockStmt : public Stmt {
   std::vector<StmtPtr> statements;
 };
 
+// 赋值语句
 struct AssignStmt : public Stmt {
   AssignStmt(Token name, ExprPtr expr) 
       : Stmt(Kind::kAssign), 
@@ -198,6 +199,7 @@ struct AssignStmt : public Stmt {
   ExprPtr expr;
 };
 
+// 索引赋值语句
 struct IndexAssignStmt : public Stmt {
   IndexAssignStmt(ExprPtr object_, ExprPtr index_, ExprPtr expr_) 
       : Stmt(Kind::kIndexAssign),
@@ -210,6 +212,17 @@ struct IndexAssignStmt : public Stmt {
   ExprPtr expr;
 };
 
+struct IfStmt : public Stmt {
+  IfStmt(ExprPtr cond_, StmtPtr then_, StmtPtr else_)
+      : Stmt(Kind::kIf),
+      cond(std::move(cond_)),
+        then_branch(std::move(then_)),
+        else_branch(std::move(else_)){}
+
+  ExprPtr cond;
+  StmtPtr then_branch;
+  StmtPtr else_branch;
+};
 
 
 }  // namespace cilly

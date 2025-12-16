@@ -31,8 +31,7 @@ class Generator {
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
 
-
-  // 未来会扩展：var/if/while/for 等
+  // 语句分支
   void EmitPrintStmt(const PrintStmt* stmt);
   void EmitExprStmt(const ExprStmt* stmt);
   void EmitVarStmt(const VarStmt* stmt);
@@ -40,6 +39,7 @@ class Generator {
   void EmitWhileStmt(const WhileStmt* stmt);
   void EmitBlockStmt(const BlockStmt* stmt);
   void EmitIndexAssignStmt(const IndexAssignStmt* stmt);
+  void EmitIfStmt(const IfStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);

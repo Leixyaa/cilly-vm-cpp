@@ -58,6 +58,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitIndexAssignStmt(p);
       break;
     }
+    case Stmt::Kind::kIf: {
+      auto p = static_cast<IfStmt*>(stmt.get());
+      EmitIfStmt(p);
+      break;
+    }
     default:
       assert(false && "当前无法处理此类语句");
   }
@@ -136,6 +141,23 @@ void Generator::EmitIndexAssignStmt(const IndexAssignStmt* stmt) {
   EmitExpr(stmt->index);
   EmitExpr(stmt->expr); 
   EmitOp(OpCode::OP_INDEX_SET);
+  return;
+}
+
+void Generator::EmitIfStmt(const IfStmt* stmt) {
+  EmitExpr(stmt->cond);
+  EmitOp(OpCode::OP_JUMP_IF_FALSE);
+  int pos_else = current_fn_->CodeSize();
+  EmitI32(0);
+
+  EmitStmt(stmt->then_branch);
+  EmitOp(OpCode::OP_JUMP);
+  int pos_then = current_fn_->CodeSize();
+  EmitI32(0);
+  PatchJump(pos_else);
+
+  EmitStmt(stmt->else_branch);
+  PatchJump(pos_then);
   return;
 }
 

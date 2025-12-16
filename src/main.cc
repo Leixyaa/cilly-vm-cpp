@@ -1213,7 +1213,11 @@ void FrontendEndToEndBlockTest() {
   "print a;\n"
   "var d = {\"x\": 1};\n"
   "d[\"x\"] = 42;\n"
-  "print d;\n";
+  "print d;\n"
+  "print d[\"x\"];\n"
+  "var x = 0;\n"
+  "if (x == 1) print 1;\n"
+  "else print 2;\n";
 
 
 

@@ -79,9 +79,14 @@ class Parser {
   // 表达式语句：expr;
   StmtPtr ExprStatement();
 
+  // while 语句; while() {}
   StmtPtr WhileStatement();
 
+  // for 语句；降级为while
   StmtPtr ForStatement();
+ 
+  // If 语句；if {} else {}
+  StmtPtr IfStatement();
 
   // 块语句：{ stmt* }
   StmtPtr BlockStatement();
@@ -89,9 +94,11 @@ class Parser {
   // 赋值语句：x = expr;
   StmtPtr AssignStatement();
 
+  // 赋值语句（选择是否去掉分号）
   StmtPtr AssignStatement(bool require_semicolon); // 重载，应对赋值表达式情况
 
-  StmtPtr IndexAssignStatement();		// 索引赋值语句
+  // 索引赋值语句
+  StmtPtr IndexAssignStatement();	
 
   // ========== 表达式语法 ==========
 

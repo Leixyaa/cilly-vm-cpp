@@ -118,11 +118,14 @@ StmtPtr Parser::Statement() {
   if (Match(TokenKind::kFor)) {
     return ForStatement();
   }
-  if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
-    return AssignStatement();
+  if (Match(TokenKind::kIf)) {
+    return IfStatement();
   }
   if (IsIndexAssignAhead()) {
     return IndexAssignStatement();
+  }
+  if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
+    return AssignStatement();
   }
   return ExprStatement();
 }
@@ -386,6 +389,26 @@ StmtPtr Parser::ForStatement() {
     while_stmt = std::move(block);
   }
   return while_stmt;
+}
+
+
+
+
+// if
+StmtPtr Parser::IfStatement() {
+  Consume(TokenKind::kLParen, "Expect '(' after if.");
+  ExprPtr cond = Expression();
+  Consume(TokenKind::kRParen, "Expect ')' after condition.");
+
+  StmtPtr then_branch_ = Statement();
+  
+  StmtPtr else_branch_ = nullptr;
+  if (Match(TokenKind::kElse)) {
+    else_branch_ = Statement();
+  }
+  return std::make_unique<IfStmt>(std::move(cond), 
+                                  std::move(then_branch_), 
+                                  std::move(else_branch_));
 }
 
 
