@@ -278,7 +278,7 @@ bool VM::Step_() {
     //}
    
     // 替换/覆盖对应索引位置的数据
-    case OpCode::OP_LIST_SET : {
+  /*  case OpCode::OP_LIST_SET : {
       Value value = stack_.Pop();
       Value index_v = stack_.Pop();
       assert(index_v.IsNum() && "索引输入错误！");
@@ -287,7 +287,7 @@ bool VM::Step_() {
       auto list = list_v.AsList();
       list->Set(index, value);
       break;
-    }
+    }*/
 
     // 返回list长度
     case OpCode::OP_LIST_LEN: {
@@ -309,7 +309,7 @@ bool VM::Step_() {
     }
 
     // 将关键字为key的索引内容替换，如果未添加该关键字则创建
-    case OpCode::OP_DICT_SET: {
+    /*case OpCode::OP_DICT_SET: {
       Value value = stack_.Pop();
       Value key_v = stack_.Pop();
       assert(key_v.IsStr() && "关键词输入错误！");
@@ -318,7 +318,7 @@ bool VM::Step_() {
       auto dict = dict_v.AsDict();
       dict->Set(key, value);
       break;
-    }
+    }*/
 
     /*case OpCode::OP_DICT_GET: {
       Value key_v = stack_.Pop();
@@ -367,7 +367,32 @@ bool VM::Step_() {
       }
       break;
     }
-
+    case OpCode::OP_INDEX_SET: {
+      Value value = stack_.Pop();
+      Value index_v = stack_.Pop();
+      Value object_v = stack_.Pop();
+      switch (object_v.AsObj()->Type()) {
+        case ObjType::kList: {
+          assert(index_v.IsNum() && "索引输入错误！");
+          int index = static_cast<int>(index_v.AsNum());
+          auto list = object_v.AsList();
+          list->Set(index, value);
+          break;
+        }
+        case ObjType::kDict: {
+          assert(index_v.IsStr() && "关键词输入错误！");
+          std::string key = index_v.AsStr();
+          auto dict = object_v.AsDict();
+          dict->Set(key, value);
+          break;;
+        }
+        default:
+          assert(false && "未找到该类型变量！");
+          break;
+      }
+      break;
+    }
+  
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;

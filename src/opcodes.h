@@ -50,17 +50,18 @@ enum class OpCode : int32_t {
   OP_LIST_NEW,      // 栈: ... -> ..., list
   OP_LIST_PUSH,     // 栈: ..., list, value -> ..., list
   //OP_LIST_GET,      // 栈: ..., list, index -> ..., element
-  OP_LIST_SET,      // 栈: ..., list, index, value -> ...     
+  //OP_LIST_SET,      // 栈: ..., list, index, value -> ...     
   OP_LIST_LEN,      // 栈: ..., list -> ..., length
 
 
   // Dict 相关指令
   OP_DICT_NEW,    // 栈: ...                -> ..., dict
-  OP_DICT_SET,    // 栈: ..., dict, key, value -> ...
+  //OP_DICT_SET,    // 栈: ..., dict, key, value -> ...
   //OP_DICT_GET,    // 栈: ..., dict, key     -> ..., value
   OP_DICT_HAS,    // 栈: ..., dict, key     -> ..., bool
 
-  OP_INDEX_GET    // 将List和Dict合并分发处理
+  OP_INDEX_GET,    // 将List和Dict合并分发处理
+  OP_INDEX_SET,
 };
 
 }  // namespace cilly

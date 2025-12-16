@@ -43,6 +43,28 @@ bool Parser::IsAssignmentAhead() const {
          LookAhead(1).kind == TokenKind::kEqual;
 }
 
+bool Parser::IsIndexAssignAhead() const {
+  if (!Check(TokenKind::kIdentifier)) return false;
+  if (LookAhead(1).kind != TokenKind::kLBracket) return false;
+
+  int i = 1;               // 从 '[' 开始
+  int depth = 0;
+  while (true) {
+    TokenKind k = LookAhead(i).kind;
+    if (k == TokenKind::kEof) return false;
+
+    if (k == TokenKind::kLBracket) depth++;
+    else if (k == TokenKind::kRBracket) {
+      depth--;
+      if (depth == 0) {
+        // 这个 i 指向匹配的 ']'
+        return LookAhead(i + 1).kind == TokenKind::kEqual;
+      }
+    }
+    i++;
+  }
+}
+
 bool Parser::Check(TokenKind kind) const {
   if(IsAtEnd()) return false;
   return Peek().kind == kind;
@@ -98,6 +120,9 @@ StmtPtr Parser::Statement() {
   }
   if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
     return AssignStatement();
+  }
+  if (IsIndexAssignAhead()) {
+    return IndexAssignStatement();
   }
   return ExprStatement();
 }
@@ -268,6 +293,22 @@ StmtPtr Parser::AssignStatement(bool require_semicolon) {
     Consume(TokenKind::kSemicolon, "Expect ';' after value.");
   }
   return std::make_unique<AssignStmt>(std::move(name), std::move(expr));
+}
+
+StmtPtr Parser::IndexAssignStatement() {
+  Token name = Consume(TokenKind::kIdentifier, "Expect identifier.");
+  ExprPtr object = std::make_unique<VariableExpr>(std::move(name));
+
+  Consume(TokenKind::kLBracket, "Expect '[' after identifier.");
+  ExprPtr index = Expression();
+  Consume(TokenKind::kRBracket, "Expect ']' after index.");
+
+  Consume(TokenKind::kEqual, "Expect '=' after ']'.");
+  ExprPtr value = Expression();
+  Consume(TokenKind::kSemicolon, "Expect ';' after index assignment.");
+
+  return std::make_unique<IndexAssignStmt>(
+      std::move(object), std::move(index), std::move(value));
 }
 
 StmtPtr Parser::ExprStatement() {

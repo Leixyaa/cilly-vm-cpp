@@ -57,6 +57,8 @@ class Parser {
 
   bool IsAssignmentAhead() const;
 
+  bool IsIndexAssignAhead() const;
+
   // 检查当前 token 的 kind 是否是给定 kind（不前进）
   bool Check(TokenKind kind) const;
 
@@ -88,6 +90,8 @@ class Parser {
   StmtPtr AssignStatement();
 
   StmtPtr AssignStatement(bool require_semicolon); // 重载，应对赋值表达式情况
+
+  StmtPtr IndexAssignStatement();		// 索引赋值语句
 
   // ========== 表达式语法 ==========
 

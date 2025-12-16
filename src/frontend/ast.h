@@ -133,6 +133,7 @@ struct Stmt {
     kPrint,   // print 语句：print expr;
     kBlock,   // 复合语句：{ stmt* }
     kAssign,   // 赋值语句：x = expr;
+    kIndexAssign, // 索引赋值语句 x[i] = expr;
     kWhile,
     // 后面还会加 if / for / while 等
   };
@@ -196,6 +197,20 @@ struct AssignStmt : public Stmt {
   Token name;
   ExprPtr expr;
 };
+
+struct IndexAssignStmt : public Stmt {
+  IndexAssignStmt(ExprPtr object_, ExprPtr index_, ExprPtr expr_) 
+      : Stmt(Kind::kIndexAssign),
+        object(std::move(object_)),
+        index(std::move(index_)),
+        expr(std::move(expr_)){}
+  
+  ExprPtr object;
+  ExprPtr index;
+  ExprPtr expr;
+};
+
+
 
 }  // namespace cilly
 

@@ -53,6 +53,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitBlockStmt(p);
       break;
     }
+    case Stmt::Kind::kIndexAssign: {
+      auto p = static_cast<IndexAssignStmt*>(stmt.get());
+      EmitIndexAssignStmt(p);
+      break;
+    }
     default:
       assert(false && "当前无法处理此类语句");
   }
@@ -123,6 +128,14 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
   for (auto& i : stmt->statements) {
     EmitStmt(i);
   }
+  return;
+}
+
+void Generator::EmitIndexAssignStmt(const IndexAssignStmt* stmt) {
+  EmitExpr(stmt->object);
+  EmitExpr(stmt->index);
+  EmitExpr(stmt->expr); 
+  EmitOp(OpCode::OP_INDEX_SET);
   return;
 }
 
@@ -243,9 +256,10 @@ void Generator::EmitListExpr(const ListExpr* expr) {
 void Generator::EmitDictExpr(const DictExpr* expr) {
   EmitOp(OpCode::OP_DICT_NEW);
   for (auto& i : expr->entries) {
+    EmitOp(OpCode::OP_DUP); // 防止set时没有保留dict副本导致无法连续set
     EmitConst(Value::Str(i.first));
     EmitExpr(i.second);
-    EmitOp(OpCode::OP_DICT_SET);
+    EmitOp(OpCode::OP_INDEX_SET);
   }
   return;
 }

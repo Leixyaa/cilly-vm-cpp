@@ -994,7 +994,7 @@ void ListOpcodeTest() {
   fn.EmitI32(c0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c2, 1);
-  fn.Emit(OpCode::OP_LIST_SET, 1);
+  fn.Emit(OpCode::OP_INDEX_SET, 1);
 
   // 获取索引为0的值打印
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
@@ -1041,12 +1041,12 @@ void DictOpcodeTest() {
   fn.EmitI32(c_a, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c1, 1);
-  fn.Emit(OpCode::OP_DICT_SET, 1);
+  fn.Emit(OpCode::OP_INDEX_SET, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c_b, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c2, 1);
-  fn.Emit(OpCode::OP_DICT_SET, 1);
+  fn.Emit(OpCode::OP_INDEX_SET, 1);
   
   // 打印 a 
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
@@ -1065,7 +1065,7 @@ void DictOpcodeTest() {
   fn.EmitI32(c_a, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c2, 1);
-  fn.Emit(OpCode::OP_DICT_SET, 1);
+  fn.Emit(OpCode::OP_INDEX_SET, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c_a, 1);
   fn.Emit(OpCode::OP_INDEX_GET, 1);
@@ -1208,10 +1208,12 @@ void FrontendEndToEndBlockTest() {
   std::cout << "前端→VM 全链路自测:\n";
   
   std::string source =
-  "var i = 0;\n"
-  "for (i = 0; i < 3; i = i + 1) {\n"
-  "  print i;\n"
-  "}\n";
+  "var a = [10, 20, 30];\n"
+  "a[1] = 99;\n"
+  "print a;\n"
+  "var d = {\"x\": 1};\n"
+  "d[\"x\"] = 42;\n"
+  "print d;\n";
 
 
 
