@@ -118,6 +118,9 @@ StmtPtr Parser::Statement() {
   if (Match(TokenKind::kFor)) {
     return ForStatement();
   }
+  if (Match(TokenKind::kBreak)) {
+    return BreakStatement();
+  }
   if (Match(TokenKind::kIf)) {
     return IfStatement();
   }
@@ -391,7 +394,10 @@ StmtPtr Parser::ForStatement() {
   return while_stmt;
 }
 
-
+StmtPtr Parser::BreakStatement() {
+  Consume(TokenKind::kSemicolon,"Expect ';' after break.");
+  return std::make_unique<BreakStmt>();
+}
 
 
 // if

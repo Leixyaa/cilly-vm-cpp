@@ -1218,7 +1218,13 @@ void FrontendEndToEndBlockTest() {
   "var x = 1;\n"
   "if (x == 0) print 0;\n"
   "else if (x == 1) print 1;\n"
-  "else print 2;\n";
+  "else print 2;\n"
+  "var i = 0;"
+  "while (true) {"
+  "if (i == 3) break;"
+  "print i;"
+  "i = i + 1;"
+  "}";
 
 
   //´Ê·¨·ÖÎö

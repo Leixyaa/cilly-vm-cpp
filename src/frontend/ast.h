@@ -135,6 +135,7 @@ struct Stmt {
     kAssign,   // ¸³ÖµÓï¾ä£ºx = expr;
     kIndexAssign, // Ë÷Òý¸³ÖµÓï¾ä x[i] = expr;
     kWhile,
+    kBreak,
     kIf,
   };
 
@@ -172,6 +173,7 @@ struct PrintStmt : public Stmt {
   ExprPtr expr;
 };
 
+// while Óï¾ä
 struct WhileStmt : public Stmt {
   WhileStmt(ExprPtr cond_, StmtPtr body_)
       : Stmt(Kind::kWhile),
@@ -181,6 +183,10 @@ struct WhileStmt : public Stmt {
   StmtPtr body;
 };
 
+//break Óï¾ä
+struct BreakStmt : public Stmt {
+  BreakStmt() : Stmt(Kind::kBreak){}
+};
 
 // ´úÂë¿é£º{ stmt1; stmt2; ... }
 struct BlockStmt : public Stmt {

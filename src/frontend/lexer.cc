@@ -95,6 +95,7 @@ Token Lexer::ScanIdentifier() {
   else if (s == "else") { return MakeToken(TokenKind::kElse); }
   else if (s == "for") { return MakeToken(TokenKind::kFor); }
   else if (s == "while") { return MakeToken(TokenKind::kWhile); }
+  else if (s == "break") { return MakeToken(TokenKind::kBreak); }
   else if (s == "print") { return MakeToken(TokenKind::kPrint); }
   else if (s == "true") { return MakeToken(TokenKind::kTrue); }
   else if (s == "false") { return MakeToken(TokenKind::kFalse); }

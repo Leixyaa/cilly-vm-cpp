@@ -84,6 +84,9 @@ class Parser {
 
   // for 语句；降级为while
   StmtPtr ForStatement();
+
+  // break 语句；当前只能用在while和for内
+  StmtPtr BreakStatement();
  
   // If 语句；if {} else {}
   StmtPtr IfStatement();

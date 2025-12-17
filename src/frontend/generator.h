@@ -37,6 +37,7 @@ class Generator {
   void EmitVarStmt(const VarStmt* stmt);
   void EmitAssignStmt(const AssignStmt* stmt);
   void EmitWhileStmt(const WhileStmt* stmt);
+  void EmitBreakStmt(const BreakStmt* stmt);
   void EmitBlockStmt(const BlockStmt* stmt);
   void EmitIndexAssignStmt(const IndexAssignStmt* stmt);
   void EmitIfStmt(const IfStmt* stmt);
@@ -55,6 +56,13 @@ class Generator {
   void EmitOp(OpCode op);
   void EmitI32(int32_t v);
   void EmitConst(const Value& v);
+
+  // 记录所有 break 的 jump 占位
+  struct LoopContext {
+    std::vector<int> break_jumps;  
+  };
+  std::vector<LoopContext> loop_stack_;
+
 };
 
 }  // namespace cilly

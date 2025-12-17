@@ -27,6 +27,7 @@ enum class TokenKind {
   kTrue,  // true
   kFalse, // false
   kNull,  // null
+  kBreak, // break
 
   // ·ûºÅ/·Ö¸ô·û
   kLParen,    // (

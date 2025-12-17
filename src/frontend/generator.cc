@@ -48,6 +48,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitWhileStmt(p);
       break;
     }
+    case Stmt::Kind::kBreak: {
+      auto p = static_cast<BreakStmt*>(stmt.get());
+      EmitBreakStmt(p);
+      break;
+    }
     case Stmt::Kind::kBlock: {
       auto p = static_cast<BlockStmt*>(stmt.get());
       EmitBlockStmt(p);
@@ -117,6 +122,7 @@ void Generator::EmitAssignStmt(const AssignStmt* stmt) {
 }
 
 void Generator::EmitWhileStmt(const WhileStmt* stmt) {
+  loop_stack_.emplace_back(); // 直接构造了，不用{}
   int loop_start = current_fn_->CodeSize();
   EmitExpr(stmt->cond);
   EmitOp(OpCode::OP_JUMP_IF_FALSE);
@@ -126,7 +132,18 @@ void Generator::EmitWhileStmt(const WhileStmt* stmt) {
   EmitOp(OpCode::OP_JUMP);
   EmitI32(loop_start);
   PatchJump(end_lable);
+  for (auto i : loop_stack_.back().break_jumps) {
+    PatchJump(i);
+  }
+  loop_stack_.pop_back();
   return;
+}
+
+void Generator::EmitBreakStmt(const BreakStmt* stmt) {
+  EmitOp(OpCode::OP_JUMP);  
+  int break_pos = current_fn_->CodeSize();
+  EmitI32(0);
+  loop_stack_.back().break_jumps.emplace_back(break_pos);
 }
 
 void Generator::EmitBlockStmt(const BlockStmt* stmt) {
@@ -155,8 +172,9 @@ void Generator::EmitIfStmt(const IfStmt* stmt) {
   int pos_then = current_fn_->CodeSize();
   EmitI32(0);
   PatchJump(pos_else);
-
-  EmitStmt(stmt->else_branch);
+  if (stmt->else_branch) {
+    EmitStmt(stmt->else_branch);
+  }
   PatchJump(pos_then);
   return;
 }
