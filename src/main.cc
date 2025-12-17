@@ -1215,10 +1215,10 @@ void FrontendEndToEndBlockTest() {
   "d[\"x\"] = 42;\n"
   "print d;\n"
   "print d[\"x\"];\n"
-  "var x = 0;\n"
-  "if (x == 1) print 1;\n"
+  "var x = 1;\n"
+  "if (x == 0) print 0;\n"
+  "else if (x == 1) print 1;\n"
   "else print 2;\n";
-
 
 
   //´Ê·¨·ÖÎö

@@ -404,7 +404,10 @@ StmtPtr Parser::IfStatement() {
   
   StmtPtr else_branch_ = nullptr;
   if (Match(TokenKind::kElse)) {
-    else_branch_ = Statement();
+    if (Match(TokenKind::kIf)) {
+      else_branch_ = IfStatement();
+    }
+    else else_branch_ = Statement();
   }
   return std::make_unique<IfStmt>(std::move(cond), 
                                   std::move(then_branch_), 
