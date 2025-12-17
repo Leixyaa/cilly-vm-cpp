@@ -30,6 +30,7 @@ class Generator {
   // 工具：生成一条语句
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
+  void PatchJumpTo(int jump_pos, int32_t target);
 
   // 语句分支
   void EmitPrintStmt(const PrintStmt* stmt);
@@ -37,7 +38,9 @@ class Generator {
   void EmitVarStmt(const VarStmt* stmt);
   void EmitAssignStmt(const AssignStmt* stmt);
   void EmitWhileStmt(const WhileStmt* stmt);
+  void EmitForStmt(const ForStmt* stmt);
   void EmitBreakStmt(const BreakStmt* stmt);
+  void EmitContinueStmt(const ContinueStmt* stmt);
   void EmitBlockStmt(const BlockStmt* stmt);
   void EmitIndexAssignStmt(const IndexAssignStmt* stmt);
   void EmitIfStmt(const IfStmt* stmt);
@@ -57,9 +60,10 @@ class Generator {
   void EmitI32(int32_t v);
   void EmitConst(const Value& v);
 
-  // 记录所有 break 的 jump 占位
+  // 记录所有 break,continue 的 jump 占位
   struct LoopContext {
     std::vector<int> break_jumps;  
+    std::vector<int> continue_jumps;
   };
   std::vector<LoopContext> loop_stack_;
 

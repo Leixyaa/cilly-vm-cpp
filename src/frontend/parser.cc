@@ -121,6 +121,9 @@ StmtPtr Parser::Statement() {
   if (Match(TokenKind::kBreak)) {
     return BreakStatement();
   }
+  if (Match(TokenKind::kContinue)) {
+    return ContinueStatement();
+  }
   if (Match(TokenKind::kIf)) {
     return IfStatement();
   }
@@ -348,14 +351,11 @@ StmtPtr Parser::ForStatement() {
     Consume(TokenKind::kSemicolon,"Expect ';' after init.");
   }
 
-
-
   ExprPtr cond = nullptr;
   if (!Check(TokenKind::kSemicolon)) {
     cond = Expression();
   }
   Consume(TokenKind::kSemicolon,"Expect ';' after cond.");
-
 
   StmtPtr step = nullptr;
   if (!Check(TokenKind::kRParen)) {
@@ -367,36 +367,24 @@ StmtPtr Parser::ForStatement() {
   }
   Consume(TokenKind::kRParen, "Expect ')' after step.");
 
-
-
   StmtPtr body;  
   body = Statement();  // 可以是单句，不一定是块语句，所以不直接等于BlockStatment
-  // 组装
-  if (step) {   
-    auto block = std::make_unique<BlockStmt>();
-    block->statements.emplace_back(std::move(body));
-    block->statements.emplace_back(std::move(step));
-    body = std::move(block);
-  }
   
   if (!cond) {
     cond = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,"true");
   }
   
-  StmtPtr while_stmt = std::make_unique<WhileStmt>(std::move(cond), std::move(body));
-
-  if (init) {
-    auto block = std::make_unique<BlockStmt>();
-    block->statements.emplace_back(std::move(init));
-    block->statements.emplace_back(std::move(while_stmt));
-    while_stmt = std::move(block);
-  }
-  return while_stmt;
+  return std::make_unique<ForStmt>(std::move(init), std::move(cond), std::move(step), std::move(body));
 }
 
 StmtPtr Parser::BreakStatement() {
   Consume(TokenKind::kSemicolon,"Expect ';' after break.");
   return std::make_unique<BreakStmt>();
+}
+
+StmtPtr Parser::ContinueStatement() {
+  Consume(TokenKind::kSemicolon,"Expect ';' after continue.");
+  return std::make_unique<ContinueStmt>();
 }
 
 

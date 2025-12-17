@@ -48,9 +48,19 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitWhileStmt(p);
       break;
     }
+    case Stmt::Kind::kFor: {
+      auto p = static_cast<ForStmt*>(stmt.get());
+      EmitForStmt(p);
+      break;
+    }
     case Stmt::Kind::kBreak: {
       auto p = static_cast<BreakStmt*>(stmt.get());
       EmitBreakStmt(p);
+      break;
+    }
+    case Stmt::Kind::kContinue: {
+      auto p = static_cast<ContinueStmt*>(stmt.get());
+      EmitContinueStmt(p);
       break;
     }
     case Stmt::Kind::kBlock: {
@@ -76,6 +86,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
 
 void Generator::PatchJump(int jump_pos) {
   current_fn_->PatchI32(jump_pos, current_fn_->CodeSize());
+  return;
+}
+
+void Generator::PatchJumpTo(int jump_pos, int32_t target){
+  current_fn_->PatchI32(jump_pos, target);
   return;
 }
 
@@ -129,6 +144,32 @@ void Generator::EmitWhileStmt(const WhileStmt* stmt) {
   int end_lable = current_fn_->CodeSize();
   EmitI32(0);
   EmitStmt(stmt->body);
+  for (auto i : loop_stack_.back().continue_jumps) {
+    PatchJumpTo(i, loop_start);
+  }
+  EmitOp(OpCode::OP_JUMP);
+  EmitI32(loop_start);
+  PatchJump(end_lable);
+  for (auto i : loop_stack_.back().break_jumps) {
+    PatchJump(i);
+  }
+  loop_stack_.pop_back();
+  return;
+}
+
+void Generator::EmitForStmt(const ForStmt* stmt) {
+  loop_stack_.emplace_back(); 
+  if(stmt->init)EmitStmt(stmt->init);
+  int loop_start = current_fn_->CodeSize();
+  EmitExpr(stmt->cond);
+  EmitOp(OpCode::OP_JUMP_IF_FALSE);
+  int end_lable = current_fn_->CodeSize();
+  EmitI32(0);
+  EmitStmt(stmt->body);
+  for (auto i : loop_stack_.back().continue_jumps) {
+    PatchJump(i);
+  }
+  if(stmt->step)EmitStmt(stmt->step);
   EmitOp(OpCode::OP_JUMP);
   EmitI32(loop_start);
   PatchJump(end_lable);
@@ -140,10 +181,21 @@ void Generator::EmitWhileStmt(const WhileStmt* stmt) {
 }
 
 void Generator::EmitBreakStmt(const BreakStmt* stmt) {
+  assert(!loop_stack_.empty() && "break outside loop");
   EmitOp(OpCode::OP_JUMP);  
   int break_pos = current_fn_->CodeSize();
   EmitI32(0);
   loop_stack_.back().break_jumps.emplace_back(break_pos);
+  return;
+}
+
+void Generator::EmitContinueStmt(const ContinueStmt* stmt) {
+  assert(!loop_stack_.empty() && "continue outside loop");
+  EmitOp(OpCode::OP_JUMP);
+  int continue_pos = current_fn_->CodeSize();
+  EmitI32(0);
+  loop_stack_.back().continue_jumps.emplace_back(continue_pos);
+  return;
 }
 
 void Generator::EmitBlockStmt(const BlockStmt* stmt) {

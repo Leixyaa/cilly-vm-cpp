@@ -135,7 +135,9 @@ struct Stmt {
     kAssign,   // ¸³ÖµÓï¾ä£ºx = expr;
     kIndexAssign, // Ë÷Òý¸³ÖµÓï¾ä x[i] = expr;
     kWhile,
+    kFor,
     kBreak,
+    kContinue,
     kIf,
   };
 
@@ -183,9 +185,29 @@ struct WhileStmt : public Stmt {
   StmtPtr body;
 };
 
+// for Óï¾ä
+struct ForStmt : public Stmt {
+  ForStmt(StmtPtr init_, ExprPtr cond_, StmtPtr step_, StmtPtr body_)
+      : Stmt(Kind::kFor),
+        init(std::move(init_)),
+        cond(std::move(cond_)),
+        step(std::move(step_)),
+        body(std::move(body_)) {}
+
+  StmtPtr init;   
+  ExprPtr cond;  
+  StmtPtr step;  
+  StmtPtr body;   
+};
+
 //break Óï¾ä
 struct BreakStmt : public Stmt {
   BreakStmt() : Stmt(Kind::kBreak){}
+};
+
+// continue Óï¾ä
+struct ContinueStmt : public Stmt {
+  ContinueStmt() : Stmt(Kind::kContinue){}
 };
 
 // ´úÂë¿é£º{ stmt1; stmt2; ... }

@@ -28,6 +28,7 @@ enum class TokenKind {
   kFalse, // false
   kNull,  // null
   kBreak, // break
+  kContinue, // continue;
 
   // ·ûºÅ/·Ö¸ô·û
   kLParen,    // (

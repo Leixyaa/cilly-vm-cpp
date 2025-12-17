@@ -1210,21 +1210,45 @@ void FrontendEndToEndBlockTest() {
   std::string source =
   "var a = [10, 20, 30];\n"
   "a[1] = 99;\n"
-  "print a;\n"
+  "print a;\n"                 // [10, 99, 30]
+
   "var d = {\"x\": 1};\n"
   "d[\"x\"] = 42;\n"
-  "print d;\n"
-  "print d[\"x\"];\n"
+  "print d;\n"                 // { "x" : 42 }
+  "print d[\"x\"];\n"          // 42
+
   "var x = 1;\n"
   "if (x == 0) print 0;\n"
   "else if (x == 1) print 1;\n"
-  "else print 2;\n"
-  "var i = 0;"
-  "while (true) {"
-  "if (i == 3) break;"
-  "print i;"
-  "i = i + 1;"
-  "}";
+  "else print 2;\n"            // 1
+
+  "var i = 0;\n"
+  "while (i < 6) {\n"
+  "  i = i + 1;\n"
+  "  if (i == 3) continue;\n"
+  "  if (i == 5) break;\n"
+  "  print i;\n"
+  "}\n"                        // 1 2 4
+
+  "var j = 0;\n"
+  "for (j = 0; j < 6; j = j + 1) {\n"
+  "  if (j == 2) continue;\n"
+  "  if (j == 4) break;\n"
+  "  print j;\n"
+  "}\n"                        // 0 1 3
+
+  "var outer = 0;\n"
+  "while (outer < 2) {\n"
+  "  var inner = 0;\n"
+  "  while (inner < 3) {\n"
+  "    inner = inner + 1;\n"
+  "    if (inner == 2) continue;\n"
+  "    break;\n"
+  "  }\n"
+  "  print outer;\n"
+  "  outer = outer + 1;\n"
+  "}\n";                       // 0 1
+
 
 
   //´Ê·¨·ÖÎö
