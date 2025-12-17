@@ -16,6 +16,7 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
     EmitStmt(i);
   }
   current_fn_->SetLocalCount(next_local_index_);
+  EmitConst(Value::Null());
   EmitOp(OpCode::OP_RETURN);
   current_fn_ = nullptr;
   return script;

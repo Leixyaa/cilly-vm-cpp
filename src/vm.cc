@@ -172,7 +172,7 @@ bool VM::Step_() {
     }
 
     case OpCode::OP_PRINT: {
-      Value v = stack_.Top();
+      Value v = stack_.Pop();
       std::cout << v.ToRepr() << std::endl;
       break;
     }
