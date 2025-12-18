@@ -175,7 +175,7 @@ Token Lexer::ScanToken() {
         case '<' :
           return MakeToken(TokenKind::kLess);
         case '>' :
-          return MakeToken(TokenKind::kLarger);
+          return MakeToken(TokenKind::kGreater);
         case '=': {
           if (Match('=')) {
             return MakeToken(TokenKind::kEqualEqual);

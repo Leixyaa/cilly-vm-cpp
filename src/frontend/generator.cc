@@ -341,7 +341,7 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
     case TokenKind::kNotEqual:
       EmitOp(OpCode::OP_NOT_EQUAL);
       break;
-    case TokenKind::kLarger:
+    case TokenKind::kGreater:
       EmitOp(OpCode::OP_GREATER);
       break;
   }
@@ -349,8 +349,25 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
 }
 
 void Generator::EmitUnaryExpr(const UnaryExpr* expr) {
-  EmitExpr(expr->expr);
-  EmitOp(OpCode::OP_NOT);
+  switch (expr->op.kind) {
+    case TokenKind::kNot: {
+      EmitExpr(expr->expr);
+      EmitOp(OpCode::OP_NOT);
+      break;
+    }
+
+    case TokenKind::kMinus: {
+      EmitConst(Value::Num(0));
+      EmitExpr(expr->expr);
+      EmitOp(OpCode::OP_SUB);
+      break;
+    }
+
+    default: 
+      assert(false && "未定义此种一元表达式！");
+      break;
+  }
+
   return;
 }
 

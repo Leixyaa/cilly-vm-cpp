@@ -152,17 +152,11 @@ ExprPtr Parser::Expression() {
 
 // È¡¸º
 ExprPtr Parser::Unary() {   
-  if (Match(TokenKind::kMinus)) {
-    Token op = Previous();
-    ExprPtr right = Unary();
-    ExprPtr zero = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber, "0");
-    return std::make_unique<BinaryExpr> (std::move(zero), op, std::move(right));
-  } else if (Match(TokenKind::kNot)) {
+  if (Match(TokenKind::kMinus) || Match(TokenKind::kNot)) {
     Token op = Previous();
     ExprPtr expr = Unary();
-    return std::make_unique<UnaryExpr> (std::move(op), std::move(expr));
-  }
-    else {
+    return std::make_unique<UnaryExpr> (op, std::move(expr));
+  } else {
     return ProFix();
   }
 }
@@ -191,7 +185,7 @@ ExprPtr Parser::Term() {
 
 ExprPtr Parser::Comparison() {
   ExprPtr left = Term();
-  while (Match(TokenKind::kLess) || Match(TokenKind::kNotEqual) || Match(TokenKind::kLarger)) {
+  while (Match(TokenKind::kLess) || Match(TokenKind::kGreater)) {
     Token op = Previous();
     ExprPtr right = Term();
     left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
@@ -202,7 +196,7 @@ ExprPtr Parser::Comparison() {
 
 ExprPtr Parser::Equality() {
   ExprPtr left = Comparison();
-  while (Match(TokenKind::kEqualEqual)) {
+  while (Match(TokenKind::kEqualEqual) || Match(TokenKind::kNotEqual)) {
     Token op = Previous();
     ExprPtr right = Comparison();
     left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));

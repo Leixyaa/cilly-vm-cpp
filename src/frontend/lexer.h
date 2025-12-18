@@ -49,7 +49,7 @@ enum class TokenKind {
   kEqual,      // =
   kEqualEqual, // ==
   kLess,	   // <
-  kLarger,     // >
+  kGreater,     // >
   kNot,		   // !
   kNotEqual,   // !=
 };
