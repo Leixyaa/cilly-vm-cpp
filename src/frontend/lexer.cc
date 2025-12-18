@@ -174,11 +174,20 @@ Token Lexer::ScanToken() {
           return MakeToken(TokenKind::kSlash);
         case '<' :
           return MakeToken(TokenKind::kLess);
+        case '>' :
+          return MakeToken(TokenKind::kLarger);
         case '=': {
           if (Match('=')) {
             return MakeToken(TokenKind::kEqualEqual);
           } else {
             return MakeToken(TokenKind::kEqual);
+          }
+        }
+        case '!': {
+          if (Match('=')) {
+            return MakeToken(TokenKind::kNotEqual);
+          } else {
+            return MakeToken(TokenKind::kNot);
           }
         }
         case '[' :

@@ -1275,8 +1275,12 @@ void FrontendETESmokeTest() {
 
   std::cout << "前端→VM 全链路自测:\n";
   
-  std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");
-      
+  //std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");
+  
+
+std::string source =
+    "while (!false) { print(1); break; }";
+
 
 
 

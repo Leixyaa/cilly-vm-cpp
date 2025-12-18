@@ -33,6 +33,7 @@ struct Expr {
     kList,
     kDict,
     kIndex,
+    kUnaryExpr,
     // 后面还会加：一元表达式、赋值表达式、函数调用等等
   };
 
@@ -51,6 +52,7 @@ struct LiteralExpr : public Expr {
     kBool,
     kNull,
     kString,
+
   };
 
   LiteralExpr(LiteralKind literal_kind, std::string lexeme)
@@ -117,6 +119,16 @@ struct IndexExpr : public Expr {
       expr(std::move(expr_)) {
   }
   ExprPtr object;
+  ExprPtr expr;
+};
+
+struct UnaryExpr : public Expr {
+  UnaryExpr(Token op_, ExprPtr expr_)
+      : Expr(Kind::kUnaryExpr),
+      op(std::move(op_)),
+      expr(std::move(expr_)){}
+
+  Token op;
   ExprPtr expr;
 };
 

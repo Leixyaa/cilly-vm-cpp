@@ -244,6 +244,11 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
     EmitBinaryExpr(p);
     break;
   }
+  case Expr::Kind::kUnaryExpr: {
+    auto p = static_cast<UnaryExpr*>(expr.get());
+    EmitUnaryExpr(p);
+    break;
+  }
   case Expr::Kind::kVariable: {
     auto p = static_cast<VariableExpr*>(expr.get());
     EmitVariableExpr(p);
@@ -333,7 +338,19 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
     case TokenKind::kEqualEqual:
       EmitOp(OpCode::OP_EQ);
       break;
+    case TokenKind::kNotEqual:
+      EmitOp(OpCode::OP_NOT_EQUAL);
+      break;
+    case TokenKind::kLarger:
+      EmitOp(OpCode::OP_GREATER);
+      break;
   }
+  return;
+}
+
+void Generator::EmitUnaryExpr(const UnaryExpr* expr) {
+  EmitExpr(expr->expr);
+  EmitOp(OpCode::OP_NOT);
   return;
 }
 

@@ -50,6 +50,7 @@ class Generator {
   void EmitLiteralExpr(const LiteralExpr* expr);
   void EmitVariableExpr(const VariableExpr* expr);
   void EmitBinaryExpr(const BinaryExpr* expr);
+  void EmitUnaryExpr(const UnaryExpr* expr);
   void EmitListExpr(const ListExpr* expr);
   void EmitDictExpr(const DictExpr* expr);
   void EmitIndexExpr(const IndexExpr* expr);

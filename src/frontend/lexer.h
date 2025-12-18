@@ -49,6 +49,9 @@ enum class TokenKind {
   kEqual,      // =
   kEqualEqual, // ==
   kLess,	   // <
+  kLarger,     // >
+  kNot,		   // !
+  kNotEqual,   // !=
 };
 
 // Token：一个单词的具体信息。
