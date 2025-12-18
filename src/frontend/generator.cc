@@ -19,6 +19,9 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   EmitConst(Value::Null());
   EmitOp(OpCode::OP_RETURN);
   current_fn_ = nullptr;
+  local_.clear();
+  next_local_index_ = 0;
+  loop_stack_.clear();
   return script;
 }
 
@@ -343,6 +346,9 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
       break;
     case TokenKind::kGreater:
       EmitOp(OpCode::OP_GREATER);
+      break;
+    default:
+      assert(false && "未找到此类二元运算表达式！");
       break;
   }
   return;
