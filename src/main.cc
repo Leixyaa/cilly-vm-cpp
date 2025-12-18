@@ -1275,50 +1275,30 @@ void FrontendETESmokeTest() {
 
   std::cout << "前端→VM 全链路自测:\n";
   
-  //std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");
+  std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");                                                         
   
 
-std::string source =
-    // 0) 基础：!=、>、!、括号优先级
-    "print(1 != 2);"              // expect: true
-    "print(2 != 2);"              // expect: false
-    "print(3 > 2);"               // expect: true
-    "print(2 > 3);"               // expect: false
-    "print(!true);"               // expect: false
-    "print(!false);"              // expect: true
-    "print(!(3 > 2));"            // expect: false
-
-    // 1) list + index get/set
-    "var a = [1, 2, 3];"
-    "a[1] = a[1] + 10;"
-    "print(a[1]);"                // expect: 12
-
-    // 2) dict + index get/set
-    "var d = {\"k\": 10, \"m\": 0};"
-    "d[\"k\"] = d[\"k\"] + a[1];"
-    "print(d[\"k\"]);"            // expect: 22
-
-    // 3) while + continue + if (bool cond)
-    "var x = 0;"
-    "while (x < 5) {"
-    "  x = x + 1;"
-    "  if (x == 2) { continue; }"
-    "  d[\"m\"] = d[\"m\"] + x;"
-    "}"
-    "print(d[\"m\"]);"            // expect: 13  (1+3+4+5)
-
-    // 4) for + break（并验证 for continue 语义不影响 step）
-    "var sum = 0;"
-    "for (var i = 0; i < 10; i = i + 1) {"
-    "  if (i == 3) { break; }"
-    "  sum = sum + i;"
-    "}"
-    "print(sum);"                 // expect: 3 (0+1+2)
-
-    // 5) 验证 ! 用在条件里
-    "if (!false) { print(999); } else { print(111); }";  // expect: 999
-
-
+//std::string source = R"(
+//var x = 1;
+//print(x);
+//
+//{
+//  var x = 2;
+//  var y = x + 3;
+//  print(x);
+//  print(y);
+//}
+//
+//print(x);
+//
+//{
+//  var z = 10;
+//  print(z);
+//  print(x);
+//}
+//
+//print(x);
+//)";
 
 
 
@@ -1366,6 +1346,6 @@ int main() {
   //LexerSmokeTest();
   //ParserExprSmokeTest();
   //FrontendEndToEndTest();
-  /*FrontendEndToEndBlockTest();*/
+  FrontendEndToEndBlockTest();
   FrontendETESmokeTest();
 }

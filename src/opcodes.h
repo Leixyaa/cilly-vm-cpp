@@ -10,6 +10,7 @@ enum class OpCode : int32_t {
   // 常量与栈操作。
   OP_CONSTANT,   // 将常量池中的一个值压入栈。
   OP_POP,        // 弹出栈顶元素。
+  OP_POPN,       // 弹出变量
   OP_DUP,        // 复制栈顶元素。
 
   // 算术运算。

@@ -64,6 +64,15 @@ bool VM::Step_() {
       stack_.Pop();
       break;
     }
+
+    case OpCode::OP_POPN: {
+      int start = ReadOpnd_();
+      int count = ReadOpnd_();
+      for (int i = 0; i < count; i++) {
+        cf.locals_[start + i] = Value::Null();
+      }
+      break;
+    }
     
     case OpCode::OP_DUP: {
       Value v = stack_.Top();  

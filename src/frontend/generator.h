@@ -26,7 +26,9 @@ class Generator {
   Function* current_fn_;
   std::unordered_map<std::string, int> local_;
   int next_local_index_;
-
+  int max_local_index_;
+ 
+  
   // 工具：生成一条语句
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
@@ -66,7 +68,15 @@ class Generator {
     std::vector<int> break_jumps;  
     std::vector<int> continue_jumps;
   };
+
+  struct Scope {
+    int start_local;
+    std::unordered_map<std::string, int> shadowns;
+    std::vector<std::string> names;
+  };
+
   std::vector<LoopContext> loop_stack_;
+  std::vector<Scope> scope_stack_;
 
 };
 

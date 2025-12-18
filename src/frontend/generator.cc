@@ -5,7 +5,11 @@ namespace cilly {
 
 Generator::Generator() 
     : current_fn_(nullptr),
-      next_local_index_(0) {}
+      next_local_index_(0),
+      max_local_index_(0),
+      scope_stack_() { 
+  scope_stack_.emplace_back();
+}
 
 // 主调用函数
 Function Generator::Generate(const std::vector<StmtPtr>& program) { 
@@ -15,13 +19,15 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   for (const auto& i : program) {
     EmitStmt(i);
   }
-  current_fn_->SetLocalCount(next_local_index_);
+  current_fn_->SetLocalCount(max_local_index_);
   EmitConst(Value::Null());
   EmitOp(OpCode::OP_RETURN);
   current_fn_ = nullptr;
   local_.clear();
   next_local_index_ = 0;
   loop_stack_.clear();
+  max_local_index_ = 0;
+  scope_stack_.clear();
   return script;
 }
 
@@ -112,12 +118,15 @@ void Generator::EmitExprStmt(const ExprStmt* stmt) {
 
 void Generator::EmitVarStmt(const VarStmt* stmt) {
   const std::string& name = stmt->name.lexeme;    // 加move不好排查
-  if (local_.find(name) != local_.end()) {
+  auto& names = scope_stack_.back().names;
+  if (std::find(names.begin(), names.end(), name) != names.end()) {
     assert(false && "该变量已存在！");
   }
+  names.emplace_back(name);
   int index = next_local_index_;
   local_[name] = index;   
   next_local_index_++;
+  max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_ : max_local_index_;
   if (stmt->initializer) {
     EmitExpr(stmt->initializer); 
   } else {
@@ -203,9 +212,20 @@ void Generator::EmitContinueStmt(const ContinueStmt* stmt) {
 }
 
 void Generator::EmitBlockStmt(const BlockStmt* stmt) {
+  scope_stack_.emplace_back();
+  scope_stack_.back().start_local = next_local_index_;
+  scope_stack_.back().shadowns = local_;
   for (auto& i : stmt->statements) {
     EmitStmt(i);
   }
+  int start = scope_stack_.back().start_local;
+  int count = next_local_index_ - scope_stack_.back().start_local;
+  EmitOp(OpCode::OP_POPN);
+  EmitI32(start);
+  EmitI32(count);
+  next_local_index_ =  scope_stack_.back().start_local;
+  local_ = scope_stack_.back().shadowns;
+  scope_stack_.pop_back();
   return;
 }
 
@@ -278,7 +298,7 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
   }
 }
 
-void Generator::EmitLiteralExpr(const LiteralExpr* expr) {\
+void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
   switch (expr->literal_kind) {
     case LiteralExpr::LiteralKind::kNumber: {
       double num = std::stod(expr->lexeme);    // stod将字符串转化为double
