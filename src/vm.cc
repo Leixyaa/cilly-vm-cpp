@@ -163,9 +163,9 @@ bool VM::Step_() {
 
     case OpCode::OP_JUMP_IF_FALSE: {
       int target = ReadOpnd_();
-      Value value = stack_.Pop();
-      
-      if(value.IsBool() && value.AsBool() == false) {
+      Value cond = stack_.Pop();
+      assert(cond.IsBool() && "cond is not bool!");
+      if(cond.AsBool() == false) {
         cf.ip = target;
       }
       break;

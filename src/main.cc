@@ -16,7 +16,7 @@
 #include "frontend/lexer.h"
 #include "frontend/parser.h"
 #include "frontend/generator.h"
-
+#include "util/io.h"
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -1269,6 +1269,36 @@ void FrontendEndToEndBlockTest() {
 }
 
 
+
+void FrontendETESmokeTest() {
+  using namespace cilly;
+
+  std::cout << "前端→VM 全链路自测:\n";
+  
+  std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");
+      
+
+
+
+  //词法分析
+  Lexer lexer(source);
+  std::vector<Token>tokens_ = lexer.ScanAll();
+
+  //语法分析
+  Parser parser(tokens_);
+  std::vector<StmtPtr>program = parser.ParseProgram();
+  
+  //生成字节码
+  Generator generator;
+  Function main = generator.Generate(program);
+  
+  VM vm;
+  vm.Run(main);
+  std::cout << "---------------------------------------------\n";
+}
+
+
+
 int main() {
   /*ValueTest();
   StackTest();
@@ -1294,5 +1324,6 @@ int main() {
   //LexerSmokeTest();
   //ParserExprSmokeTest();
   //FrontendEndToEndTest();
-  FrontendEndToEndBlockTest();
+  /*FrontendEndToEndBlockTest();*/
+  FrontendETESmokeTest();
 }
