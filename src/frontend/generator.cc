@@ -8,7 +8,7 @@ Generator::Generator()
       next_local_index_(0),
       max_local_index_(0),
       scope_stack_() { 
-  scope_stack_.emplace_back();
+  scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
 }
 
 // 主调用函数
@@ -28,6 +28,8 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   loop_stack_.clear();
   max_local_index_ = 0;
   scope_stack_.clear();
+  scope_stack_.emplace_back(); // 要保证有一个存在，防止.back()报错
+  
   return script;
 }
 
@@ -151,6 +153,7 @@ void Generator::EmitAssignStmt(const AssignStmt* stmt) {
 
 void Generator::EmitWhileStmt(const WhileStmt* stmt) {
   loop_stack_.emplace_back(); // 直接构造了，不用{}
+  loop_stack_.back().scope_depth = static_cast<int>(scope_stack_.size());
   int loop_start = current_fn_->CodeSize();
   EmitExpr(stmt->cond);
   EmitOp(OpCode::OP_JUMP_IF_FALSE);
@@ -172,6 +175,7 @@ void Generator::EmitWhileStmt(const WhileStmt* stmt) {
 
 void Generator::EmitForStmt(const ForStmt* stmt) {
   loop_stack_.emplace_back(); 
+  loop_stack_.back().scope_depth = static_cast<int>(scope_stack_.size());
   if(stmt->init)EmitStmt(stmt->init);
   int loop_start = current_fn_->CodeSize();
   EmitExpr(stmt->cond);
@@ -195,6 +199,7 @@ void Generator::EmitForStmt(const ForStmt* stmt) {
 
 void Generator::EmitBreakStmt(const BreakStmt* stmt) {
   assert(!loop_stack_.empty() && "break outside loop");
+  EmitUnwindToDepth(loop_stack_.back().scope_depth);
   EmitOp(OpCode::OP_JUMP);  
   int break_pos = current_fn_->CodeSize();
   EmitI32(0);
@@ -204,6 +209,7 @@ void Generator::EmitBreakStmt(const BreakStmt* stmt) {
 
 void Generator::EmitContinueStmt(const ContinueStmt* stmt) {
   assert(!loop_stack_.empty() && "continue outside loop");
+  EmitUnwindToDepth(loop_stack_.back().scope_depth);
   EmitOp(OpCode::OP_JUMP);
   int continue_pos = current_fn_->CodeSize();
   EmitI32(0);
@@ -422,6 +428,30 @@ void Generator::EmitIndexExpr(const IndexExpr* expr) {
   EmitExpr(expr->expr);
   EmitOp(OpCode::OP_INDEX_GET);
 }
+
+void Generator::EmitUnwindToDepth(int target_depth) {
+  // target_depth 表示：希望回到 scope_stack_ 的这个大小（不包含更深层 block）
+  int cur_depth = static_cast<int>(scope_stack_.size());
+  assert(target_depth >= 0 && target_depth <= cur_depth);
+
+  // 从最内层 scope 开始往外清理
+  int end = next_local_index_;
+  for (int i = cur_depth - 1; i >= target_depth; --i) {
+    int start = scope_stack_[i].start_local;
+    int count = end - start;
+    // next_local_index_ 是“当前编译点已分配的最大 local 下标”
+    // start_local 是进入该 block 时的下标
+    // 它们的差就是：这个 block 内声明了多少 locals 需要清理
+
+    if (count > 0) {
+      EmitOp(OpCode::OP_POPN);
+      EmitI32(start);
+      EmitI32(count);
+    }
+    end = start;
+  }
+}
+
 
 void Generator::EmitOp(OpCode op) {
   current_fn_->Emit(op, 1);

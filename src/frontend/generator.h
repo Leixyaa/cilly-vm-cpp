@@ -56,6 +56,9 @@ class Generator {
   void EmitListExpr(const ListExpr* expr);
   void EmitDictExpr(const DictExpr* expr);
   void EmitIndexExpr(const IndexExpr* expr);
+  // 在运行时路径上清理即将跳出的 block locals（只 emit OP_POPN，不改编译期栈）
+  void EmitUnwindToDepth(int target_depth);
+
   // 以后可能会有 UnaryExpr / AssignExpr 等
 
   // 往 current_fn_ 里 emit 指令
@@ -65,6 +68,7 @@ class Generator {
 
   // 记录所有 break,continue 的 jump 占位
   struct LoopContext {
+    int scope_depth = 0;   
     std::vector<int> break_jumps;  
     std::vector<int> continue_jumps;
   };
@@ -74,7 +78,7 @@ class Generator {
     std::unordered_map<std::string, int> shadowns;
     std::vector<std::string> names;
   };
-
+  
   std::vector<LoopContext> loop_stack_;
   std::vector<Scope> scope_stack_;
 

@@ -1320,12 +1320,121 @@ void FrontendETESmokeTest() {
 }
 
 
+void ScopeAllFeatureSmokeTest() {
+  using namespace cilly;
 
-int main() {
-  /*ValueTest();
+  std::cout << "===== Scope / Block / Loop 全覆盖冒烟测试 =====\n";
+
+  std::string source = R"(
+
+  // ---------- 1. 基础变量 ----------
+  var x = 1;
+  print x;        // 1
+
+  // ---------- 2. block shadow ----------
+  {
+    var x = 2;
+    var y = x + 10;
+    print x;      // 2
+    print y;      // 12
+  }
+
+  print x;        // 1（外层 x 不应被污染）
+
+  // ---------- 3. if / else 作用域 ----------
+  if (x == 1) {
+    var a = 100;
+    print a;      // 100
+  } else {
+    var a = 200;
+    print a;
+  }
+
+  // ---------- 4. while + continue ----------
+  var i = 0;
+  while (i < 5) {
+    i = i + 1;
+    var t = i * 10;
+
+    if (i == 2) continue;
+
+    print t;      // 10, 30, 40
+  }
+
+  // ---------- 5. while + break ----------
+  var j = 0;
+  while (true) {
+    j = j + 1;
+    var k = j + 100;
+
+    if (j == 3) break;
+
+    print k;      // 101, 102
+  }
+
+  print j;        // 3
+
+  // ---------- 6. for loop scope ----------
+  for (var m = 0; m < 5; m = m + 1) {
+    var inner = m * 2;
+
+    if (m == 1) continue;
+    if (m == 3) break;
+
+    print inner;  // 0, 4
+  }
+
+  // ---------- 7. 嵌套 while + continue + break ----------
+  var outer = 0;
+  while (outer < 2) {
+    var inner = 0;
+
+    while (inner < 3) {
+      inner = inner + 1;
+      var tmp = outer * 10 + inner;
+
+      if (inner == 2) continue;
+      break;
+    }
+
+    print outer;   // 0, 1
+    outer = outer + 1;
+  }
+
+  print outer;     // 2
+
+  )";
+
+  // 词法分析
+  Lexer lexer(source);
+  std::vector<Token> tokens = lexer.ScanAll();
+
+  // 语法分析
+  Parser parser(tokens);
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
+  Generator generator;
+  Function main_fn = generator.Generate(program);
+
+  // 执行
+  VM vm;
+  vm.Run(main_fn);
+
+  std::cout << "===== Scope 冒烟测试结束 =====\n";
+}
+
+
+
+
+void RunUnitTests() {
+  ValueTest();
   StackTest();
   ChunkTest();
   FunctionTest();
+}
+
+void RunVMTests() {
   VMTest();
   VarTest();
   CallTest();
@@ -1335,17 +1444,37 @@ int main() {
   IfTest();
   OddEvenTest();
   CompareTest();
-  StreamTest();
-  ValueSerializationTest();
-  ChunkSerializationTest();
-  FunctionSerializationTest();
-  VarValueSemanticsTest();
-  ObjSmokeTest();
+}
+
+void RunOpcodeTests() {
   ListOpcodeTest();
-  DictOpcodeTest();*/
-  //LexerSmokeTest();
-  //ParserExprSmokeTest();
-  //FrontendEndToEndTest();
+  DictOpcodeTest();
+}
+
+void RunFrontendTests() {
+  LexerSmokeTest();
+  ParserExprSmokeTest();
+}
+
+void RunEndToEndTests() {
+  FrontendEndToEndTest();
   FrontendEndToEndBlockTest();
   FrontendETESmokeTest();
+  ScopeAllFeatureSmokeTest();
+}
+
+
+
+
+
+int main() {
+  std::cout << "=== cilly-vm-cpp test runner ===\n";
+
+  RunEndToEndTests();
+  // RunFrontendTests();
+  // RunOpcodeTests();
+  // RunVMTests();
+  // RunUnitTests();
+
+  return 0;
 }
