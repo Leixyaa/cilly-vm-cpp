@@ -34,6 +34,7 @@ struct Expr {
     kDict,
     kIndex,
     kUnaryExpr,
+    kCall       // 函数调用表达式 如：print add(x,y);
     // 后面还会加：一元表达式、赋值表达式、函数调用等等
   };
 
@@ -78,6 +79,18 @@ struct VariableExpr : public Expr {
   Token name;
 };
 
+
+struct CallExpr : public Expr {
+  explicit CallExpr(ExprPtr callee_, std::vector<ExprPtr>arg_, Token paran_)
+      : Expr(Kind::kCall),
+        callee(std::move(callee_)),
+        arg(std::move(arg_)),
+        paran(paran_){}
+  
+  ExprPtr callee;   // 暂时就函数名 VariableExpr
+  std::vector<ExprPtr>arg;
+  Token paran;      // 用于报错
+};
 
 
 
@@ -141,6 +154,7 @@ struct UnaryExpr : public Expr {
 struct Stmt {
   enum class Kind {
     kVar,     // 变量声明：var x = expr;
+    kFun,     // 函数声明
     kExpr,    // 表达式语句：expr;
     kPrint,   // print 语句：print expr;
     kBlock,   // 复合语句：{ stmt* }
@@ -227,6 +241,20 @@ struct ContinueStmt : public Stmt {
 struct BlockStmt : public Stmt {
   BlockStmt() : Stmt(Kind::kBlock) {}
   std::vector<StmtPtr> statements;
+};
+
+struct FunctionStmt : public Stmt {
+  FunctionStmt(Token name_,
+               std::vector<Token>params_, 
+               std::unique_ptr<BlockStmt>body_)
+     : Stmt(Kind::kFun),
+       name(name_),
+       params(params_),
+       body(std::move(body_)){};
+
+  Token name;
+  std::vector<Token>params;
+  std::unique_ptr<BlockStmt>body;
 };
 
 // 赋值语句

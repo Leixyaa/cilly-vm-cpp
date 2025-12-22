@@ -68,6 +68,7 @@ bool VM::Step_() {
     case OpCode::OP_POPN: {
       int start = ReadOpnd_();
       int count = ReadOpnd_();
+      assert(start >= 0 && count >= 0 && start + count <= (int)cf.locals_.size());
       for (int i = 0; i < count; i++) {
         cf.locals_[start + i] = Value::Null();
       }

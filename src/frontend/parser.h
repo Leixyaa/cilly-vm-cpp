@@ -73,6 +73,9 @@ class Parser {
   // var 声明语句：var x = expr;
   StmtPtr VarDeclaration();
 
+  // fun 声明语句
+  StmtPtr FuncitonDeclaration();
+
   // print 语句：print expr;
   StmtPtr PrintStatement();
 
@@ -134,6 +137,7 @@ class Parser {
 
   std::vector<Token> tokens_;  // 输入的 token 序列
   int current_;                // 当前看的 token 下标（类似 Lexer 里的 current_）
+  int block_depth_ = 0;        // 暂时规定函数只能顶层声明
 };
 
 }  // namespace cilly

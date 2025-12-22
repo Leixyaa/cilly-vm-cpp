@@ -19,6 +19,7 @@ enum class TokenKind {
 
   // ¹Ø¼ü×Ö
   kVar,   // var
+  kFun,   // fun
   kIf,    // if
   kElse,  // else
   kFor,   // for

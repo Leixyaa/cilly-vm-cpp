@@ -105,6 +105,24 @@ StmtPtr Parser::VarDeclaration() {
   return std::make_unique<VarStmt>(name, std::move(initializer));
 }
 
+StmtPtr Parser::FuncitonDeclaration() {
+  Token name = Consume(TokenKind::kIdentifier, "Expect function name!");
+  Consume(TokenKind::kLParen, "Expect '(' after function name.");
+  std::vector<Token>params;
+  while (!Check(TokenKind::kRParen)) {
+    Token name_params = Consume(TokenKind::kIdentifier, "Expect parameter name!");
+    params.emplace_back(name_params);
+    if (Match(TokenKind::kRParen)) break;
+    Consume(TokenKind::kComma, "Expect ',' after parameter name!");
+  }
+  // 规定函数体必须加‘{’
+  Consume(TokenKind::kLBrace, "Expect '{' before function body.");
+
+  StmtPtr body_stmt = BlockStatement();
+  auto body = std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>(body_stmt.release()));
+  return std::make_unique<FunctionStmt>(name, params, std::move(body));
+}
+
 StmtPtr Parser::Statement() {
   if (Match(TokenKind::kLBrace)) {
     return BlockStatement();
@@ -268,11 +286,33 @@ ExprPtr Parser::Primary() {
 
 ExprPtr Parser::ProFix() {
   ExprPtr expr = Primary();
-  while (Match(TokenKind::kLBracket)) {
-    ExprPtr idx = Expression();
-    Consume(TokenKind::kRBracket,"Exprct ']' after expression.");
-    expr = std::make_unique<IndexExpr>(std::move(expr), std::move(idx));
+
+  while (true) {
+    if (Match(TokenKind::kLBracket)) {
+      ExprPtr idx = Expression();
+      Consume(TokenKind::kRBracket, "Expect ']' after expression.");
+      expr = std::make_unique<IndexExpr>(std::move(expr), std::move(idx));
+      continue;
+    }
+
+    if (Match(TokenKind::kLParen)) {
+      std::vector<ExprPtr> args;
+      if (!Check(TokenKind::kRParen)) {
+        do {
+          if (args.size() >= 255) {
+            assert(false && "Too many arguments (max 255).");
+          }
+          args.emplace_back(Expression());
+        } while (Match(TokenKind::kComma));
+      }
+      Token paren = Consume(TokenKind::kRParen, "Expect ')' after arguments.");
+      expr = std::make_unique<CallExpr>(std::move(expr), std::move(args), std::move(paren));
+      continue;
+    }
+
+    break;
   }
+
   return expr;
 }
 
@@ -431,11 +471,14 @@ std::vector<StmtPtr> Parser::ParseProgram() {
 }
 
 StmtPtr Parser::Declaration() {
-  if(Match(TokenKind::kVar)) {
+  if (Match(TokenKind::kVar)) {
     return VarDeclaration();
-  } else {
-    return Statement();
+  } 
+  if (Match(TokenKind::kFun)) {
+    assert(block_depth_ == 0 && "暂时不实现非顶层声明!");
+    return FuncitonDeclaration();
   }
+  return Statement();
 }
 
 }  // namespace cilly

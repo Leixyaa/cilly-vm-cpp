@@ -21,6 +21,10 @@ class Generator {
   // 输出：一个可在 VM 中执行的 Function
   Function Generate(const std::vector<StmtPtr>& program);
 
+  const std::vector<std::unique_ptr<Function>>& Functions() const { return functions_; } // 只读接口
+  int FindFunctionIndex(const std::string& name) const;
+  
+
  private:
   // 当前正在生成字节码的函数
   Function* current_fn_;
@@ -33,7 +37,7 @@ class Generator {
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
   void PatchJumpTo(int jump_pos, int32_t target);
-
+  
   // 语句分支
   void EmitPrintStmt(const PrintStmt* stmt);
   void EmitExprStmt(const ExprStmt* stmt);
@@ -47,6 +51,7 @@ class Generator {
   void EmitIndexAssignStmt(const IndexAssignStmt* stmt);
   void EmitIfStmt(const IfStmt* stmt);
   void EmitReturnStmt(const ReturnStmt* stmt);
+  void EmitFunctionStmt(const FunctionStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);
@@ -57,6 +62,7 @@ class Generator {
   void EmitListExpr(const ListExpr* expr);
   void EmitDictExpr(const DictExpr* expr);
   void EmitIndexExpr(const IndexExpr* expr);
+  void EmitCallExpr(const CallExpr* expr);
   // 在运行时路径上清理即将跳出的 block locals（只 emit OP_POPN，不改编译期栈）
   void EmitUnwindToDepth(int target_depth);
 
@@ -75,14 +81,15 @@ class Generator {
   };
 
   struct Scope {
-    int start_local;
+    int start_local = 0;
     std::unordered_map<std::string, int> shadowns;
     std::vector<std::string> names;
   };
   
   std::vector<LoopContext> loop_stack_;
   std::vector<Scope> scope_stack_;
-
+  std::vector<std::unique_ptr<Function>> functions_;  // 函数表
+  std::unordered_map<std::string, int> func_name_to_index_; // 函数名和索引的映射
 };
 
 }  // namespace cilly

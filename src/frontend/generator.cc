@@ -1,4 +1,6 @@
 #include <string>
+#include <algorithm>
+#include <iostream>
 #include "generator.h"
 
 namespace cilly {
@@ -9,28 +11,49 @@ Generator::Generator()
       max_local_index_(0),
       scope_stack_() { 
   scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
+  scope_stack_.back().start_local = 0;
+  scope_stack_.back().shadowns = local_;
 }
 
 // 主调用函数
-Function Generator::Generate(const std::vector<StmtPtr>& program) { 
+Function Generator::Generate(const std::vector<StmtPtr>& program) {
+  // 每次编译一个脚本，都要从干净状态开始
+  //（注意：functions_ / func_name_to_index_ 要在开头清，不能在结尾清）
+  functions_.clear();
+  func_name_to_index_.clear();
+
+  local_.clear();
+  loop_stack_.clear();
+  scope_stack_.clear();
+  scope_stack_.emplace_back();    
+  scope_stack_.back().start_local = 0;
+  scope_stack_.back().shadowns = local_;
+
+  next_local_index_ = 0;
+  max_local_index_ = 0;
+
+  // 1) 生成 script
   Function script("script", 0);
-  script.SetLocalCount(0);
   current_fn_ = &script;
-  for (const auto& i : program) {
-    EmitStmt(i);
+
+  for (const auto& s : program) {
+    EmitStmt(s);
   }
+
   current_fn_->SetLocalCount(max_local_index_);
+
+  // 隐式 return null
   EmitConst(Value::Null());
   EmitOp(OpCode::OP_RETURN);
+
   current_fn_ = nullptr;
-  local_.clear();
-  next_local_index_ = 0;
-  loop_stack_.clear();
-  max_local_index_ = 0;
-  scope_stack_.clear();
-  scope_stack_.emplace_back(); // 要保证有一个存在，防止.back()报错
-  
   return script;
+}
+
+
+int Generator::FindFunctionIndex(const std::string& name) const {
+  auto it = func_name_to_index_.find(name);
+  return it == func_name_to_index_.end() ? -1 : it->second;
 }
 
 void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
@@ -93,6 +116,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
     case Stmt::Kind::kReturn: {
       auto p = static_cast<ReturnStmt*>(stmt.get());
       EmitReturnStmt(p);
+      break;
+    }
+    case Stmt::Kind::kFun: {
+      auto p = static_cast<FunctionStmt*>(stmt.get());
+      EmitFunctionStmt(p);
       break;
     }
     default:
@@ -273,6 +301,65 @@ void Generator::EmitReturnStmt(const ReturnStmt* stmt) {
   return;
 }
 
+void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
+  // 重名检查
+  assert(FindFunctionIndex(stmt->name.lexeme) == -1 && "该函数名已定义！");
+  
+  // 保存当前script现场
+  Function* saved_fn = current_fn_;
+  auto saved_local = local_;
+  int saved_next = next_local_index_;
+  int saved_max = max_local_index_;
+  auto saved_loop = loop_stack_;
+  auto saved_scope = scope_stack_;
+
+  // 编译函数
+  Function fn(stmt->name.lexeme, static_cast<int>(stmt->params.size()));
+  
+  // 清空编译状态
+  local_.clear();
+  loop_stack_.clear();
+  scope_stack_.clear();
+  scope_stack_.emplace_back(); 
+  scope_stack_.back().start_local = 0;
+  scope_stack_.back().shadowns = local_;
+
+  next_local_index_ = 0;
+  max_local_index_ = 0;
+
+  // 将参数放入当前local变量表中
+  {
+    std::unordered_map<std::string, int> seen;
+    for (int i = 0; i < static_cast<int>(stmt->params.size()); i++) {
+      const std::string& pname = stmt->params[i].lexeme;
+      assert(seen.find(pname) == seen.end() && "函数参数变量名已定义！");
+      seen[pname]++;
+      local_[pname] = i;
+      next_local_index_++;
+      if (next_local_index_ > max_local_index_) {
+        max_local_index_ = next_local_index_;
+      }
+    }
+  }
+  int index = static_cast<int>(functions_.size());
+  functions_.push_back(std::make_unique<Function>(std::move(fn)));
+  func_name_to_index_[stmt->name.lexeme] = index;
+  current_fn_ = functions_[index].get();
+  
+  EmitBlockStmt(stmt->body.get());
+  EmitConst(Value::Null());
+  EmitOp(OpCode::OP_RETURN);  // 隐式return
+  current_fn_->SetLocalCount(max_local_index_);
+
+  // 回复上一层的script相关信息
+  current_fn_ = saved_fn;
+  local_ = std::move(saved_local);
+  next_local_index_ = saved_next;
+  max_local_index_ = saved_max;
+  loop_stack_ = std::move(saved_loop);
+  scope_stack_ = std::move(saved_scope);
+}
+
 void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
   switch (expr->kind) {
   case Expr::Kind::kLiteral: {
@@ -308,6 +395,11 @@ void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
   case Expr::Kind::kIndex: {
     auto p = static_cast<IndexExpr*>(expr.get());
     EmitIndexExpr(p);
+    break;
+  }
+  case Expr::Kind::kCall: {
+    auto p = static_cast<CallExpr*>(expr.get());
+    EmitCallExpr(p);
     break;
   }
   default:
@@ -439,6 +531,31 @@ void Generator::EmitIndexExpr(const IndexExpr* expr) {
   EmitExpr(expr->object);
   EmitExpr(expr->expr);
   EmitOp(OpCode::OP_INDEX_GET);
+}
+
+void Generator::EmitCallExpr(const CallExpr* expr) {
+  assert(expr->callee->kind == Expr::Kind::kVariable && "Only function-name calls like foo(...) are supported for now.");
+  auto callee = static_cast<VariableExpr*>(expr->callee.get());
+
+  // 查找函数名对应索引
+  int func_index = FindFunctionIndex(callee->name.lexeme);
+  if (func_index < 0) {
+    assert(false && "Undefined function name.");
+  }
+
+  // 参数个数
+  int arity = functions_[func_index]->arity();
+  assert(arity == static_cast<int>(expr->arg.size()) && "Argument count mismatch.");
+
+  // 压入参数
+  for (const auto& i : expr->arg) {
+    EmitExpr(i);
+  }
+
+  // 调用call
+  EmitOp(OpCode::OP_CALL);
+  EmitI32(func_index);
+
 }
 
 void Generator::EmitUnwindToDepth(int target_depth) {

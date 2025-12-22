@@ -91,6 +91,7 @@ Token Lexer::ScanIdentifier() {
   }
   s = std::move(source_.substr(start_, current_ - start_));
   if (s == "var") { return MakeToken(TokenKind::kVar); }
+  else if (s == "fun") {return MakeToken(TokenKind::kFun); }
   else if (s == "if") { return MakeToken(TokenKind::kIf); }
   else if (s == "else") { return MakeToken(TokenKind::kElse); }
   else if (s == "for") { return MakeToken(TokenKind::kFor); }
