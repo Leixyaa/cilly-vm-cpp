@@ -106,6 +106,9 @@ class Parser {
   // 索引赋值语句
   StmtPtr IndexAssignStatement();	
 
+  // return返回值
+  StmtPtr ReturnStatement();
+
   // ========== 表达式语法 ==========
 
   // 总入口：表达式

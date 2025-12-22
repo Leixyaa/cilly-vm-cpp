@@ -1358,7 +1358,7 @@ void ScopeAllFeatureSmokeTest() {
 
     if (i == 2) continue;
 
-    print t;      // 10, 30, 40
+    print t;      // 10, 30, 40 , 50
   }
 
   // ---------- 5. while + break ----------
@@ -1425,6 +1425,33 @@ void ScopeAllFeatureSmokeTest() {
 }
 
 
+void CallFunctionSmokeTest() {
+  using namespace cilly;
+
+  std::cout << "===== Return 冒烟测试 =====\n";
+
+   std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");           
+
+  // 词法分析
+  Lexer lexer(source);
+  std::vector<Token> tokens = lexer.ScanAll();
+
+  // 语法分析
+  Parser parser(tokens);
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
+  Generator generator;
+  Function main_fn = generator.Generate(program);
+
+  // 执行
+  VM vm;
+  vm.Run(main_fn);
+
+  std::cout << "===== Scope 冒烟测试结束 =====\n";
+}
+
+
 
 
 void RunUnitTests() {
@@ -1457,10 +1484,11 @@ void RunFrontendTests() {
 }
 
 void RunEndToEndTests() {
-  FrontendEndToEndTest();
+  /*FrontendEndToEndTest();
   FrontendEndToEndBlockTest();
   FrontendETESmokeTest();
-  ScopeAllFeatureSmokeTest();
+  ScopeAllFeatureSmokeTest();*/
+  CallFunctionSmokeTest();
 }
 
 

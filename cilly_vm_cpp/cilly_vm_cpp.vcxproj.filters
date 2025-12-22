@@ -18,5 +18,84 @@
     <ClCompile Include="..\src\main.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\frontend\generator.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\frontend\lexer.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\frontend\parser.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\chunk.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\function.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\object.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\stack_stats.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\value.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\vm.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\util\io.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\frontend\ast.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\frontend\generator.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\frontend\lexer.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\frontend\parser.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\bytecode_stream.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\call_frame.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\chunk.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\function.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\object.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\opcodes.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\stack_stats.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\value.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\vm.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\util\io.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="file.txt">
+      <Filter>资源文件</Filter>
+    </Text>
   </ItemGroup>
 </Project>

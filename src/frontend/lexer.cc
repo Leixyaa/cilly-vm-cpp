@@ -101,6 +101,7 @@ Token Lexer::ScanIdentifier() {
   else if (s == "true") { return MakeToken(TokenKind::kTrue); }
   else if (s == "false") { return MakeToken(TokenKind::kFalse); }
   else if (s == "null") { return MakeToken(TokenKind::kNull); }
+  else if (s == "return") { return MakeToken(TokenKind::kReturn); }
   else return MakeToken(TokenKind::kIdentifier);
 }
 

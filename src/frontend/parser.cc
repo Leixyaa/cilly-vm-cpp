@@ -133,6 +133,9 @@ StmtPtr Parser::Statement() {
   if (Check(TokenKind::kIdentifier) && LookAhead(1).kind == TokenKind::kEqual) {
     return AssignStatement();
   }
+  if (Match(TokenKind::kReturn)) {
+    return ReturnStatement();
+  }
   return ExprStatement();
 }
 
@@ -317,6 +320,12 @@ StmtPtr Parser::IndexAssignStatement() {
 
   return std::make_unique<IndexAssignStmt>(
       std::move(object), std::move(index), std::move(value));
+}
+
+StmtPtr Parser::ReturnStatement() {
+  ExprPtr expr = Expression();
+  Consume(TokenKind::kSemicolon, "Expect ';' after expr.");
+  return std::make_unique<ReturnStmt>(std::move(expr));
 }
 
 StmtPtr Parser::ExprStatement() {

@@ -151,6 +151,7 @@ struct Stmt {
     kBreak,
     kContinue,
     kIf,
+    kReturn,
   };
 
   explicit Stmt(Kind kind) : kind(kind) {}
@@ -262,6 +263,11 @@ struct IfStmt : public Stmt {
   ExprPtr cond;
   StmtPtr then_branch;
   StmtPtr else_branch;
+};
+
+struct ReturnStmt : public Stmt {
+  ReturnStmt(ExprPtr expr_) : Stmt(Kind::kReturn), expr(std::move(expr_)) {};
+  ExprPtr expr;
 };
 
 

@@ -124,7 +124,36 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\chunk.cc" />
+    <ClCompile Include="..\src\frontend\generator.cc" />
+    <ClCompile Include="..\src\frontend\lexer.cc" />
+    <ClCompile Include="..\src\frontend\parser.cc" />
+    <ClCompile Include="..\src\function.cc" />
     <ClCompile Include="..\src\main.cc" />
+    <ClCompile Include="..\src\object.cc" />
+    <ClCompile Include="..\src\stack_stats.cc" />
+    <ClCompile Include="..\src\util\io.cc" />
+    <ClCompile Include="..\src\value.cc" />
+    <ClCompile Include="..\src\vm.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\bytecode_stream.h" />
+    <ClInclude Include="..\src\call_frame.h" />
+    <ClInclude Include="..\src\chunk.h" />
+    <ClInclude Include="..\src\frontend\ast.h" />
+    <ClInclude Include="..\src\frontend\generator.h" />
+    <ClInclude Include="..\src\frontend\lexer.h" />
+    <ClInclude Include="..\src\frontend\parser.h" />
+    <ClInclude Include="..\src\function.h" />
+    <ClInclude Include="..\src\object.h" />
+    <ClInclude Include="..\src\opcodes.h" />
+    <ClInclude Include="..\src\stack_stats.h" />
+    <ClInclude Include="..\src\util\io.h" />
+    <ClInclude Include="..\src\value.h" />
+    <ClInclude Include="..\src\vm.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="file.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -90,6 +90,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       EmitIfStmt(p);
       break;
     }
+    case Stmt::Kind::kReturn: {
+      auto p = static_cast<ReturnStmt*>(stmt.get());
+      EmitReturnStmt(p);
+      break;
+    }
     default:
       assert(false && "当前无法处理此类语句");
   }
@@ -258,6 +263,13 @@ void Generator::EmitIfStmt(const IfStmt* stmt) {
     EmitStmt(stmt->else_branch);
   }
   PatchJump(pos_then);
+  return;
+}
+
+void Generator::EmitReturnStmt(const ReturnStmt* stmt) {
+  EmitExpr(stmt->expr);
+  EmitUnwindToDepth(1);  // 清理运行是local表，清理知道最外层根作用域;
+  EmitOp(OpCode::OP_RETURN);
   return;
 }
 
