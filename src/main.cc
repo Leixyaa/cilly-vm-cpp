@@ -1603,7 +1603,6 @@ print "END";
   std::cout << "===== Scope Ã°ÑÌ²âÊÔ½áÊø =====\n";
 }
 
-
 void NativeFunctionSmokeTest() {
   using namespace cilly;
 
@@ -1705,6 +1704,13 @@ print "END_FULL";
   std::cout << "===== Full Smoke Test END =====\n";
 }
 
+void CallVirtualFunctionTest() {
+    auto v = cilly::Value::Callable(7);
+    std::cout << v.ToRepr() << "\n";   // ÆÚÍû£º<fn #7>
+    assert(v.IsCallable());
+    assert(v.AsCallable() == 7);
+}
+
 
 void RunUnitTests() {
   ValueTest();
@@ -1745,6 +1751,7 @@ void RunEndToEndTests() {
 
 void NativeFunctionTest() {
   NativeFunctionSmokeTest();
+  CallVirtualFunctionTest();
 }
 
 

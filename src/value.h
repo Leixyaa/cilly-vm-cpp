@@ -35,7 +35,7 @@ class ObjDict;
 
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
-enum class ValueType { kNull, kBool, kNum, kStr, kObj};
+enum class ValueType { kNull, kBool, kNum, kStr, kObj, kCallable};
 
 // 运行时的通用值类型。
 // 可存放 null、bool、number、string 四种数据。
@@ -43,7 +43,7 @@ class Value {
  public:
   // 构造与工厂方法
   Value();  // 默认构造成 Null。
-  Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> y);
+  Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>, int32_t> y);
   static Value Null();
   static Value Bool(bool b);
   static Value Num(double d);
@@ -51,6 +51,7 @@ class Value {
   static Value Obj(std::shared_ptr<ObjList> object);
   static Value Obj(std::shared_ptr<ObjString> object);
   static Value Obj(std::shared_ptr<ObjDict> object);
+  static Value Callable(int32_t);
 
   // 类型判断
   ValueType type() const;
@@ -62,6 +63,7 @@ class Value {
   bool IsList() const;
   bool IsString() const;
   bool IsDict() const;
+  bool IsCallable() const;
 
   // 取值接口
   // 类型不匹配时，可选择断言或异常（实现中保持一致）。
@@ -73,6 +75,8 @@ class Value {
   std::shared_ptr<ObjList> AsList() const;
   std::shared_ptr<ObjString> AsString() const;
   std::shared_ptr<ObjDict> AsDict() const;
+  
+  int32_t AsCallable() const;
 
   // 文本表示
   // 用于打印或调试：
@@ -101,7 +105,7 @@ class Value {
 
  private:
   ValueType type_ = ValueType::kNull;  // 当前值类型。
-  std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> data_;  // 存储实际数据。
+  std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>, int32_t> data_;  // 存储实际数据。
 };
 
 }  // namespace cilly

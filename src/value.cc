@@ -20,7 +20,7 @@ namespace cilly {
 
 Value::Value() : type_(ValueType::kNull), data_(std::monostate{}) {}
 
-Value::Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>> y) : type_(x), data_(std::move(y)) {}
+Value::Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>, int32_t> y) : type_(x), data_(std::move(y)) {}
 
 Value Value::Null() {
   Value v;
@@ -71,6 +71,13 @@ Value Value::Obj(std::shared_ptr<ObjDict> object) {
   return v;
 }
 
+Value Value::Callable(int32_t index) {
+  Value v;
+  v.type_ = ValueType::kCallable;
+  v.data_ = index;
+  return v;
+}
+
 ValueType Value::type() const {
   return type_;
 }
@@ -105,6 +112,10 @@ bool Value::IsString() const {
 
 bool Value::IsDict() const {
   return IsObj() && AsObj() -> Type() == ObjType::kDict;
+}
+
+bool Value::IsCallable() const {
+  return type_ == ValueType::kCallable;
 }
 
 bool Value::AsBool() const{
@@ -142,28 +153,34 @@ std::shared_ptr<ObjDict> Value::AsDict() const {
   return std::static_pointer_cast<ObjDict>(AsObj());
 }
 
+int32_t Value::AsCallable() const {
+  return std::get<int32_t>(data_);
+}
+
 std::string Value::ToRepr() const{
-  if(IsNull()) {
+  if (IsNull()) {
     return "null";
-  } else if(IsBool()) {
+  } else if (IsBool()) {
     return std::get<bool>(data_)? "true":"false";
-  } else if(IsNum()) {
+  } else if (IsNum()) {
     double num = std::get<double>(data_);
     std::string s;
     std::ostringstream oss;
     oss << std::setprecision(15) << std::fixed << num;
     s = oss.str();
-    while(!s.empty() && s.back() == '0') {
+    while (!s.empty() && s.back() == '0') {
       s.pop_back();
     }
-    if(!s.empty() && s.back() == '.') {
+    if (!s.empty() && s.back() == '.') {
         s.pop_back();
     }
     return s;
-  } else if(IsObj()) {
+  } else if (IsObj()) {
     auto obj = AsObj();
     return obj -> ToRepr();
-  } 
+  } else if (IsCallable()) {
+     return "<fn #" + std::to_string(std::get<int32_t>(data_)) + ">";
+  }
   //Str
   return std::get<std::string>(data_);
 }
