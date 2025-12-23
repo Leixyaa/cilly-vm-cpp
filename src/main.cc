@@ -1705,11 +1705,60 @@ print "END_FULL";
 }
 
 void CallVirtualFunctionTest() {
-    auto v = cilly::Value::Callable(7);
-    std::cout << v.ToRepr() << "\n";   // 期望：<fn #7>
-    assert(v.IsCallable());
-    assert(v.AsCallable() == 7);
+  using namespace cilly;
+
+  std::cout << "===== CallVirtualFunctionTest BEGIN =====\n";
+
+  //  不要用 // 注释，避免 lexer 不支持
+  std::string source = R"(
+print "BEGIN_CALLV";
+
+fun add(a, b) { return a + b; }
+
+var f = add;
+print f(1, 2);
+
+var o = { "m": add };
+print o["m"](20, 22);
+
+print add(3, 4);
+
+print len([1, 2, 3]);
+print abs(0 - 9);
+print clock();
+
+print "END_CALLV";
+)";
+
+  // 词法分析
+  Lexer lexer(source);
+  std::vector<Token> tokens = lexer.ScanAll();
+
+  // 语法分析
+  Parser parser(tokens);
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
+  Generator generator;
+  Function main_fn = generator.Generate(program);
+
+  // VM 执行
+  VM vm;
+
+  //  必须：先注册 builtin（如果你已经做了 builtin index 前缀）
+  // 把这个函数名改成你项目里实际的：RegisterBuiltins / RegisterNativeBuiltins ...
+  RegisterBuiltins(vm);
+
+  // 再注册用户函数（顺序必须与 Generator::Functions() 一致）
+  for (const auto& fnptr : generator.Functions()) {
+    vm.RegisterFunction(fnptr.get());
+  }
+
+  vm.Run(main_fn);
+
+  std::cout << "===== CallVirtualFunctionTest END =====\n";
 }
+
 
 
 void RunUnitTests() {
@@ -1751,6 +1800,7 @@ void RunEndToEndTests() {
 
 void NativeFunctionTest() {
   NativeFunctionSmokeTest();
+  CallVirtualFunctionTest();
   CallVirtualFunctionTest();
 }
 

@@ -520,12 +520,28 @@ void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
 void Generator::EmitVariableExpr(const VariableExpr* expr) {
   const std::string& name = expr->name.lexeme;
   int index;
+  // 变量
   auto it = local_.find(name);
-  assert(it != local_.end() && "未定义该变量！");
-  index = it->second;
-  EmitOp(OpCode::OP_LOAD_VAR);
-  EmitI32(index);
-  return;
+  if (it != local_.end()) {
+    EmitOp(OpCode::OP_LOAD_VAR);
+    EmitI32(it->second);
+    return;
+  }
+  
+  // native function
+  if (IsBuiltin(name)) {
+    int index = BuiltinIndex(name);
+    EmitConst(Value::Callable(index));
+    return;
+  }
+
+  // 用户函数
+  int user_index = FindFunctionIndex(name);
+  if (user_index >= 0) {
+    EmitConst(Value::Callable(user_index + kBuiltinCount) );
+    return;
+  }
+  assert(false && "Undefined variable/function name.");
 }
 
 void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
@@ -613,33 +629,16 @@ void Generator::EmitIndexExpr(const IndexExpr* expr) {
 }
 
 void Generator::EmitCallExpr(const CallExpr* expr) {
-  assert(expr->callee->kind == Expr::Kind::kVariable && "Only function-name calls like foo(...) are supported for now.");
-  auto callee = static_cast<VariableExpr*>(expr->callee.get());
-  std::string callee_name = callee->name.lexeme;
-  int arity = -1;
-  int callee_index = -1;
-  // 查找函数名对应索引
-  if (IsBuiltin(callee_name)) {
-    arity = BuiltinArity(callee_name);
-    callee_index = BuiltinIndex(callee_name);
-  } else {
-    int user_index = FindFunctionIndex(callee->name.lexeme);
-    assert(user_index >= 0 && "Undefined function name.");
-    callee_index = user_index + kBuiltinCount; // 函数偏移
-    arity = functions_[user_index]->arity();
-  }
-  assert(callee_index >= 0 && "Undefined function name.");
-  assert(arity == static_cast<int>(expr->arg.size()) && "Argument count mismatch.");
-  
-  // 压入参数
-  for (const auto& i : expr->arg) {
-    EmitExpr(i);
+  EmitExpr(expr->callee);
+  int argc = (int)expr->arg.size();
+  assert(argc <= 255 && "Too many arguments");
+  for (int i = 0; i < argc; i++) {
+    EmitExpr(expr->arg[i]);
   }
 
-  // 调用call
-  EmitOp(OpCode::OP_CALL);
-  EmitI32(callee_index);
-
+  EmitOp(OpCode::OP_CALLV);
+  EmitI32(argc);
+  return;
 }
 
 void Generator::EmitUnwindToDepth(int target_depth) {

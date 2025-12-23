@@ -47,6 +47,8 @@ class VM {
 
   int RegisterFunction(const Function* fn); // 注册函数并且返回索引 
   int RegisterNative(const std::string& name, int arity, NativeFn fn);  // 注册原生函数
+ 
+  void DoCallByIndex(int call_index, int argc, const Value* argv); // 判断是user函数还是builtin函数
 
  private:
   // 取下一条指令（从 code_ 读取，并自增 ip_）。
@@ -65,7 +67,6 @@ class VM {
   StackStats stack_;  // 运行时栈（带统计）
   std::vector<CallFrame> frames_;
   std::vector<Callable> callables_;
-
 
 
 };

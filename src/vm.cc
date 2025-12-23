@@ -55,6 +55,40 @@ int VM::Depth() const { return stack_.Depth(); }
 
 int VM::MaxDepth() const { return stack_.MaxDepth(); }
 
+void VM::DoCallByIndex(int call_index, int argc, const Value* argv) {
+  int builtin_count = 5; // 或常量 5
+  assert(call_index >= 0 && call_index < (int)callables_.size());
+  if (call_index < builtin_count) {
+    auto& nb = callables_[call_index];
+    assert(nb.arity == argc);
+    Value ret = nb.native(*this, argv, argc);
+    stack_.Push(ret);
+    return;
+  }
+
+  int user_index = call_index;
+  assert(user_index >= 0 && user_index < (int)callables_.size());
+  const Function* callee = callables_[user_index].fn;
+  assert(callee->arity() == argc);
+
+  // 为被调用函数创建一个新的调用帧
+  CallFrame frame;
+  frame.fn = callee; 
+  frame.ip = 0;       // 被调用函数从头开始执行
+  frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
+  int local_count = callee->LocalCount();
+  frame.locals_.assign(local_count, Value::Null());
+
+  for (int i = 0; i < argc; i++) {
+    assert(i < (int)frame.locals_.size());
+    frame.locals_[i] = argv[i];
+  }
+  frames_.push_back(std::move(frame));
+  return;
+}
+
+
+
 bool VM::Step_() {
   CallFrame& cf = CurrentFrame();
   const Chunk& ch = cf.fn->chunk();
@@ -229,48 +263,33 @@ bool VM::Step_() {
 // 参数会共享底层堆对象，实现类似 Python 的引用语义。
 
     case OpCode::OP_CALL: {
-      // 读取要调用的函数 ID（
       int func_index = ReadOpnd_();
-      assert(func_index >= 0 && func_index < static_cast<int>(callables_.size()));
+      assert(func_index >= 0 && func_index < (int)callables_.size());
 
       const Callable& c = callables_[func_index];
+      int argc = (c.type == Callable::Type::kNative) ? c.arity : c.fn->arity();
 
-      if (c.type == Callable::Type::kBytecode) {
-        const Function* callee = c.fn;
-        assert(callee != nullptr);
+      std::vector<Value> argv(argc);
+      for (int i = argc - 1; i >= 0; --i) argv[i] = stack_.Pop();
 
-        int argc = callee->arity();
-        assert(argc >= 0);
-
-        // 为被调用函数创建一个新的调用帧
-        CallFrame frame;
-        frame.fn = callee; 
-        frame.ip = 0;       // 被调用函数从头开始执行
-        frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
-        int local_count = callee->LocalCount();
-        frame.locals_.assign(local_count, Value::Null());
-
-        for (int i = argc - 1; i >= 0; i--) {
-          Value arg = stack_.Pop();
-          assert(i < static_cast<int>(frame.locals_.size()));
-          frame.locals_[i] = arg;
-        }
-        frames_.push_back(std::move(frame));
-      } else {
-        int argc = c.arity;
-        assert(argc >= 0);
-        
-        std::vector<Value> argv(argc);
-        for (int i = argc - 1; i >= 0; i--) {
-          argv[i] = stack_.Pop();
-        }
-        Value ret = c.native(*this, argc ? argv.data() : nullptr, argc);
-        stack_.Push(ret);
-      }
+      DoCallByIndex(func_index, argc, argc ? argv.data() : nullptr);
       break;
     }
-    
 
+    
+    // 运行时调用函数
+    case OpCode::OP_CALLV: {
+      int argc = ReadI32_();
+      std::vector<Value> argv(argc);
+      for (int i = argc-1; i >= 0; --i) argv[i] = stack_.Pop();
+
+      Value callee = stack_.Pop();
+      assert(callee.IsCallable() && "Callee is not callable");
+      DoCallByIndex(callee.AsCallable(), argc, argc? argv.data(): nullptr);
+      break;    
+    }
+
+    
     // List相关
     // 创建新列表
     case OpCode::OP_LIST_NEW: {

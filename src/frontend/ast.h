@@ -87,7 +87,7 @@ struct CallExpr : public Expr {
         arg(std::move(arg_)),
         paran(paran_){}
   
-  ExprPtr callee;   // 暂时就函数名 VariableExpr
+  ExprPtr callee;   
   std::vector<ExprPtr>arg;
   Token paran;      // 用于报错
 };

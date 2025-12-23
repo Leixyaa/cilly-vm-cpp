@@ -44,6 +44,7 @@ enum class OpCode : int32_t {
 
   // 函数调用。
   OP_CALL,       // 调用另一个函数，操作数是函数 ID。
+  OP_CALLV,		 // 运行时调用函数
 
 
 
