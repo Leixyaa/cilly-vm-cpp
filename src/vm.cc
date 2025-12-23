@@ -1,11 +1,13 @@
-#include "vm.h"
-
+#include <functional>
 #include <cassert>
 #include <iostream>
+
+#include "vm.h"
 
 namespace cilly {
 
 VM::VM() = default;
+
 
 void VM::Run(const Function& fn) {
   frames_.clear();
@@ -229,30 +231,42 @@ bool VM::Step_() {
     case OpCode::OP_CALL: {
       // 读取要调用的函数 ID（
       int func_index = ReadOpnd_();
-      assert(func_index >= 0 && func_index < static_cast<int>(functions_.size()));
+      assert(func_index >= 0 && func_index < static_cast<int>(callables_.size()));
 
-      const Function* callee = functions_[func_index];
-      assert(callee != nullptr);
+      const Callable& c = callables_[func_index];
 
-      int argc = callee -> arity();
-      assert(argc >= 0);
+      if (c.type == Callable::Type::kBytecode) {
+        const Function* callee = c.fn;
+        assert(callee != nullptr);
 
-      // 为被调用函数创建一个新的调用帧
-      CallFrame frame;
-      frame.fn = callee; 
-      frame.ip = 0;       // 被调用函数从头开始执行
-      frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
+        int argc = callee->arity();
+        assert(argc >= 0);
 
-      int local_count = callee->LocalCount();
-      frame.locals_.assign(local_count, Value::Null());
+        // 为被调用函数创建一个新的调用帧
+        CallFrame frame;
+        frame.fn = callee; 
+        frame.ip = 0;       // 被调用函数从头开始执行
+        frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
+        int local_count = callee->LocalCount();
+        frame.locals_.assign(local_count, Value::Null());
 
-      for (int i = argc - 1; i >= 0; i--) {
-        Value arg = stack_.Pop();
-        assert(i < static_cast<int>(frame.locals_.size()));
-        frame.locals_[i] = arg;
+        for (int i = argc - 1; i >= 0; i--) {
+          Value arg = stack_.Pop();
+          assert(i < static_cast<int>(frame.locals_.size()));
+          frame.locals_[i] = arg;
+        }
+        frames_.push_back(std::move(frame));
+      } else {
+        int argc = c.arity;
+        assert(argc >= 0);
+        
+        std::vector<Value> argv(argc);
+        for (int i = argc - 1; i >= 0; i--) {
+          argv[i] = stack_.Pop();
+        }
+        Value ret = c.native(*this, argc ? argv.data() : nullptr, argc);
+        stack_.Push(ret);
       }
-
-      frames_.push_back(std::move(frame));
       break;
     }
     
@@ -420,8 +434,24 @@ const CallFrame& VM::CurrentFrame() const {
 }
 
 int VM::RegisterFunction(const Function* fn) {
-  functions_.push_back(fn);
-  return static_cast<int> (functions_.size() - 1);
+  Callable f;
+  f.type = Callable::Type::kBytecode;
+  f.arity = fn->arity();
+  f.name = fn->name();
+  f.fn = fn;
+  callables_.push_back(std::move(f));
+  return static_cast<int> (callables_.size() - 1);
+}
+
+int VM::RegisterNative(const std::string& name, int arity, NativeFn fn) {
+  Callable nf;
+  nf.type = Callable::Type::kNative;
+  nf.arity = arity;
+  nf.name = name;
+  nf.native = std::move(fn);
+  
+  callables_.push_back(std::move(nf));
+  return static_cast<int> (callables_.size() - 1);
 }
 
 

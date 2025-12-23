@@ -9,10 +9,11 @@ Generator::Generator()
     : current_fn_(nullptr),
       next_local_index_(0),
       max_local_index_(0),
-      scope_stack_() { 
+      scope_stack_()  { 
   scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
+  InitBuiltins();
 }
 
 // 主调用函数
@@ -614,17 +615,22 @@ void Generator::EmitIndexExpr(const IndexExpr* expr) {
 void Generator::EmitCallExpr(const CallExpr* expr) {
   assert(expr->callee->kind == Expr::Kind::kVariable && "Only function-name calls like foo(...) are supported for now.");
   auto callee = static_cast<VariableExpr*>(expr->callee.get());
-
+  std::string callee_name = callee->name.lexeme;
+  int arity = -1;
+  int callee_index = -1;
   // 查找函数名对应索引
-  int func_index = FindFunctionIndex(callee->name.lexeme);
-  if (func_index < 0) {
-    assert(false && "Undefined function name.");
+  if (IsBuiltin(callee_name)) {
+    arity = BuiltinArity(callee_name);
+    callee_index = BuiltinIndex(callee_name);
+  } else {
+    int user_index = FindFunctionIndex(callee->name.lexeme);
+    assert(user_index >= 0 && "Undefined function name.");
+    callee_index = user_index + kBuiltinCount; // 函数偏移
+    arity = functions_[user_index]->arity();
   }
-
-  // 参数个数
-  int arity = functions_[func_index]->arity();
+  assert(callee_index >= 0 && "Undefined function name.");
   assert(arity == static_cast<int>(expr->arg.size()) && "Argument count mismatch.");
-
+  
   // 压入参数
   for (const auto& i : expr->arg) {
     EmitExpr(i);
@@ -632,7 +638,7 @@ void Generator::EmitCallExpr(const CallExpr* expr) {
 
   // 调用call
   EmitOp(OpCode::OP_CALL);
-  EmitI32(func_index);
+  EmitI32(callee_index);
 
 }
 
@@ -676,5 +682,31 @@ void Generator::EmitConst(const Value& v) {
   current_fn_->EmitI32(index, 1);
   return;
 }
+
+void Generator::InitBuiltins() {
+  builtin_name_to_arity_.clear();
+  builtin_name_to_index_.clear();
+  // 固定顺序 = 固定 index（必须和 VM 注册顺序一致）
+  builtin_name_to_index_["len"]   = 0; builtin_name_to_arity_["len"]   = 1;
+  builtin_name_to_index_["str"]   = 1; builtin_name_to_arity_["str"]   = 1;
+  builtin_name_to_index_["type"]  = 2; builtin_name_to_arity_["type"]  = 1;
+  builtin_name_to_index_["abs"]   = 3; builtin_name_to_arity_["abs"]   = 1;
+  builtin_name_to_index_["clock"] = 4; builtin_name_to_arity_["clock"] = 0;
+}
+
+bool Generator::IsBuiltin(const std::string& name) const {
+  return builtin_name_to_index_.count(name) != 0;
+}
+
+int Generator::BuiltinIndex(const std::string& name) const {
+  auto it = builtin_name_to_index_.find(name);
+  return it == builtin_name_to_index_.end() ? -1 : it->second;
+}
+
+int Generator::BuiltinArity(const std::string& name) const {
+  auto it = builtin_name_to_arity_.find(name);
+  return it == builtin_name_to_arity_.end() ? -1 : it->second;
+}
+
 
 }  // namespace cilly

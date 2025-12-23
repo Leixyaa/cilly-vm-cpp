@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-
+#include <functional>
 #include "call_frame.h"
 #include "function.h"
 #include "opcodes.h"
@@ -14,10 +14,27 @@
 
 namespace cilly {
 
+//一个 C++ 函数/闭包”，输入是 VM + 参数数组，输出是一个 Value
+//别名
+using NativeFn = std::function<Value(class VM&, const Value* args, int argc)>;
+
+struct Callable {
+  enum class Type { kBytecode, kNative } type;
+  std::string name;
+  int arity = 0;
+
+  // bytecode
+  const Function* fn = nullptr;
+
+  // native
+  NativeFn native;
+};
+
 // 最小可运行 VM:OP_CONSTANT / OP_ADD / OP_PRINT。
 class VM {
  public:
   VM();
+
 
   // 运行入口：执行给定函数（从头到尾）。
   void Run(const Function& fn);
@@ -29,7 +46,8 @@ class VM {
   int MaxDepth() const;
 
   int RegisterFunction(const Function* fn); // 注册函数并且返回索引 
-  
+  int RegisterNative(const std::string& name, int arity, NativeFn fn);  // 注册原生函数
+
  private:
   // 取下一条指令（从 code_ 读取，并自增 ip_）。
   int32_t ReadI32_();
@@ -46,7 +64,9 @@ class VM {
 
   StackStats stack_;  // 运行时栈（带统计）
   std::vector<CallFrame> frames_;
-  std::vector<const Function*> functions_;
+  std::vector<Callable> callables_;
+
+
 
 };
 

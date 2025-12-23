@@ -4,6 +4,7 @@
 // Description: Entry point for testing environment.
 
 #include <iostream>
+#include <chrono>
 
 #include "chunk.h"
 #include "function.h"
@@ -17,6 +18,70 @@
 #include "frontend/parser.h"
 #include "frontend/generator.h"
 #include "util/io.h"
+
+// 注册原生函数
+static void RegisterBuiltins(cilly::VM& vm) {
+  using namespace cilly;
+
+  // len(x)
+  int i0 = vm.RegisterNative("len", 1, [](VM&, const Value* args, int argc) {
+    assert(argc == 1);
+    const Value& v = args[0];
+    if (v.IsStr())   return Value::Num((double)v.AsStr().size());
+    if (v.IsList())  return Value::Num((double)v.AsList()->Size());
+    if (v.IsDict())  return Value::Num((double)v.AsDict()->Size());
+    if (v.IsString())return Value::Num((double)v.AsString()->ToRepr().size());
+    assert(false && "len() unsupported type");
+    return Value::Null();
+  });
+  assert(i0 == 0);
+
+  //str(x)
+  int i1 = vm.RegisterNative("str", 1, [](VM&, const Value* args, int argc) {
+    assert(argc == 1);
+    const Value& v = args[0];
+    if (v.IsStr()) return v;
+    return Value::Str(v.ToRepr());
+  });
+  assert(i1 == 1);
+
+  //type(x)
+  int i2 = vm.RegisterNative("type", 1, [](VM&, const Value* args, int argc) {
+    assert(argc == 1);
+    const Value& v = args[0];
+    if (v.IsNull()) return Value::Str("null");
+    if (v.IsBool()) return Value::Str("bool");
+    if (v.IsNum())  return Value::Str("number");
+    if (v.IsStr() || v.IsString()) return Value::Str("str");
+    if (v.IsList()) return Value::Str("list");
+    if (v.IsDict()) return Value::Str("dict");
+    if (v.IsObj())  return Value::Str("object");
+    return Value::Str("unknown");
+  });
+  assert(i2 == 2);
+
+  //abs(x)
+  int i3 = vm.RegisterNative("abs", 1, [](VM&, const Value* args, int argc) {
+    assert(argc == 1);
+    assert(args[0].IsNum());
+    double x = args[0].AsNum();
+    return Value::Num(x < 0 ? -x : x);
+  });
+  assert(i3 == 3);
+
+  //clock()
+  int i4 = vm.RegisterNative("clock", 0, [](VM&, const Value*, int) {
+    using clock = std::chrono::steady_clock;
+    double s = std::chrono::duration_cast<std::chrono::duration<double>>(
+                 clock::now().time_since_epoch()).count();
+    return Value::Num(s);
+  });
+  assert(i4 == 4);
+}
+
+
+
+
 
 // ---------------- Value 封装自测 ----------------
 void ValueTest(){
@@ -1275,30 +1340,30 @@ void FrontendETESmokeTest() {
 
   std::cout << "前端→VM 全链路自测:\n";
   
-  std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");                                                         
+  /*std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");      */                                                   
   
 
-//std::string source = R"(
-//var x = 1;
-//print(x);
-//
-//{
-//  var x = 2;
-//  var y = x + 3;
-//  print(x);
-//  print(y);
-//}
-//
-//print(x);
-//
-//{
-//  var z = 10;
-//  print(z);
-//  print(x);
-//}
-//
-//print(x);
-//)";
+std::string source = R"(
+var x = 1;
+print(x);
+
+{
+  var x = 2;
+  var y = x + 3;
+  print(x);
+  print(y);
+}
+
+print(x);
+
+{
+  var z = 10;
+  print(z);
+  print(x);
+}
+
+print(x);
+)";
 
 
 
@@ -1315,6 +1380,11 @@ void FrontendETESmokeTest() {
   Function main = generator.Generate(program);
   
   VM vm;
+
+  for (const auto& fnptr : generator.Functions()) {
+    vm.RegisterFunction(fnptr.get());  // 注册所有编译的函数
+  }
+
   vm.Run(main);
   std::cout << "---------------------------------------------\n";
 }
@@ -1430,82 +1500,82 @@ void CallFunctionSmokeTest() {
 
   std::cout << "===== Return 冒烟测试 =====\n";
 
-   std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");           
-//std::string source = R"(
-//print "BEGIN";
-//print 111;
-//
-//fun add(a, b) { return a + b; }
-//print add(1, 2);
-//print add(20, 22);
-//
-//fun sub(a, b) { return a - b; }
-//print sub(10, 7);
-//
-//fun abs1(x) {
-//  if (x < 0) { return 0 - x; }
-//  else { return x; }
-//}
-//print abs1(9);
-//print abs1(0 - 9);
-//
-//fun fact(n) {
-//  if (n < 2) { return 1; }
-//  return n * fact(n - 1);
-//}
-//print fact(5);
-//
-//print add(add(1, 2), add(3, 4));
-//print add(fact(3), fact(4));
-//
-//fun shadow(x) {
-//  var y = x + 1;
-//  {
-//    var y = 100;
-//  }
-//  return y;
-//}
-//print shadow(9);
-//
-//fun sum_skip3(n) {
-//  var i = 0;
-//  var s = 0;
-//  while (i < n) {
-//    i = i + 1;
-//    if (i == 3) { continue; }
-//    if (i == 8) { break; }
-//    s = s + i;
-//  }
-//  return s;
-//}
-//print sum_skip3(100);
-//
-//fun list_demo(a) {
-//  var L = [a, a + 1, a + 2];
-//  L[1] = L[1] + 10;
-//  return L[0] + L[1] + L[2];
-//}
-//print list_demo(1);
-//
-//fun dict_demo(dummy) {
-//  var D = { "a": 1, "b": 2 };
-//  D["c"] = D["a"] + D["b"];
-//  return D["c"];
-//}
-//print dict_demo(0);
-//
-//fun for_demo(n) {
-//  var s = 0;
-//  for (var i = 0; i < n; i = i + 1) {
-//    s = s + i;
-//  }
-//  return s;
-//}
-//print for_demo(5);
-//
-//print 999;
-//print "END";
-//)";
+  /* std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");          */ 
+std::string source = R"(
+print "BEGIN";
+print 111;
+
+fun add(a, b) { return a + b; }
+print add(1, 2);
+print add(20, 22);
+
+fun sub(a, b) { return a - b; }
+print sub(10, 7);
+
+fun abs1(x) {
+  if (x < 0) { return 0 - x; }
+  else { return x; }
+}
+print abs1(9);
+print abs1(0 - 9);
+
+fun fact(n) {
+  if (n < 2) { return 1; }
+  return n * fact(n - 1);
+}
+print fact(5);
+
+print add(add(1, 2), add(3, 4));
+print add(fact(3), fact(4));
+
+fun shadow(x) {
+  var y = x + 1;
+  {
+    var y = 100;
+  }
+  return y;
+}
+print shadow(9);
+
+fun sum_skip3(n) {
+  var i = 0;
+  var s = 0;
+  while (i < n) {
+    i = i + 1;
+    if (i == 3) { continue; }
+    if (i == 8) { break; }
+    s = s + i;
+  }
+  return s;
+}
+print sum_skip3(100);
+
+fun list_demo(a) {
+  var L = [a, a + 1, a + 2];
+  L[1] = L[1] + 10;
+  return L[0] + L[1] + L[2];
+}
+print list_demo(1);
+
+fun dict_demo(dummy) {
+  var D = { "a": 1, "b": 2 };
+  D["c"] = D["a"] + D["b"];
+  return D["c"];
+}
+print dict_demo(0);
+
+fun for_demo(n) {
+  var s = 0;
+  for (var i = 0; i < n; i = i + 1) {
+    s = s + i;
+  }
+  return s;
+}
+print for_demo(5);
+
+print 999;
+print "END";
+)";
 
 
 
@@ -1523,7 +1593,7 @@ void CallFunctionSmokeTest() {
 
   // 执行
   VM vm;
-
+  RegisterBuiltins(vm);
   for (const auto& fnptr : generator.Functions()) {
     vm.RegisterFunction(fnptr.get());  // 注册所有编译的函数
   }
@@ -1534,6 +1604,106 @@ void CallFunctionSmokeTest() {
 }
 
 
+void NativeFunctionSmokeTest() {
+  using namespace cilly;
+
+  std::cout << "===== Full Smoke Test (Native + User Functions) =====\n";
+
+  std::string source = R"(
+print "BEGIN_FULL";
+
+print len([1, 2, 3]);
+print str(123);
+print type({ "a": 1 });
+print abs(0 - 9);
+print clock();
+
+fun add(a, b) { return a + b; }
+print add(1, 2);
+print add(20, 22);
+
+fun fact(n) {
+  if (n < 2) { return 1; }
+  return n * fact(n - 1);
+}
+print fact(5);
+
+fun isEven(n) {
+  if (n == 0) return true;
+  return isOdd(n - 1);
+}
+fun isOdd(n) {
+  if (n == 0) return false;
+  return isEven(n - 1);
+}
+print isEven(10);
+print isOdd(10);
+print isEven(7);
+print isOdd(7);
+
+fun shadow(x) {
+  var y = x + 1;
+  {
+    var y = 100;
+  }
+  return y;
+}
+print shadow(9);
+
+fun sum_skip3(n) {
+  var i = 0;
+  var s = 0;
+  while (i < n) {
+    i = i + 1;
+    if (i == 3) { continue; }
+    if (i == 8) { break; }
+    s = s + i;
+  }
+  return s;
+}
+print sum_skip3(100);
+
+fun list_demo(a) {
+  var L = [a, a + 1, a + 2];
+  L[1] = L[1] + 10;
+  return L[0] + L[1] + L[2];
+}
+print list_demo(1);
+
+fun dict_demo(dummy) {
+  var D = { "a": 1, "b": 2 };
+  D["c"] = D["a"] + D["b"];
+  return D["c"];
+}
+print dict_demo(0);
+
+print 999;
+print "END_FULL";
+)";
+
+  Lexer lexer(source);
+  std::vector<Token> tokens = lexer.ScanAll();
+
+  Parser parser(tokens);
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  Generator generator;
+  Function main_fn = generator.Generate(program);
+
+  VM vm;
+
+  // builtins 必须先注册，占据 0..4
+  RegisterBuiltins(vm);
+
+
+  for (const auto& fnptr : generator.Functions()) {
+    vm.RegisterFunction(fnptr.get());
+  }
+
+  vm.Run(main_fn);
+
+  std::cout << "===== Full Smoke Test END =====\n";
+}
 
 
 void RunUnitTests() {
@@ -1566,11 +1736,15 @@ void RunFrontendTests() {
 }
 
 void RunEndToEndTests() {
-  /*FrontendEndToEndTest();
+  FrontendEndToEndTest();
   FrontendEndToEndBlockTest();
   FrontendETESmokeTest();
-  ScopeAllFeatureSmokeTest();*/
+  ScopeAllFeatureSmokeTest();
   CallFunctionSmokeTest();
+}
+
+void NativeFunctionTest() {
+  NativeFunctionSmokeTest();
 }
 
 
@@ -1579,8 +1753,8 @@ void RunEndToEndTests() {
 
 int main() {
   std::cout << "=== cilly-vm-cpp test runner ===\n";
-
-  RunEndToEndTests();
+  NativeFunctionTest();
+  /*RunEndToEndTests();*/
   // RunFrontendTests();
   // RunOpcodeTests();
   // RunVMTests();

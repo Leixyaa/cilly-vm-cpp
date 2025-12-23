@@ -93,6 +93,16 @@ class Generator {
   std::vector<Scope> scope_stack_;
   std::vector<std::unique_ptr<Function>> functions_;  // 函数表
   std::unordered_map<std::string, int> func_name_to_index_; // 函数名和索引的映射
+
+  // 原生函数相关
+  static constexpr int kBuiltinCount = 5;
+  std::unordered_map<std::string, int> builtin_name_to_index_;
+  std::unordered_map<std::string, int> builtin_name_to_arity_;
+
+  void InitBuiltins();
+  bool IsBuiltin(const std::string& name) const;
+  int BuiltinIndex(const std::string& name) const;
+  int BuiltinArity(const std::string& name) const;
 };
 
 }  // namespace cilly
