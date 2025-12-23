@@ -1430,82 +1430,82 @@ void CallFunctionSmokeTest() {
 
   std::cout << "===== Return Ã°ÑÌ²âÊÔ =====\n";
 
-   /*std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");          */ 
-std::string source = R"(
-print "BEGIN";
-print 111;
-
-fun add(a, b) { return a + b; }
-print add(1, 2);
-print add(20, 22);
-
-fun sub(a, b) { return a - b; }
-print sub(10, 7);
-
-fun abs1(x) {
-  if (x < 0) { return 0 - x; }
-  else { return x; }
-}
-print abs1(9);
-print abs1(0 - 9);
-
-fun fact(n) {
-  if (n < 2) { return 1; }
-  return n * fact(n - 1);
-}
-print fact(5);
-
-print add(add(1, 2), add(3, 4));
-print add(fact(3), fact(4));
-
-fun shadow(x) {
-  var y = x + 1;
-  {
-    var y = 100;
-  }
-  return y;
-}
-print shadow(9);
-
-fun sum_skip3(n) {
-  var i = 0;
-  var s = 0;
-  while (i < n) {
-    i = i + 1;
-    if (i == 3) { continue; }
-    if (i == 8) { break; }
-    s = s + i;
-  }
-  return s;
-}
-print sum_skip3(100);
-
-fun list_demo(a) {
-  var L = [a, a + 1, a + 2];
-  L[1] = L[1] + 10;
-  return L[0] + L[1] + L[2];
-}
-print list_demo(1);
-
-fun dict_demo(dummy) {
-  var D = { "a": 1, "b": 2 };
-  D["c"] = D["a"] + D["b"];
-  return D["c"];
-}
-print dict_demo(0);
-
-fun for_demo(n) {
-  var s = 0;
-  for (var i = 0; i < n; i = i + 1) {
-    s = s + i;
-  }
-  return s;
-}
-print for_demo(5);
-
-print 999;
-print "END";
-)";
+   std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");           
+//std::string source = R"(
+//print "BEGIN";
+//print 111;
+//
+//fun add(a, b) { return a + b; }
+//print add(1, 2);
+//print add(20, 22);
+//
+//fun sub(a, b) { return a - b; }
+//print sub(10, 7);
+//
+//fun abs1(x) {
+//  if (x < 0) { return 0 - x; }
+//  else { return x; }
+//}
+//print abs1(9);
+//print abs1(0 - 9);
+//
+//fun fact(n) {
+//  if (n < 2) { return 1; }
+//  return n * fact(n - 1);
+//}
+//print fact(5);
+//
+//print add(add(1, 2), add(3, 4));
+//print add(fact(3), fact(4));
+//
+//fun shadow(x) {
+//  var y = x + 1;
+//  {
+//    var y = 100;
+//  }
+//  return y;
+//}
+//print shadow(9);
+//
+//fun sum_skip3(n) {
+//  var i = 0;
+//  var s = 0;
+//  while (i < n) {
+//    i = i + 1;
+//    if (i == 3) { continue; }
+//    if (i == 8) { break; }
+//    s = s + i;
+//  }
+//  return s;
+//}
+//print sum_skip3(100);
+//
+//fun list_demo(a) {
+//  var L = [a, a + 1, a + 2];
+//  L[1] = L[1] + 10;
+//  return L[0] + L[1] + L[2];
+//}
+//print list_demo(1);
+//
+//fun dict_demo(dummy) {
+//  var D = { "a": 1, "b": 2 };
+//  D["c"] = D["a"] + D["b"];
+//  return D["c"];
+//}
+//print dict_demo(0);
+//
+//fun for_demo(n) {
+//  var s = 0;
+//  for (var i = 0; i < n; i = i + 1) {
+//    s = s + i;
+//  }
+//  return s;
+//}
+//print for_demo(5);
+//
+//print 999;
+//print "END";
+//)";
 
 
 

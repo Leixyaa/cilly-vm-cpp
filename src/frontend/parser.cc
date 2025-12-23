@@ -112,9 +112,10 @@ StmtPtr Parser::FuncitonDeclaration() {
   while (!Check(TokenKind::kRParen)) {
     Token name_params = Consume(TokenKind::kIdentifier, "Expect parameter name!");
     params.emplace_back(name_params);
-    if (Match(TokenKind::kRParen)) break;
+    if (Check(TokenKind::kRParen)) break;
     Consume(TokenKind::kComma, "Expect ',' after parameter name!");
   }
+  Consume(TokenKind::kRParen, "Expect ')' after parameters.");
   // 规定函数体必须加‘{’
   Consume(TokenKind::kLBrace, "Expect '{' before function body.");
 

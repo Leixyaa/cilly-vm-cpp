@@ -38,6 +38,9 @@ class Generator {
   void PatchJump(int jump_pos);
   void PatchJumpTo(int jump_pos, int32_t target);
   
+  void PredeclareFunctions(const std::vector<StmtPtr>& program);
+  void CompileFunctionBody(const FunctionStmt* stmt);
+
   // ”Ôæ‰∑÷÷ß
   void EmitPrintStmt(const PrintStmt* stmt);
   void EmitExprStmt(const ExprStmt* stmt);

@@ -19,8 +19,13 @@ Generator::Generator()
 Function Generator::Generate(const std::vector<StmtPtr>& program) {
   // 每次编译一个脚本，都要从干净状态开始
   //（注意：functions_ / func_name_to_index_ 要在开头清，不能在结尾清）
-  functions_.clear();
-  func_name_to_index_.clear();
+
+  PredeclareFunctions(program);
+  for (const auto& s : program) {
+    if (s->kind == Stmt::Kind::kFun) {
+      CompileFunctionBody(static_cast<FunctionStmt*>(s.get()));
+    }
+  }
 
   local_.clear();
   loop_stack_.clear();
@@ -32,11 +37,11 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   next_local_index_ = 0;
   max_local_index_ = 0;
 
-  // 1) 生成 script
   Function script("script", 0);
   current_fn_ = &script;
 
   for (const auto& s : program) {
+    if (s->kind == Stmt::Kind::kFun) continue;  // 不在顶层执行fun相关，前面已经编译过一次了
     EmitStmt(s);
   }
 
@@ -119,9 +124,7 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
       break;
     }
     case Stmt::Kind::kFun: {
-      auto p = static_cast<FunctionStmt*>(stmt.get());
-      EmitFunctionStmt(p);
-      break;
+      return;
     }
     default:
       assert(false && "当前无法处理此类语句");
@@ -138,6 +141,81 @@ void Generator::PatchJumpTo(int jump_pos, int32_t target){
   current_fn_->PatchI32(jump_pos, target);
   return;
 }
+
+void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
+  functions_.clear();
+  func_name_to_index_.clear();
+
+  for (const auto& s : program) {
+    if (s->kind != Stmt::Kind::kFun) continue;
+    auto* fn = static_cast<FunctionStmt*>(s.get());
+    const std::string& name = fn->name.lexeme;
+
+    assert(func_name_to_index_.count(name) == 0 && "duplicate function name");
+
+    int idx = static_cast<int>(functions_.size());
+    functions_.push_back(std::make_unique<Function>(name, (int)fn->params.size()));
+    func_name_to_index_[name] = idx;
+  }
+}
+
+void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
+  int idx = FindFunctionIndex(stmt->name.lexeme);
+  assert(idx >= 0);
+
+  // 保存当前 script 现场
+  Function* saved_fn = current_fn_;
+  auto saved_local = local_;
+  int saved_next = next_local_index_;
+  int saved_max = max_local_index_;
+  auto saved_loop = loop_stack_;
+  auto saved_scope = scope_stack_;
+
+  // 切到该函数（第一遍已经创建好空 Function）
+  current_fn_ = functions_[idx].get();
+
+  // 清空编译状态（函数内部独立）
+  local_.clear();
+  loop_stack_.clear();
+  scope_stack_.clear();
+  scope_stack_.emplace_back();
+  scope_stack_.back().start_local = 0;
+  scope_stack_.back().shadowns = local_;
+
+  next_local_index_ = 0;
+  max_local_index_ = 0;
+
+  // 参数绑定：params -> locals[0..arity-1]
+  std::unordered_map<std::string, bool> seen;
+  for (int i = 0; i < (int)stmt->params.size(); i++) {
+    const std::string& pname = stmt->params[i].lexeme;
+    assert(!seen.count(pname) && "duplicate parameter name");
+    seen[pname] = true;
+
+    local_[pname] = i;
+    next_local_index_++;
+    if (next_local_index_ > max_local_index_) max_local_index_ = next_local_index_;
+  }
+
+  // 编 body
+  EmitBlockStmt(stmt->body.get());
+
+  // 隐式 return null
+  EmitConst(Value::Null());
+  EmitOp(OpCode::OP_RETURN);
+
+  current_fn_->SetLocalCount(max_local_index_);
+
+  // 恢复 script 现场
+  current_fn_ = saved_fn;
+  local_ = std::move(saved_local);
+  next_local_index_ = saved_next;
+  max_local_index_ = saved_max;
+  loop_stack_ = std::move(saved_loop);
+  scope_stack_ = std::move(saved_scope);
+}
+
+
 
 void Generator::EmitPrintStmt(const PrintStmt* stmt) {
   EmitExpr(stmt->expr);
