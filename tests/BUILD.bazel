@@ -1,0 +1,48 @@
+cc_test(
+    name = "hello_test",
+    srcs = ["hello_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+cc_test(
+    name = "value_stack_test",
+    srcs = ["value_stack_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+cc_test(
+    name = "milestone_smoke_test",
+    srcs = ["milestone_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+test_suite(
+    name = "all",
+    tests = [
+        ":hello_test",
+        ":value_stack_test",
+        ":milestone_smoke_test",
+    ],
+)

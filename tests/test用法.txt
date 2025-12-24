@@ -1,0 +1,9 @@
+只跑所有测试（最常用）
+bazelisk test //tests:all
+
+全量编译（偶尔用）
+bazelisk build //...
+
+编译可执行并运行
+bazelisk build //src:cilly
+.\bazel-bin\src\cilly.exe

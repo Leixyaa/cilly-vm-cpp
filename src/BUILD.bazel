@@ -1,0 +1,16 @@
+cc_library(
+    name = "cilly_core",
+    srcs = glob(["*.cc"], exclude=["main.cc"]),
+    hdrs = glob(["*.h"]),
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)
+
+cc_binary(
+    name = "cilly",
+    srcs = ["main.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+    ],
+)

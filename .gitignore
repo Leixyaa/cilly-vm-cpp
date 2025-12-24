@@ -416,3 +416,26 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+# bazel
+/bazel-*
+/bazel-bin/
+/bazel-out/
+/bazel-testlogs/
+/bazel-*/
+**/.vs/
+/**/x64/
+/**/Debug/
+/**/Release/
+
+
+# Bazel outputs
+/bazel-*
+bazel-*
+
+# Local test artifacts / binaries
+cilly_vm_cpp/*.bin
+
+# Local scratch script (optional)
+# cilly_vm_cpp/file.txt
+

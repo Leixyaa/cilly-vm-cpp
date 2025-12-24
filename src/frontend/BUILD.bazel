@@ -1,0 +1,10 @@
+cc_library(
+    name = "frontend",
+    srcs = glob(["*.cc"]),
+    hdrs = glob(["*.h"]),
+    includes = ["."],
+    deps = [
+        "//src:cilly_core",
+    ],
+    visibility = ["//visibility:public"],
+)
