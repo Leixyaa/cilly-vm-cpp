@@ -3,8 +3,8 @@
 #include <cassert>
 #include <chrono>
 
-#include "vm.h"
 #include "value.h"
+#include "vm.h"
 
 namespace cilly {
 
@@ -13,10 +13,14 @@ void RegisterBuiltins(VM& vm) {
   int i0 = vm.RegisterNative("len", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr()) return Value::Num((double)v.AsStr().size());
-    if (v.IsList()) return Value::Num((double)v.AsList()->Size());
-    if (v.IsDict()) return Value::Num((double)v.AsDict()->Size());
-    if (v.IsString()) return Value::Num((double)v.AsString()->ToRepr().size());
+    if (v.IsStr())
+      return Value::Num((double)v.AsStr().size());
+    if (v.IsList())
+      return Value::Num((double)v.AsList()->Size());
+    if (v.IsDict())
+      return Value::Num((double)v.AsDict()->Size());
+    if (v.IsString())
+      return Value::Num((double)v.AsString()->ToRepr().size());
     assert(false && "len() unsupported type");
     return Value::Null();
   });
@@ -26,7 +30,8 @@ void RegisterBuiltins(VM& vm) {
   int i1 = vm.RegisterNative("str", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr()) return v;
+    if (v.IsStr())
+      return v;
     return Value::Str(v.ToRepr());
   });
   assert(i1 == 1);
@@ -35,13 +40,20 @@ void RegisterBuiltins(VM& vm) {
   int i2 = vm.RegisterNative("type", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsNull()) return Value::Str("null");
-    if (v.IsBool()) return Value::Str("bool");
-    if (v.IsNum()) return Value::Str("number");
-    if (v.IsStr() || v.IsString()) return Value::Str("str");
-    if (v.IsList()) return Value::Str("list");
-    if (v.IsDict()) return Value::Str("dict");
-    if (v.IsObj()) return Value::Str("object");
+    if (v.IsNull())
+      return Value::Str("null");
+    if (v.IsBool())
+      return Value::Str("bool");
+    if (v.IsNum())
+      return Value::Str("number");
+    if (v.IsStr() || v.IsString())
+      return Value::Str("str");
+    if (v.IsList())
+      return Value::Str("list");
+    if (v.IsDict())
+      return Value::Str("dict");
+    if (v.IsObj())
+      return Value::Str("object");
     return Value::Str("unknown");
   });
   assert(i2 == 2);

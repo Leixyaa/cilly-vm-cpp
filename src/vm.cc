@@ -1,8 +1,10 @@
 #include "vm.h"
-#include "builtins.h"
+
 #include <cassert>
 #include <functional>
 #include <iostream>
+
+#include "builtins.h"
 
 namespace cilly {
 
@@ -19,6 +21,7 @@ void VM::Run(const Function& fn) {
 
   // 每次运行前清空栈
   stack_.Clear();
+  last_return_value_ = Value::Null();
 
   while (true) {
     CallFrame& cf = CurrentFrame();
@@ -239,6 +242,8 @@ bool VM::Step_() {
 
     case OpCode::OP_RETURN: {
       Value ret = stack_.Pop();  // 先弹出返回值；
+      last_return_value_ = ret;
+
       frames_.pop_back();
       if (frames_
               .empty()) {  // 如果已经没有上层调用帧了，说明返回的是最外层函数

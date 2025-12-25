@@ -38,6 +38,8 @@ class VM {
 
   // 运行入口：执行给定函数（从头到尾）。
   void Run(const Function& fn);
+  // 供测试使用：拿到最近一次 OP_RETURN 的返回值
+  const Value& last_return_value() const { return last_return_value_; }
 
   // 便于调试：取内部栈的统计指标。
   int PushCount() const;
@@ -68,6 +70,8 @@ class VM {
   StackStats stack_;  // 运行时栈（带统计）
   std::vector<CallFrame> frames_;
   std::vector<Callable> callables_;
+
+  Value last_return_value_ = Value::Null();
 };
 
 }  // namespace cilly
