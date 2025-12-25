@@ -24,29 +24,32 @@ function Clean-RelPath([string]$s) {
     $t = $t.Substring(1, $t.Length - 2)
   }
 
-  # 去控制字符
+  # 去掉所有控制字符（包含 \r \n \t 等）
   $t = -join ($t.ToCharArray() | Where-Object { [int]$_ -ge 32 })
 
-  # 统一分隔符
+  # 统一分隔符（git 通常输出 /）
   $t = $t.Replace('/', '\')
 
   return $t.Trim()
 }
 
-function Get-ChangedFiles() {
+function Get-ChangedFilesFlat() {
+  # 用 -z（NUL 分隔）拿路径，避免 Git Bash / CRLF 污染
   $raw1 = (& git diff --name-only -z) 2>$null
   $raw2 = (& git diff --name-only --cached -z) 2>$null
 
-  $paths = @()
-  if ($raw1) { $paths += $raw1.Split([char]0) }
-  if ($raw2) { $paths += $raw2.Split([char]0) }
+  $paths = New-Object System.Collections.Generic.List[string]
 
-  $paths = $paths |
-    ForEach-Object { Clean-RelPath $_ } |
-    Where-Object { $_ -ne "" } |
-    Sort-Object -Unique
+  foreach ($raw in @($raw1, $raw2)) {
+    if (-not $raw) { continue }
+    foreach ($p in $raw.Split([char]0)) {
+      $c = Clean-RelPath $p
+      if ($c) { [void]$paths.Add($c) }
+    }
+  }
 
-  return ,$paths
+  # 去重排序后返回一维 string[]
+  return $paths.ToArray() | Sort-Object -Unique
 }
 
 # ---------------- main ----------------
@@ -55,18 +58,26 @@ Assert-Command clang-format
 
 $repoRoot = Get-RepoRoot
 
+# 只处理 C/C++ 文件
 $extOk = @(".h", ".hpp", ".hh", ".c", ".cc", ".cpp", ".cxx")
+
+# 排除目录（统一用小写匹配）
 $excludeSubstrings = @("\bazel-", "\third_party\", "\external\", "\out\", "\build\", "\.git\")
 
-$files = Get-ChangedFiles
-if (-not $files -or $files.Count -eq 0) {
+$files = @(Get-ChangedFilesFlat)
+if ($files.Length -eq 0) {
   Write-Host "No changed files."
   exit 0
 }
 
-$targets = @()
+$targets = New-Object System.Collections.Generic.List[string]
+
 foreach ($rel in $files) {
-  $full = Join-Path $repoRoot $rel
+  # 强制转 string，避免出现 object[]
+  $relStr = [string]$rel
+  if (-not $relStr) { continue }
+
+  $full = Join-Path -Path $repoRoot -ChildPath $relStr
   $pLower = $full.ToLowerInvariant()
 
   $skip = $false
@@ -79,7 +90,7 @@ foreach ($rel in $files) {
 
   $ext = [IO.Path]::GetExtension($full).ToLowerInvariant()
   if ($extOk -contains $ext) {
-    $targets += $full
+    [void]$targets.Add($full)
   }
 }
 
@@ -92,7 +103,6 @@ Write-Host ("Checking changed files: {0}" -f $targets.Count)
 
 $failed = $false
 foreach ($f in $targets) {
-  # 用 replacements 判断是否需要格式化（避免 CRLF/LF 误判）
   $xml = clang-format --style=file -output-replacements-xml $f
   if ($xml -match "<replacement ") {
     Write-Host ("NOT FORMATTED: {0}" -f $f)
