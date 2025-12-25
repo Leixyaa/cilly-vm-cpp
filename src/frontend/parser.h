@@ -45,7 +45,7 @@ class Parser {
   bool MatchAny(std::initializer_list<TokenKind> kinds);
 
   // 除去string两边引号 "abc"->abc
-  std::string StripQuotes(const std::string& s);  
+  std::string StripQuotes(const std::string& s);
 
   // 如果当前 token 是 kind，就消费掉；否则报错（以后再实现具体错误处理）。
   const Token& Consume(TokenKind kind, const std::string& message);
@@ -104,10 +104,10 @@ class Parser {
   StmtPtr AssignStatement();
 
   // 赋值语句（选择是否去掉分号）
-  StmtPtr AssignStatement(bool require_semicolon); // 重载，应对赋值表达式情况
+  StmtPtr AssignStatement(bool require_semicolon);  // 重载，应对赋值表达式情况
 
   // 索引赋值语句
-  StmtPtr IndexAssignStatement();	
+  StmtPtr IndexAssignStatement();
 
   // return返回值
   StmtPtr ReturnStatement();
@@ -123,12 +123,12 @@ class Parser {
   // 典型表达式优先级结构（从高到低）大概是：
   //   Primary -> Unary -> Factor(* /) -> Term(+ -) -> ... -> Expression
 
-  //ExprPtr Equality();    // ==, !=（以后用）
-  //ExprPtr Comparison();  // <, <=, >, >=（以后用）
-  ExprPtr Term();        // +, -
-  ExprPtr Factor();      // *, /
-  ExprPtr Unary();       // 一元运算：-expr, !expr（以后用）
-  ExprPtr Primary();     // 最底层：字面量、变量名、括号表达式
+  // ExprPtr Equality();    // ==, !=（以后用）
+  // ExprPtr Comparison();  // <, <=, >, >=（以后用）
+  ExprPtr Term();     // +, -
+  ExprPtr Factor();   // *, /
+  ExprPtr Unary();    // 一元运算：-expr, !expr（以后用）
+  ExprPtr Primary();  // 最底层：字面量、变量名、括号表达式
   ExprPtr ProFix();
   ExprPtr Equality();
   ExprPtr Comparison();
@@ -136,8 +136,8 @@ class Parser {
   // ========== 成员数据 ==========
 
   std::vector<Token> tokens_;  // 输入的 token 序列
-  int current_;                // 当前看的 token 下标（类似 Lexer 里的 current_）
-  int block_depth_ = 0;        // 暂时规定函数只能顶层声明
+  int current_;          // 当前看的 token 下标（类似 Lexer 里的 current_）
+  int block_depth_ = 0;  // 暂时规定函数只能顶层声明
 };
 
 }  // namespace cilly

@@ -2,12 +2,12 @@
 #define CILLY_VM_CPP_GENERATOR_H_
 
 #include <memory>
-#include <vector>
 #include <unordered_map>
-#include "ast.h"
+#include <vector>
+
 #include "../function.h"
 #include "../opcodes.h"
-
+#include "ast.h"
 
 namespace cilly {
 
@@ -21,9 +21,10 @@ class Generator {
   // 输出：一个可在 VM 中执行的 Function
   Function Generate(const std::vector<StmtPtr>& program);
 
-  const std::vector<std::unique_ptr<Function>>& Functions() const { return functions_; } // 只读接口
+  const std::vector<std::unique_ptr<Function>>& Functions() const {
+    return functions_;
+  }  // 只读接口
   int FindFunctionIndex(const std::string& name) const;
-  
 
  private:
   // 当前正在生成字节码的函数
@@ -31,13 +32,12 @@ class Generator {
   std::unordered_map<std::string, int> local_;
   int next_local_index_;
   int max_local_index_;
- 
-  
+
   // 工具：生成一条语句
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
   void PatchJumpTo(int jump_pos, int32_t target);
-  
+
   void PredeclareFunctions(const std::vector<StmtPtr>& program);
   void CompileFunctionBody(const FunctionStmt* stmt);
 
@@ -78,8 +78,8 @@ class Generator {
 
   // 记录所有 break,continue 的 jump 占位
   struct LoopContext {
-    int scope_depth = 0;   
-    std::vector<int> break_jumps;  
+    int scope_depth = 0;
+    std::vector<int> break_jumps;
     std::vector<int> continue_jumps;
   };
 
@@ -88,11 +88,12 @@ class Generator {
     std::unordered_map<std::string, int> shadowns;
     std::vector<std::string> names;
   };
-  
+
   std::vector<LoopContext> loop_stack_;
   std::vector<Scope> scope_stack_;
   std::vector<std::unique_ptr<Function>> functions_;  // 函数表
-  std::unordered_map<std::string, int> func_name_to_index_; // 函数名和索引的映射
+  std::unordered_map<std::string, int>
+      func_name_to_index_;  // 函数名和索引的映射
 
   // 原生函数相关
   static constexpr int kBuiltinCount = 5;

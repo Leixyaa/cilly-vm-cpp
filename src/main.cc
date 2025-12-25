@@ -3,21 +3,21 @@
 // Date: 2024-11-06
 // Description: Entry point for testing environment.
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
+#include "bytecode_stream.h"
 #include "chunk.h"
-#include "function.h"
-#include "opcodes.h"
-#include "stack_stats.h"
-#include "value.h"
-#include "vm.h"
-#include "bytecode_stream.h" 
-#include "object.h"
+#include "frontend/generator.h"
 #include "frontend/lexer.h"
 #include "frontend/parser.h"
-#include "frontend/generator.h"
+#include "function.h"
+#include "object.h"
+#include "opcodes.h"
+#include "stack_stats.h"
 #include "util/io.h"
+#include "value.h"
+#include "vm.h"
 
 // 注册原生函数
 static void RegisterBuiltins(cilly::VM& vm) {
@@ -27,40 +27,52 @@ static void RegisterBuiltins(cilly::VM& vm) {
   int i0 = vm.RegisterNative("len", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr())   return Value::Num((double)v.AsStr().size());
-    if (v.IsList())  return Value::Num((double)v.AsList()->Size());
-    if (v.IsDict())  return Value::Num((double)v.AsDict()->Size());
-    if (v.IsString())return Value::Num((double)v.AsString()->ToRepr().size());
+    if (v.IsStr())
+      return Value::Num((double)v.AsStr().size());
+    if (v.IsList())
+      return Value::Num((double)v.AsList()->Size());
+    if (v.IsDict())
+      return Value::Num((double)v.AsDict()->Size());
+    if (v.IsString())
+      return Value::Num((double)v.AsString()->ToRepr().size());
     assert(false && "len() unsupported type");
     return Value::Null();
   });
   assert(i0 == 0);
 
-  //str(x)
+  // str(x)
   int i1 = vm.RegisterNative("str", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr()) return v;
+    if (v.IsStr())
+      return v;
     return Value::Str(v.ToRepr());
   });
   assert(i1 == 1);
 
-  //type(x)
+  // type(x)
   int i2 = vm.RegisterNative("type", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsNull()) return Value::Str("null");
-    if (v.IsBool()) return Value::Str("bool");
-    if (v.IsNum())  return Value::Str("number");
-    if (v.IsStr() || v.IsString()) return Value::Str("str");
-    if (v.IsList()) return Value::Str("list");
-    if (v.IsDict()) return Value::Str("dict");
-    if (v.IsObj())  return Value::Str("object");
+    if (v.IsNull())
+      return Value::Str("null");
+    if (v.IsBool())
+      return Value::Str("bool");
+    if (v.IsNum())
+      return Value::Str("number");
+    if (v.IsStr() || v.IsString())
+      return Value::Str("str");
+    if (v.IsList())
+      return Value::Str("list");
+    if (v.IsDict())
+      return Value::Str("dict");
+    if (v.IsObj())
+      return Value::Str("object");
     return Value::Str("unknown");
   });
   assert(i2 == 2);
 
-  //abs(x)
+  // abs(x)
   int i3 = vm.RegisterNative("abs", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     assert(args[0].IsNum());
@@ -69,28 +81,25 @@ static void RegisterBuiltins(cilly::VM& vm) {
   });
   assert(i3 == 3);
 
-  //clock()
+  // clock()
   int i4 = vm.RegisterNative("clock", 0, [](VM&, const Value*, int) {
     using clock = std::chrono::steady_clock;
     double s = std::chrono::duration_cast<std::chrono::duration<double>>(
-                 clock::now().time_since_epoch()).count();
+                   clock::now().time_since_epoch())
+                   .count();
     return Value::Num(s);
   });
   assert(i4 == 4);
 }
 
-
-
-
-
 // ---------------- Value 封装自测 ----------------
-void ValueTest(){
+void ValueTest() {
   std::cout << "Value 封装自测 :\n" << std::endl;
 
   cilly::Value vnull = cilly::Value::Null();
   cilly::Value vtrue = cilly::Value::Bool(true);
-  cilly::Value vnum  = cilly::Value::Num(10);
-  cilly::Value vstr  = cilly::Value::Str("hi");
+  cilly::Value vnum = cilly::Value::Num(10);
+  cilly::Value vstr = cilly::Value::Str("hi");
 
   std::cout << vnull.ToRepr() << std::endl;
   std::cout << vtrue.ToRepr() << std::endl;
@@ -102,7 +111,7 @@ void ValueTest(){
 }
 
 // ---------------- Stack 封装自测 ----------------
-void StackTest(){
+void StackTest() {
   std::cout << "Stack 封装自测 :\n" << std::endl;
 
   cilly::StackStats s;
@@ -110,7 +119,8 @@ void StackTest(){
   s.Push(cilly::Value::Num(10));
   s.Push(cilly::Value::Str("stack_test_"));
   auto v = s.Pop();
-  std::cout << s.PushCount() << "," << s.PopCount() << "," << s.Depth()  << "," << s.MaxDepth() << "," << v.ToRepr() << std::endl;
+  std::cout << s.PushCount() << "," << s.PopCount() << "," << s.Depth() << ","
+            << s.MaxDepth() << "," << v.ToRepr() << std::endl;
   std::cout << "---------------------------------------------\n";
 }
 
@@ -124,20 +134,20 @@ void ChunkTest() {
   int c0 = ch.AddConst(Value::Num(10));
   int c1 = ch.AddConst(Value::Num(20));
 
-  ch.Emit(OpCode::OP_CONSTANT, 1);  
+  ch.Emit(OpCode::OP_CONSTANT, 1);
   ch.EmitI32(c0, 1);
-  ch.Emit(OpCode::OP_CONSTANT, 1); 
+  ch.Emit(OpCode::OP_CONSTANT, 1);
   ch.EmitI32(c1, 1);
-  ch.Emit(OpCode::OP_ADD, 1);       
-  ch.Emit(OpCode::OP_PRINT, 1);     
+  ch.Emit(OpCode::OP_ADD, 1);
+  ch.Emit(OpCode::OP_PRINT, 1);
 
   std::cout << "CodeSize = " << ch.CodeSize() << "\n";
   std::cout << "ConstSize = " << ch.ConstSize() << "\n\n";
 
   std::cout << "Code stream (index : value [line]):\n";
   for (int i = 0; i < ch.CodeSize(); ++i) {
-    std::cout << "  " << i << " : " << ch.CodeAt(i)
-              << " [line " << ch.LineAt(i) << "]\n";
+    std::cout << "  " << i << " : " << ch.CodeAt(i) << " [line " << ch.LineAt(i)
+              << "]\n";
   }
 
   std::cout << "\nConst pool:\n";
@@ -164,14 +174,14 @@ void FunctionTest() {
   fn.Emit(OpCode::OP_ADD, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
-  std::cout << "Function name=" << fn.name()
-            << ", arity=" << fn.arity() << "\n";
+  std::cout << "Function name=" << fn.name() << ", arity=" << fn.arity()
+            << "\n";
   std::cout << "CodeSize=" << fn.chunk().CodeSize()
             << ", ConstSize=" << fn.chunk().ConstSize() << "\n";
 
   for (int i = 0; i < fn.chunk().CodeSize(); ++i) {
-    std::cout << "  code[" << i << "]=" << fn.chunk().CodeAt(i)
-              << " @line " << fn.chunk().LineAt(i) << "\n";
+    std::cout << "  code[" << i << "]=" << fn.chunk().CodeAt(i) << " @line "
+              << fn.chunk().LineAt(i) << "\n";
   }
   for (int i = 0; i < fn.chunk().ConstSize(); ++i) {
     std::cout << "  const[" << i << "]=" << fn.chunk().ConstAt(i).ToRepr()
@@ -186,35 +196,37 @@ void VMTest() {
   std::cout << "VM 最小执行循环自测 :\n" << std::endl;
 
   Function fn("main", /*arity=*/0);
-  
+
   int c0 = fn.AddConst(Value::Num(10));
   int c1 = fn.AddConst(Value::Num(2));
   int c2 = fn.AddConst(Value::Num(3));
   int c3 = fn.AddConst(Value::Num(2));
-// 10 - 2 * 3 / 2 = 12
-fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c0, 1);   // 10
-fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c1, 1);   // 2
-fn.Emit(OpCode::OP_SUB, 1);                           // 10 - 2 = 8
-fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c2, 1);   // 3
-fn.Emit(OpCode::OP_MUL, 1);                           // 8 * 3 = 24
-fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c3, 1);   // 2
-fn.Emit(OpCode::OP_DIV, 1);                           // 24 / 2 = 12
-fn.Emit(OpCode::OP_PRINT, 1);                         // 打印结果s
-fn.Emit(OpCode::OP_RETURN, 1);
+  // 10 - 2 * 3 / 2 = 12
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c0, 1);  // 10
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);           // 2
+  fn.Emit(OpCode::OP_SUB, 1);  // 10 - 2 = 8
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);           // 3
+  fn.Emit(OpCode::OP_MUL, 1);  // 8 * 3 = 24
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c3, 1);             // 2
+  fn.Emit(OpCode::OP_DIV, 1);    // 24 / 2 = 12
+  fn.Emit(OpCode::OP_PRINT, 1);  // 打印结果s
+  fn.Emit(OpCode::OP_RETURN, 1);
 
   VM vm;
-  vm.Run(fn);  //12
+  vm.Run(fn);  // 12
 
-std::cout << "PushCount = "   << vm.PushCount() 
-          << ", PopCount = "  << vm.PopCount()
-          << ", Depth = "     << vm.Depth()
-          << ", MaxDepth = "  << vm.MaxDepth() << std::endl;
+  std::cout << "PushCount = " << vm.PushCount()
+            << ", PopCount = " << vm.PopCount() << ", Depth = " << vm.Depth()
+            << ", MaxDepth = " << vm.MaxDepth() << std::endl;
 
   std::cout << "---------------------------------------------\n";
 }
 
-
-//---------------- 变量系统自测 ---------------- 
+//---------------- 变量系统自测 ----------------
 void VarTest() {
   using namespace cilly;
   std::cout << "变量系统自测:\n" << std::endl;
@@ -227,7 +239,7 @@ void VarTest() {
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c10, 1);
   fn.Emit(OpCode::OP_STORE_VAR, 1);
-  fn.EmitI32(0, 1);   // local[0]
+  fn.EmitI32(0, 1);  // local[0]
 
   // locals_[1] = 20
   int c20 = fn.AddConst(Value::Num(20));
@@ -237,8 +249,10 @@ void VarTest() {
   fn.EmitI32(1, 1);
 
   // print locals_[0] + locals_[1]
-  fn.Emit(OpCode::OP_LOAD_VAR, 1); fn.EmitI32(0, 1);
-  fn.Emit(OpCode::OP_LOAD_VAR, 1); fn.EmitI32(1, 1);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(0, 1);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  fn.EmitI32(1, 1);
   fn.Emit(OpCode::OP_ADD, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
@@ -249,11 +263,10 @@ void VarTest() {
   vm.Run(fn);
 
   std::cout << "---------------------------------------------\n";
-
 }
 
 // ---------------- 简单函数调用自测 ----------------
-//被调用函数返回 42，主函数调用并打印
+// 被调用函数返回 42，主函数调用并打印
 void CallTest() {
   using namespace cilly;
   std::cout << "简单函数调用自测:\n" << std::endl;
@@ -285,10 +298,8 @@ void CallTest() {
   // 运行主函数
   vm.Run(main_fn);
 
-
   std::cout << "---------------------------------------------\n";
 }
-
 
 // ---------------- 带一个参数的函数调用自测 ----------------
 void CallWithArgTest() {
@@ -296,25 +307,25 @@ void CallWithArgTest() {
 
   std::cout << "带一个参数的函数调用自测:\n" << std::endl;
 
-  Function add1("add1", 1);  //创建函数add1(n)
-  add1.SetLocalCount(1);     //规定变量一共一个
+  Function add1("add1", 1);  // 创建函数add1(n)
+  add1.SetLocalCount(1);     // 规定变量一共一个
 
   int c1 = add1.AddConst(Value::Num(1));  // 把1加入常量池
   add1.Emit(OpCode::OP_LOAD_VAR, 1);      // 载入变量n
-  add1.EmitI32(0, 1);   
-  add1.Emit(OpCode::OP_CONSTANT, 1);      // 1
+  add1.EmitI32(0, 1);
+  add1.Emit(OpCode::OP_CONSTANT, 1);  // 1
   add1.EmitI32(c1, 1);
-  add1.Emit(OpCode::OP_ADD, 1);           // n + 1
-  add1.Emit(OpCode::OP_RETURN, 1);        // 返回 n + 1
+  add1.Emit(OpCode::OP_ADD, 1);     // n + 1
+  add1.Emit(OpCode::OP_RETURN, 1);  // 返回 n + 1
 
-  Function main("main", 1);   //创建函数 main
+  Function main("main", 1);  // 创建函数 main
   main.SetLocalCount(0);
 
   VM vm;
 
   int add1_id = vm.RegisterFunction(&add1);
 
-  int c42 = main.AddConst(Value::Num(42)); // 压入实参 42
+  int c42 = main.AddConst(Value::Num(42));  // 压入实参 42
   main.Emit(OpCode::OP_CONSTANT, 1);
   main.EmitI32(c42, 1);
 
@@ -322,48 +333,47 @@ void CallWithArgTest() {
   main.EmitI32(add1_id, 1);
 
   main.Emit(OpCode::OP_PRINT, 1);
-  main.Emit(OpCode::OP_RETURN, 1);         // 返回 42 + 1 = 42
-  
+  main.Emit(OpCode::OP_RETURN, 1);  // 返回 42 + 1 = 42
+
   vm.Run(main);
 
   std::cout << "---------------------------------------------\n";
 }
 
-
 // ---------------- 相等命令自测 ----------------
 void Eqtest() {
   using namespace cilly;
-  
+
   std::cout << "相等命令自测:\n" << std::endl;
-  
+
   Function main("main", 0);
   main.SetLocalCount(0);
 
   int c1 = main.AddConst(Value::Num(1));
   int c2 = main.AddConst(Value::Num(2));
-  
+
   main.Emit(OpCode::OP_CONSTANT, 1);  // 1
   main.EmitI32(c1, 1);
   main.Emit(OpCode::OP_CONSTANT, 1);  // 1
   main.EmitI32(c1, 1);
-  main.Emit(OpCode::OP_EQ, 1);        // 1 == 1
-  main.Emit(OpCode::OP_PRINT, 1);     // true
+  main.Emit(OpCode::OP_EQ, 1);     // 1 == 1
+  main.Emit(OpCode::OP_PRINT, 1);  // true
 
   main.Emit(OpCode::OP_CONSTANT, 1);  // 1
   main.EmitI32(c1, 1);
   main.Emit(OpCode::OP_CONSTANT, 1);  // 2
-  main.EmitI32(c2, 1);  
-  main.Emit(OpCode::OP_EQ, 1);        // 1 == 2
-  main.Emit(OpCode::OP_PRINT, 1);     // false
+  main.EmitI32(c2, 1);
+  main.Emit(OpCode::OP_EQ, 1);     // 1 == 2
+  main.Emit(OpCode::OP_PRINT, 1);  // false
 
-  main.Emit(OpCode::OP_RETURN, 1);    // 随便 return 一个值，这里返回最后一次比较结果
+  main.Emit(OpCode::OP_RETURN,
+            1);  // 随便 return 一个值，这里返回最后一次比较结果
 
   VM vm;
-  vm.Run(main);  
+  vm.Run(main);
 
   std::cout << "---------------------------------------------\n";
 }
-
 
 void ForLoopTest() {
   using namespace cilly;
@@ -401,7 +411,7 @@ void ForLoopTest() {
   fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
   int end_lable = fn.CodeSize();
   fn.EmitI32(0, 1);
-  
+
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
@@ -413,10 +423,10 @@ void ForLoopTest() {
   fn.Emit(OpCode::OP_ADD, 1);
   fn.Emit(OpCode::OP_STORE_VAR, 1);
   fn.EmitI32(0, 1);
-  
+
   fn.Emit(OpCode::OP_JUMP, 1);
   fn.EmitI32(loop_start, 1);
-  
+
   fn.PatchI32(end_lable, fn.CodeSize());
 
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
@@ -429,9 +439,6 @@ void ForLoopTest() {
   std::cout << "For 循环自测 (预期 print: 0,1,2; return: 3)\n";
   std::cout << "---------------------------------------------\n";
 }
-
-
-
 
 // ---------------- 条件跳转命令自测 ----------------
 void IfTest() {
@@ -449,9 +456,11 @@ void IfTest() {
   int c999 = fn.AddConst(Value::Num(999));
 
   // 如果 (1 == 2)
-  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c1, 1);
-  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c2, 1);
-  fn.Emit(OpCode::OP_EQ, 1);                      // 栈顶 = false
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c1, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_EQ, 1);  // 栈顶 = false
 
   // JUMP_IF_FALSE <else_label>
   fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
@@ -460,12 +469,13 @@ void IfTest() {
   fn.EmitI32(0, 1);
 
   // then: print(999)
-  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c999, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c999, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
   // JUMP end
   fn.Emit(OpCode::OP_JUMP, 1);
-  
+
   int if_end_pos = fn.CodeSize();
   fn.EmitI32(0, 1);
 
@@ -475,7 +485,8 @@ void IfTest() {
   // print(888)
   // ——此处就是 else_label 的位置——
   // 真实位置 = fn.CodeSize()
-  fn.Emit(OpCode::OP_CONSTANT, 1); fn.EmitI32(c888, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c888, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
   fn.PatchI32(if_end_pos, fn.CodeSize());
@@ -486,9 +497,8 @@ void IfTest() {
   VM vm;
   vm.Run(fn);
 
- std::cout << "---------------------------------------------\n";
+  std::cout << "---------------------------------------------\n";
 }
-
 
 // ---------------- odd/even 互递归自测 ----------------
 void OddEvenTest() {
@@ -496,9 +506,9 @@ void OddEvenTest() {
   std::cout << "odd/even 互递归自测:\n" << std::endl;
 
   // 1. 创建三个函数对象：odd, even, main
-  Function odd_fn("odd", 1);      // 1 个参数：n
-  Function even_fn("even", 1);    // 1 个参数：n
-  Function main_fn("main", 0);    // 无参数
+  Function odd_fn("odd", 1);    // 1 个参数：n
+  Function even_fn("even", 1);  // 1 个参数：n
+  Function main_fn("main", 0);  // 无参数
 
   // 每个函数至少有与参数个数一致的 locals
   odd_fn.SetLocalCount(1);   // locals_[0] = n
@@ -516,53 +526,61 @@ void OddEvenTest() {
   int c1 = even_fn.AddConst(Value::Num(1));
   int c_true = even_fn.AddConst(Value::Bool(true));
 
-  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);  even_fn.EmitI32(0, 1);
-  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c0, 1);
+  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  even_fn.EmitI32(0, 1);
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);
+  even_fn.EmitI32(c0, 1);
   even_fn.Emit(OpCode::OP_EQ, 1);
- 
+
   // if(n == 0)
   even_fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
-  int if_else_pos = even_fn.CodeSize();  
+  int if_else_pos = even_fn.CodeSize();
   even_fn.EmitI32(0, 1);
-  
-  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c_true, 1);
+
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);
+  even_fn.EmitI32(c_true, 1);
   even_fn.Emit(OpCode::OP_RETURN, 1);
-  
+
   even_fn.PatchI32(if_else_pos, even_fn.CodeSize());
 
-  //else
-  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);  even_fn.EmitI32(0, 1);
-  even_fn.Emit(OpCode::OP_CONSTANT, 1);  even_fn.EmitI32(c1, 1);
+  // else
+  even_fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  even_fn.EmitI32(0, 1);
+  even_fn.Emit(OpCode::OP_CONSTANT, 1);
+  even_fn.EmitI32(c1, 1);
   even_fn.Emit(OpCode::OP_SUB, 1);
   even_fn.Emit(OpCode::OP_CALL, 1);
   even_fn.EmitI32(odd_id, 1);
 
   even_fn.Emit(OpCode::OP_RETURN, 1);
 
-
-
   //    (2) odd_fn 的函数体
   c0 = odd_fn.AddConst(Value::Num(0));
   c1 = odd_fn.AddConst(Value::Num(1));
   c_true = odd_fn.AddConst(Value::Bool(false));
 
-  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);  odd_fn.EmitI32(0, 1);
-  odd_fn.Emit(OpCode::OP_CONSTANT, 1);  odd_fn.EmitI32(c0, 1);
+  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  odd_fn.EmitI32(0, 1);
+  odd_fn.Emit(OpCode::OP_CONSTANT, 1);
+  odd_fn.EmitI32(c0, 1);
   odd_fn.Emit(OpCode::OP_EQ, 1);
- 
+
   // if(n == 0)
   odd_fn.Emit(OpCode::OP_JUMP_IF_FALSE, 1);
-  if_else_pos = odd_fn.CodeSize();  odd_fn.EmitI32(0, 1);
-  
+  if_else_pos = odd_fn.CodeSize();
+  odd_fn.EmitI32(0, 1);
+
   odd_fn.Emit(OpCode::OP_CONSTANT, 1);
   odd_fn.EmitI32(c_true, 1);
   odd_fn.Emit(OpCode::OP_RETURN, 1);
-  
+
   odd_fn.PatchI32(if_else_pos, odd_fn.CodeSize());
 
-  //else
-  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);  odd_fn.EmitI32(0, 1);
-  odd_fn.Emit(OpCode::OP_CONSTANT, 1);  odd_fn.EmitI32(c1, 1);
+  // else
+  odd_fn.Emit(OpCode::OP_LOAD_VAR, 1);
+  odd_fn.EmitI32(0, 1);
+  odd_fn.Emit(OpCode::OP_CONSTANT, 1);
+  odd_fn.EmitI32(c1, 1);
   odd_fn.Emit(OpCode::OP_SUB, 1);
   odd_fn.Emit(OpCode::OP_CALL, 1);
   odd_fn.EmitI32(even_id, 1);
@@ -577,14 +595,14 @@ void OddEvenTest() {
   main_fn.Emit(OpCode::OP_CALL, 1);
   main_fn.EmitI32(even_id, 1);
   main_fn.Emit(OpCode::OP_PRINT, 1);
-  
+
   main_fn.Emit(OpCode::OP_CONSTANT, 1);
   main_fn.EmitI32(c3, 1);
   main_fn.Emit(OpCode::OP_CALL, 1);
   main_fn.EmitI32(odd_id, 1);
   main_fn.Emit(OpCode::OP_PRINT, 1);
 
- main_fn.Emit(OpCode::OP_RETURN, 1);
+  main_fn.Emit(OpCode::OP_RETURN, 1);
 
   // TODO: 填 even_fn 的字节码
 
@@ -595,7 +613,7 @@ void OddEvenTest() {
   // 4. 运行 main_fn
   vm.Run(main_fn);
 
- std::cout << "---------------------------------------------\n";
+  std::cout << "---------------------------------------------\n";
 }
 
 // ---------------- 比较指令自测 ----------------
@@ -603,7 +621,7 @@ void CompareTest() {
   using namespace cilly;
   std::cout << "补全比较指令自测:\n" << std::endl;
 
-  Function fn("compare_test", /*arity*/0);
+  Function fn("compare_test", /*arity*/ 0);
   fn.SetLocalCount(0);
 
   // 创建常量
@@ -612,25 +630,32 @@ void CompareTest() {
   int cfalse = fn.AddConst(Value::Bool(false));
 
   // ----- print(3 > 2) -----
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
   fn.Emit(OpCode::OP_GREATER, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
   // ----- print(3 < 2) -----
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
   fn.Emit(OpCode::OP_LESS, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
   // ----- print(3 != 2) -----
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c3, 1);
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(c2, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c3, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(c2, 1);
   fn.Emit(OpCode::OP_NOT_EQUAL, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
   // ----- print(!false) -----
-  fn.Emit(OpCode::OP_CONSTANT, 1);  fn.EmitI32(cfalse, 1);
+  fn.Emit(OpCode::OP_CONSTANT, 1);
+  fn.EmitI32(cfalse, 1);
   fn.Emit(OpCode::OP_NOT, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
 
@@ -648,11 +673,11 @@ void StreamTest() {
   using namespace cilly;
   // 写入测试
   {
-    BytecodeWriter writer("test.bin"); // 会在目录下生成 test.bin
-    writer.Write<int>(12345);                 // 写入整数
-    writer.Write<double>(3.14159);            // 写入浮点数
-    writer.WriteString("Hello C++");          // 写入字符串
-  } // writer 析构，文件自动关闭
+    BytecodeWriter writer("test.bin");  // 会在目录下生成 test.bin
+    writer.Write<int>(12345);           // 写入整数
+    writer.Write<double>(3.14159);      // 写入浮点数
+    writer.WriteString("Hello C++");    // 写入字符串
+  }  // writer 析构，文件自动关闭
 
   // 读取测试
   {
@@ -674,7 +699,7 @@ void StreamTest() {
 
 void ValueSerializationTest() {
   std::cout << "值序列化测试...\n";
-  
+
   // 准备数据：包含 Null, Bool, Num, Str 混合情况
   std::vector<cilly::Value> values;
   values.push_back(cilly::Value::Null());
@@ -686,9 +711,9 @@ void ValueSerializationTest() {
   {
     cilly::BytecodeWriter writer("value_test.bin");
     // 手动模拟写入一个 vector 的过程
-    writer.Write<int32_t>(values.size()); 
+    writer.Write<int32_t>(values.size());
     for (const auto& v : values) {
-      v.Save(writer); // 调用 Save
+      v.Save(writer);  // 调用 Save
     }
   }
 
@@ -696,12 +721,13 @@ void ValueSerializationTest() {
   {
     cilly::BytecodeReader reader("value_test.bin");
     int32_t count = reader.Read<int32_t>();
-    
-    if (count != values.size()) std::cout << "FAIL: 数量不匹配!\n";
+
+    if (count != values.size())
+      std::cout << "FAIL: 数量不匹配!\n";
 
     for (int i = 0; i < count; ++i) {
-      cilly::Value loaded = cilly::Value::Load(reader); // 调用 Load
-      
+      cilly::Value loaded = cilly::Value::Load(reader);  // 调用 Load
+
       // 验证是否相等
       if (loaded != values[i]) {
         std::cout << "FAIL: 同一索引 Value 不匹配 " << i << "\n";
@@ -711,13 +737,10 @@ void ValueSerializationTest() {
       }
     }
   }
-  
+
   std::cout << "所有Value值都被正确存入!\n";
   std::cout << "---------------------------------------------\n";
 }
-
-
-
 
 void ChunkSerializationTest() {
   using namespace cilly;
@@ -813,7 +836,6 @@ void ChunkSerializationTest() {
 
   std::cout << "Chunk 序列化通过！" << std::endl;
 }
-
 
 void FunctionSerializationTest() {
   using namespace cilly;
@@ -942,25 +964,25 @@ void VarValueSemanticsTest() {
   // var a = 1;
   fn.Emit(OpCode::OP_CONSTANT, 1);  // push 1
   fn.EmitI32(c1, 1);
-  fn.Emit(OpCode::OP_STORE_VAR, 1); // a = 1
-  fn.EmitI32(0, 1);                 // local[0]
+  fn.Emit(OpCode::OP_STORE_VAR, 1);  // a = 1
+  fn.EmitI32(0, 1);                  // local[0]
 
   // var b = a;
   fn.Emit(OpCode::OP_LOAD_VAR, 1);  // push a
   fn.EmitI32(0, 1);
-  fn.Emit(OpCode::OP_STORE_VAR, 1); // b = a
-  fn.EmitI32(1, 1);                 // local[1]
+  fn.Emit(OpCode::OP_STORE_VAR, 1);  // b = a
+  fn.EmitI32(1, 1);                  // local[1]
 
   // b = 2;
   fn.Emit(OpCode::OP_CONSTANT, 1);  // push 2
   fn.EmitI32(c2, 1);
-  fn.Emit(OpCode::OP_STORE_VAR, 1); // b = 2
-  fn.EmitI32(1, 1);                 // local[1]
+  fn.Emit(OpCode::OP_STORE_VAR, 1);  // b = 2
+  fn.EmitI32(1, 1);                  // local[1]
 
   // print(a);
   fn.Emit(OpCode::OP_LOAD_VAR, 1);  // push a
   fn.EmitI32(0, 1);
-  fn.Emit(OpCode::OP_PRINT, 1);     // 打印 a（期望：1）
+  fn.Emit(OpCode::OP_PRINT, 1);  // 打印 a（期望：1）
 
   // return
   fn.Emit(OpCode::OP_RETURN, 1);
@@ -977,48 +999,44 @@ void ObjSmokeTest() {
   std::cout << "测试ObjList ObjString 是否成功定义\n";
   std::cout << "测试ObjList\n";
   auto obj = std::make_shared<ObjList>();
-  obj -> Push(Value::Num(1));
-  obj -> Push(Value::Str("hello"));
-  obj -> Push(Value::Bool(true));
-  std::cout << obj -> ToRepr() << std::endl;
+  obj->Push(Value::Num(1));
+  obj->Push(Value::Str("hello"));
+  obj->Push(Value::Bool(true));
+  std::cout << obj->ToRepr() << std::endl;
 
   Value v1 = Value::Obj(obj);
   std::cout << v1.ToRepr() << std::endl;
 
-
   std::cout << "测试ObjString\n";
   auto obj_string = std::make_shared<ObjString>();
-  obj_string -> Set("hello");
-  std::cout << obj_string -> ToRepr() << std::endl;
+  obj_string->Set("hello");
+  std::cout << obj_string->ToRepr() << std::endl;
   Value v2 = Value::Obj(obj_string);
   std::cout << v2.ToRepr() << std::endl;
 
-
   std::cout << "测试ObjDict\n";
   std::unordered_map<std::string, Value> index;
-  index["a"] = Value::Num(1);   // a : 1
-  index["b"] = Value::Num(2);   // b : 2
+  index["a"] = Value::Num(1);                        // a : 1
+  index["b"] = Value::Num(2);                        // b : 2
   auto obj_dict = std::make_shared<ObjDict>(index);  // 存入ObjDict
-  obj_dict->Set("c", Value::Num(3));  // c : 3
-  if (obj_dict->Has("a")) {   // 查找 a
+  obj_dict->Set("c", Value::Num(3));                 // c : 3
+  if (obj_dict->Has("a")) {                          // 查找 a
     std::cout << "存在 a" << std::endl;
   }
   if (!obj_dict->Has("d")) {  // 查找 d
     std::cout << "不存在 d" << std::endl;
   }
-  std::cout << (obj_dict->Get("a")).ToRepr() << std::endl;   // 返回 a 关键字的值
-  std::cout << (obj_dict->Get("d")).ToRepr() << std::endl;   // 返回 d 关键字的值(Null)
-  obj_dict->Erase("a");       // 删除 a
-  if (!obj_dict->Has("a")) { 
+  std::cout << (obj_dict->Get("a")).ToRepr() << std::endl;  // 返回 a 关键字的值
+  std::cout << (obj_dict->Get("d")).ToRepr()
+            << std::endl;  // 返回 d 关键字的值(Null)
+  obj_dict->Erase("a");    // 删除 a
+  if (!obj_dict->Has("a")) {
     std::cout << "不存在 a" << std::endl;
   }
   std::cout << obj_dict->Size() << std::endl;  // 返回长度 2
   std::cout << obj_dict->ToRepr() << std::endl;
   std::cout << "---------------------------------------------\n";
 }
-
-
-
 
 void ListOpcodeTest() {
   using namespace cilly;
@@ -1036,7 +1054,7 @@ void ListOpcodeTest() {
   fn.Emit(OpCode::OP_LIST_NEW, 1);
   fn.Emit(OpCode::OP_STORE_VAR, 1);
   fn.EmitI32(0, 1);
-    
+
   // 推入1，2
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
@@ -1046,14 +1064,14 @@ void ListOpcodeTest() {
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c2, 1);
   fn.Emit(OpCode::OP_LIST_PUSH, 1);
-  
+
   // 显示当前列表长度
   fn.Emit(OpCode::OP_LIST_LEN, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
   fn.Emit(OpCode::OP_POP, 1);
 
   // 将索引为0的值改为2  1->2
-  fn.Emit(OpCode::OP_LOAD_VAR,1);
+  fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c0, 1);
@@ -1065,20 +1083,17 @@ void ListOpcodeTest() {
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
-  fn.EmitI32(c0, 1);  
+  fn.EmitI32(c0, 1);
   fn.Emit(OpCode::OP_INDEX_GET, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
-  
 
   fn.Emit(OpCode::OP_RETURN, 1);
-  
+
   vm.Run(fn);
 
   std::cout << "List 指令自测(预期结果：print: 2, 2;  return: 2)\n";
   std::cout << "---------------------------------------------\n";
 }
-
-
 
 void DictOpcodeTest() {
   using namespace cilly;
@@ -1092,7 +1107,7 @@ void DictOpcodeTest() {
   int c_a = fn.AddConst(Value::Str("a"));
   int c_b = fn.AddConst(Value::Str("b"));
   int c_c = fn.AddConst(Value::Str("c"));
-  
+
   // 创建新字典并存入变量表
   fn.Emit(OpCode::OP_DICT_NEW, 1);
   fn.Emit(OpCode::OP_STORE_VAR, 1);
@@ -1112,8 +1127,8 @@ void DictOpcodeTest() {
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(c2, 1);
   fn.Emit(OpCode::OP_INDEX_SET, 1);
-  
-  // 打印 a 
+
+  // 打印 a
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
   fn.Emit(OpCode::OP_CONSTANT, 1);
@@ -1121,7 +1136,7 @@ void DictOpcodeTest() {
   fn.Emit(OpCode::OP_INDEX_GET, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
   fn.Emit(OpCode::OP_POP, 1);
-  
+
   // 把 a 改成 2 并且打印
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
   fn.EmitI32(0, 1);
@@ -1144,17 +1159,15 @@ void DictOpcodeTest() {
   fn.EmitI32(c_c, 1);
   fn.Emit(OpCode::OP_DICT_HAS, 1);
   fn.Emit(OpCode::OP_PRINT, 1);
-  
+
   fn.Emit(OpCode::OP_RETURN, 1);
-  
+
   VM vm;
   vm.Run(fn);
 
   std::cout << "Dict 指令自测 (预期结果：print: 1, 2,false;  return: false)\n";
   std::cout << "---------------------------------------------\n";
 }
-
-
 
 void LexerSmokeTest() {
   using namespace cilly;
@@ -1166,14 +1179,11 @@ void LexerSmokeTest() {
   std::cout << "Lexer 自测：token 数量 = " << tokens.size() << std::endl;
   if (!tokens.empty()) {
     std::cout << "第一个 token kind (int) = "
-              << static_cast<int>(tokens[0].kind)
-              << ", lexeme = \"" << tokens[0].lexeme << "\""
-              << std::endl;
+              << static_cast<int>(tokens[0].kind) << ", lexeme = \""
+              << tokens[0].lexeme << "\"" << std::endl;
   }
   std::cout << "---------------------------------------------\n";
 }
-
-
 
 void ParserExprSmokeTest() {
   using namespace cilly;
@@ -1201,149 +1211,139 @@ void ParserExprSmokeTest() {
   std::cout << "---------------------------------------------\n";
 }
 
-
-
-
 void FrontendEndToEndTest() {
   using namespace cilly;
 
   std::cout << "前端→VM 全链路自测:\n";
-  
+
   std::string source =
-  // A. 回归：变量/赋值/四则
-  "var x = 1;\n"
-  "print x;\n"
-  "x = x + 1;\n"
-  "print x;\n"
-  "x = x * 10;\n"
-  "print x;\n"
-  
-  // B. List 字面量
-  "print [];\n"
-  "print [1, 2, 3];\n"
-  "print [x, x + 1, x * 2, (x - 3) / 7];\n"
+      // A. 回归：变量/赋值/四则
+      "var x = 1;\n"
+      "print x;\n"
+      "x = x + 1;\n"
+      "print x;\n"
+      "x = x * 10;\n"
+      "print x;\n"
 
-  // C. Dict 字面量（key 必须是字符串）
-  "print {};\n"
-  "print {\"a\": 1};\n"
-  "print {\"a\": x, \"b\": x + 1, \"c\": x * 2};\n"
+      // B. List 字面量
+      "print [];\n"
+      "print [1, 2, 3];\n"
+      "print [x, x + 1, x * 2, (x - 3) / 7];\n"
 
-  // D. Bool / Null
-  "print true;\n"
-  "print false;\n"
-  "print null;\n"
-  "print [true, null, false];\n"
-  "print {\"t\": true, \"n\": null};\n"
+      // C. Dict 字面量（key 必须是字符串）
+      "print {};\n"
+      "print {\"a\": 1};\n"
+      "print {\"a\": x, \"b\": x + 1, \"c\": x * 2};\n"
 
-  // E. 组合：dict value 是 list
-  "print {\"nums\": [x, x + 1, x + 2], \"double\": x * 2};\n"
+      // D. Bool / Null
+      "print true;\n"
+      "print false;\n"
+      "print null;\n"
+      "print [true, null, false];\n"
+      "print {\"t\": true, \"n\": null};\n"
 
-  // F. 索引功能
-  "var a = [10, 20, 30];\n"
-  "print a[0];\n"
-  "print a[2];\n"
-  "var d = {\"a\": 1, \"b\": 2};\n"
-  "print d[\"a\"];\n"
-  "print d[\"b\"];\n"
-  "print {\"nums\": a}[\"nums\"][1];\n";
+      // E. 组合：dict value 是 list
+      "print {\"nums\": [x, x + 1, x + 2], \"double\": x * 2};\n"
 
+      // F. 索引功能
+      "var a = [10, 20, 30];\n"
+      "print a[0];\n"
+      "print a[2];\n"
+      "var d = {\"a\": 1, \"b\": 2};\n"
+      "print d[\"a\"];\n"
+      "print d[\"b\"];\n"
+      "print {\"nums\": a}[\"nums\"][1];\n";
 
-
-  //词法分析
+  // 词法分析
   Lexer lexer(source);
-  std::vector<Token>tokens_ = lexer.ScanAll();
+  std::vector<Token> tokens_ = lexer.ScanAll();
 
-  //语法分析
+  // 语法分析
   Parser parser(tokens_);
-  std::vector<StmtPtr>program = parser.ParseProgram();
-  
-  //生成字节码
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
   Generator generator;
   Function main = generator.Generate(program);
-  
+
   VM vm;
   vm.Run(main);
   std::cout << "---------------------------------------------\n";
 }
-
 
 void FrontendEndToEndBlockTest() {
   using namespace cilly;
 
   std::cout << "前端→VM 全链路自测:\n";
-  
+
   std::string source =
-  "var a = [10, 20, 30];\n"
-  "a[1] = 99;\n"
-  "print a;\n"                 // [10, 99, 30]
+      "var a = [10, 20, 30];\n"
+      "a[1] = 99;\n"
+      "print a;\n"  // [10, 99, 30]
 
-  "var d = {\"x\": 1};\n"
-  "d[\"x\"] = 42;\n"
-  "print d;\n"                 // { "x" : 42 }
-  "print d[\"x\"];\n"          // 42
+      "var d = {\"x\": 1};\n"
+      "d[\"x\"] = 42;\n"
+      "print d;\n"         // { "x" : 42 }
+      "print d[\"x\"];\n"  // 42
 
-  "var x = 1;\n"
-  "if (x == 0) print 0;\n"
-  "else if (x == 1) print 1;\n"
-  "else print 2;\n"            // 1
+      "var x = 1;\n"
+      "if (x == 0) print 0;\n"
+      "else if (x == 1) print 1;\n"
+      "else print 2;\n"  // 1
 
-  "var i = 0;\n"
-  "while (i < 6) {\n"
-  "  i = i + 1;\n"
-  "  if (i == 3) continue;\n"
-  "  if (i == 5) break;\n"
-  "  print i;\n"
-  "}\n"                        // 1 2 4
+      "var i = 0;\n"
+      "while (i < 6) {\n"
+      "  i = i + 1;\n"
+      "  if (i == 3) continue;\n"
+      "  if (i == 5) break;\n"
+      "  print i;\n"
+      "}\n"  // 1 2 4
 
-  "var j = 0;\n"
-  "for (j = 0; j < 6; j = j + 1) {\n"
-  "  if (j == 2) continue;\n"
-  "  if (j == 4) break;\n"
-  "  print j;\n"
-  "}\n"                        // 0 1 3
+      "var j = 0;\n"
+      "for (j = 0; j < 6; j = j + 1) {\n"
+      "  if (j == 2) continue;\n"
+      "  if (j == 4) break;\n"
+      "  print j;\n"
+      "}\n"  // 0 1 3
 
-  "var outer = 0;\n"
-  "while (outer < 2) {\n"
-  "  var inner = 0;\n"
-  "  while (inner < 3) {\n"
-  "    inner = inner + 1;\n"
-  "    if (inner == 2) continue;\n"
-  "    break;\n"
-  "  }\n"
-  "  print outer;\n"
-  "  outer = outer + 1;\n"
-  "}\n";                       // 0 1
+      "var outer = 0;\n"
+      "while (outer < 2) {\n"
+      "  var inner = 0;\n"
+      "  while (inner < 3) {\n"
+      "    inner = inner + 1;\n"
+      "    if (inner == 2) continue;\n"
+      "    break;\n"
+      "  }\n"
+      "  print outer;\n"
+      "  outer = outer + 1;\n"
+      "}\n";  // 0 1
 
-
-
-  //词法分析
+  // 词法分析
   Lexer lexer(source);
-  std::vector<Token>tokens_ = lexer.ScanAll();
+  std::vector<Token> tokens_ = lexer.ScanAll();
 
-  //语法分析
+  // 语法分析
   Parser parser(tokens_);
-  std::vector<StmtPtr>program = parser.ParseProgram();
-  
-  //生成字节码
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
   Generator generator;
   Function main = generator.Generate(program);
-  
+
   VM vm;
   vm.Run(main);
   std::cout << "---------------------------------------------\n";
 }
 
-
-
 void FrontendETESmokeTest() {
   using namespace cilly;
 
   std::cout << "前端→VM 全链路自测:\n";
-  
-  /*std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");      */                                                   
-  
 
-std::string source = R"(
+  /*std::string source =
+   * ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");      */
+
+  std::string source = R"(
 var x = 1;
 print(x);
 
@@ -1365,20 +1365,18 @@ print(x);
 print(x);
 )";
 
-
-
-  //词法分析
+  // 词法分析
   Lexer lexer(source);
-  std::vector<Token>tokens_ = lexer.ScanAll();
+  std::vector<Token> tokens_ = lexer.ScanAll();
 
-  //语法分析
+  // 语法分析
   Parser parser(tokens_);
-  std::vector<StmtPtr>program = parser.ParseProgram();
-  
-  //生成字节码
+  std::vector<StmtPtr> program = parser.ParseProgram();
+
+  // 生成字节码
   Generator generator;
   Function main = generator.Generate(program);
-  
+
   VM vm;
 
   for (const auto& fnptr : generator.Functions()) {
@@ -1388,7 +1386,6 @@ print(x);
   vm.Run(main);
   std::cout << "---------------------------------------------\n";
 }
-
 
 void ScopeAllFeatureSmokeTest() {
   using namespace cilly;
@@ -1494,14 +1491,14 @@ void ScopeAllFeatureSmokeTest() {
   std::cout << "===== Scope 冒烟测试结束 =====\n";
 }
 
-
 void CallFunctionSmokeTest() {
   using namespace cilly;
 
   std::cout << "===== Return 冒烟测试 =====\n";
 
-  /* std::string source = ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");          */ 
-std::string source = R"(
+  /* std::string source =
+   * ReadFileToString("D:/dev/cilly-vm-cpp/cilly_vm_cpp/file.txt");          */
+  std::string source = R"(
 print "BEGIN";
 print 111;
 
@@ -1576,8 +1573,6 @@ print for_demo(5);
 print 999;
 print "END";
 )";
-
-
 
   // 词法分析
   Lexer lexer(source);
@@ -1694,7 +1689,6 @@ print "END_FULL";
   // builtins 必须先注册，占据 0..4
   RegisterBuiltins(vm);
 
-
   for (const auto& fnptr : generator.Functions()) {
     vm.RegisterFunction(fnptr.get());
   }
@@ -1746,7 +1740,8 @@ print "END_CALLV";
   VM vm;
 
   //  必须：先注册 builtin（如果你已经做了 builtin index 前缀）
-  // 把这个函数名改成你项目里实际的：RegisterBuiltins / RegisterNativeBuiltins ...
+  // 把这个函数名改成你项目里实际的：RegisterBuiltins / RegisterNativeBuiltins
+  // ...
   RegisterBuiltins(vm);
 
   // 再注册用户函数（顺序必须与 Generator::Functions() 一致）
@@ -1758,8 +1753,6 @@ print "END_CALLV";
 
   std::cout << "===== CallVirtualFunctionTest END =====\n";
 }
-
-
 
 void RunUnitTests() {
   ValueTest();
@@ -1804,14 +1797,10 @@ void NativeFunctionTest() {
   CallVirtualFunctionTest();
 }
 
-
-
-
-
 int main() {
   std::cout << "=== cilly-vm-cpp test runner ===\n";
   NativeFunctionTest();
-  /*RunEndToEndTests();*/
+  // RunEndToEndTests();
   // RunFrontendTests();
   // RunOpcodeTests();
   // RunVMTests();

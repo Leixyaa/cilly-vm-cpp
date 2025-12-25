@@ -1,9 +1,10 @@
 #ifndef CILLY_VM_CPP_LEXER_H_
 #define CILLY_VM_CPP_LEXER_H_
 
+#include <assert.h>
+
 #include <string>
 #include <vector>
-#include <assert.h>
 
 namespace cilly {
 
@@ -18,50 +19,50 @@ enum class TokenKind {
   kString,      // 字符串："hello"
 
   // 关键字
-  kVar,   // var
-  kFun,   // fun
-  kIf,    // if
-  kElse,  // else
-  kFor,   // for
-  kWhile, // while
-  kPrint, // print
-  kTrue,  // true
-  kFalse, // false
-  kNull,  // null
-  kBreak, // break
-  kContinue, // continue;
+  kVar,       // var
+  kFun,       // fun
+  kIf,        // if
+  kElse,      // else
+  kFor,       // for
+  kWhile,     // while
+  kPrint,     // print
+  kTrue,      // true
+  kFalse,     // false
+  kNull,      // null
+  kBreak,     // break
+  kContinue,  // continue;
   kReturn,    // return
 
   // 符号/分隔符
-  kLParen,    // (
-  kRParen,    // )
-  kLBrace,    // {
-  kRBrace,    // }
-  kComma,     // ,
-  kSemicolon, // ;
-  kLBracket,  // [
-  kRBracket,  // ]
-  kColon,     // :
+  kLParen,     // (
+  kRParen,     // )
+  kLBrace,     // {
+  kRBrace,     // }
+  kComma,      // ,
+  kSemicolon,  // ;
+  kLBracket,   // [
+  kRBracket,   // ]
+  kColon,      // :
 
   // 运算符
-  kPlus,       // +
-  kMinus,      // -
-  kStar,       // *
-  kSlash,      // /
-  kEqual,      // =
-  kEqualEqual, // ==
-  kLess,	   // <
+  kPlus,        // +
+  kMinus,       // -
+  kStar,        // *
+  kSlash,       // /
+  kEqual,       // =
+  kEqualEqual,  // ==
+  kLess,        // <
   kGreater,     // >
-  kNot,		   // !
-  kNotEqual,   // !=
+  kNot,         // !
+  kNotEqual,    // !=
 };
 
 // Token：一个单词的具体信息。
 struct Token {
-  TokenKind kind;     // 判断类型
-  std::string lexeme; // 源代码里的原始文本
-  int line;           // 出现在第几行（从 1 开始）
-  int col;            // 出现在这一行的第几列（从 1 开始）
+  TokenKind kind;      // 判断类型
+  std::string lexeme;  // 源代码里的原始文本
+  int line;            // 出现在第几行（从 1 开始）
+  int col;             // 出现在这一行的第几列（从 1 开始）
 };
 
 // Lexer 类：负责拿到整段代码字符串，然后切成一串 Token
@@ -74,7 +75,6 @@ class Lexer {
   std::vector<Token> ScanAll();
 
  private:
-
   // 判断：是否已经到达字符串末尾
   bool IsAtEnd() const;
 
@@ -94,7 +94,7 @@ class Lexer {
   // 跳过空白和注释（空格、制表符、回车、换行、// 注释）
   void SkipWhitespace();
 
-// 判断一个字符是不是字母或下划线（适合作为标识符的第一个字符）
+  // 判断一个字符是不是字母或下划线（适合作为标识符的第一个字符）
   static bool IsAlpha(char c);
 
   // 判断是不是数字
@@ -110,7 +110,7 @@ class Lexer {
   Token ScanIdentifier();
 
   Token ScanNumber();
-  
+
   Token ScanString();
 
   // 构造一个 Token（后面会复用）

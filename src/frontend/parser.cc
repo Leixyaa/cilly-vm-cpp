@@ -1,10 +1,12 @@
+#include "parser.h"
+
 #include <initializer_list>
 #include <iostream>
-#include "parser.h"
 
 namespace cilly {
 
-Parser::Parser(std::vector<Token> tokens) : tokens_(std::move(tokens)), current_(0) {};
+Parser::Parser(std::vector<Token> tokens) :
+    tokens_(std::move(tokens)), current_(0) {};
 
 bool Parser::IsAtEnd() const {
   if (current_ >= static_cast<int>(tokens_.size())) {
@@ -12,7 +14,6 @@ bool Parser::IsAtEnd() const {
   }
   return tokens_[current_].kind == TokenKind::kEof;
 }
-
 
 const Token& Parser::Peek() const {
   return tokens_[current_];
@@ -24,7 +25,7 @@ const Token& Parser::Previous() const {
 }
 
 const Token& Parser::Advance() {
-  if(!IsAtEnd()) {
+  if (!IsAtEnd()) {
     ++current_;
     return Previous();
   }
@@ -44,16 +45,20 @@ bool Parser::IsAssignmentAhead() const {
 }
 
 bool Parser::IsIndexAssignAhead() const {
-  if (!Check(TokenKind::kIdentifier)) return false;
-  if (LookAhead(1).kind != TokenKind::kLBracket) return false;
+  if (!Check(TokenKind::kIdentifier))
+    return false;
+  if (LookAhead(1).kind != TokenKind::kLBracket)
+    return false;
 
-  int i = 1;               // 从 '[' 开始
+  int i = 1;  // 从 '[' 开始
   int depth = 0;
   while (true) {
     TokenKind k = LookAhead(i).kind;
-    if (k == TokenKind::kEof) return false;
+    if (k == TokenKind::kEof)
+      return false;
 
-    if (k == TokenKind::kLBracket) depth++;
+    if (k == TokenKind::kLBracket)
+      depth++;
     else if (k == TokenKind::kRBracket) {
       depth--;
       if (depth == 0) {
@@ -66,7 +71,8 @@ bool Parser::IsIndexAssignAhead() const {
 }
 
 bool Parser::Check(TokenKind kind) const {
-  if(IsAtEnd()) return false;
+  if (IsAtEnd())
+    return false;
   return Peek().kind == kind;
 }
 
@@ -81,7 +87,7 @@ bool Parser::Match(TokenKind kind) {
 
 bool Parser::MatchAny(std::initializer_list<TokenKind> kinds) {
   for (auto i : kinds) {
-    if(Check(i)) {
+    if (Check(i)) {
       Advance();
       return true;
     }
@@ -94,12 +100,11 @@ std::string Parser::StripQuotes(const std::string& s) {
   return s.substr(1, s.size() - 2);
 }
 
-
 StmtPtr Parser::VarDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect variable name.");
   ExprPtr initializer = nullptr;
   if (Match(TokenKind::kEqual)) {
-    initializer = Expression();   // 下一个步骤才实现，这一步用占位
+    initializer = Expression();  // 下一个步骤才实现，这一步用占位
   }
   Consume(TokenKind::kSemicolon, "Expect ';' after variable declaration.");
   return std::make_unique<VarStmt>(name, std::move(initializer));
@@ -108,11 +113,13 @@ StmtPtr Parser::VarDeclaration() {
 StmtPtr Parser::FuncitonDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect function name!");
   Consume(TokenKind::kLParen, "Expect '(' after function name.");
-  std::vector<Token>params;
+  std::vector<Token> params;
   while (!Check(TokenKind::kRParen)) {
-    Token name_params = Consume(TokenKind::kIdentifier, "Expect parameter name!");
+    Token name_params =
+        Consume(TokenKind::kIdentifier, "Expect parameter name!");
     params.emplace_back(name_params);
-    if (Check(TokenKind::kRParen)) break;
+    if (Check(TokenKind::kRParen))
+      break;
     Consume(TokenKind::kComma, "Expect ',' after parameter name!");
   }
   Consume(TokenKind::kRParen, "Expect ')' after parameters.");
@@ -120,7 +127,8 @@ StmtPtr Parser::FuncitonDeclaration() {
   Consume(TokenKind::kLBrace, "Expect '{' before function body.");
 
   StmtPtr body_stmt = BlockStatement();
-  auto body = std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>(body_stmt.release()));
+  auto body =
+      std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>(body_stmt.release()));
   return std::make_unique<FunctionStmt>(name, params, std::move(body));
 }
 
@@ -162,9 +170,15 @@ const Token& Parser::Consume(TokenKind kind, const std::string& message) {
   if (Check(kind)) {
     return Advance();
   } else {
-    std::cerr << "Error: " << message << std::endl; //std::cerr 是专门用来输出错误信息的流，它与 std::cout 是分开的，通常会在终端显示不同的颜色或标记，使得错误信息更加显眼。
-    assert(false && message.c_str());  // 用c_str转换成const char* 类型，主要可以转换成bool使用 而 string类型不可以，所以一定要用c_str
-    return tokens_[current_]; 
+    std::cerr
+        << "Error: " << message
+        << std::
+               endl;  // std::cerr 是专门用来输出错误信息的流，它与 std::cout
+                      // 是分开的，通常会在终端显示不同的颜色或标记，使得错误信息更加显眼。
+    assert(false && message.c_str());  // 用c_str转换成const char*
+                                       // 类型，主要可以转换成bool使用 而
+                                       // string类型不可以，所以一定要用c_str
+    return tokens_[current_];
   }
 }
 
@@ -173,11 +187,11 @@ ExprPtr Parser::Expression() {
 }
 
 // 取负
-ExprPtr Parser::Unary() {   
+ExprPtr Parser::Unary() {
   if (Match(TokenKind::kMinus) || Match(TokenKind::kNot)) {
     Token op = Previous();
     ExprPtr expr = Unary();
-    return std::make_unique<UnaryExpr> (op, std::move(expr));
+    return std::make_unique<UnaryExpr>(op, std::move(expr));
   } else {
     return ProFix();
   }
@@ -191,19 +205,19 @@ ExprPtr Parser::Factor() {
     ExprPtr right = Unary();
     left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
   }
-    return left;
+  return left;
 }
 
 // 加减
 ExprPtr Parser::Term() {
-  ExprPtr left = Factor(); 
+  ExprPtr left = Factor();
   while (Match(TokenKind::kPlus) || Match(TokenKind::kMinus)) {
     Token op = Previous();
     ExprPtr right = Factor();
     left = std::make_unique<BinaryExpr>(std::move(left), op, std::move(right));
   }
-   return left;
- }
+  return left;
+}
 
 ExprPtr Parser::Comparison() {
   ExprPtr left = Term();
@@ -215,7 +229,6 @@ ExprPtr Parser::Comparison() {
   return left;
 }
 
-
 ExprPtr Parser::Equality() {
   ExprPtr left = Comparison();
   while (Match(TokenKind::kEqualEqual) || Match(TokenKind::kNotEqual)) {
@@ -226,33 +239,29 @@ ExprPtr Parser::Equality() {
   return left;
 }
 
-
-
 ExprPtr Parser::Primary() {
   if (Match(TokenKind::kNumber)) {  // 数字
-    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber,Previous().lexeme);
-  } 
-  else if (Match(TokenKind::kIdentifier)) {  // 关键字
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNumber,
+                                         Previous().lexeme);
+  } else if (Match(TokenKind::kIdentifier)) {  // 关键字
     return std::make_unique<VariableExpr>(Previous());
-  } 
-  else if (Match(TokenKind::kString)) {
-      return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kString,StripQuotes(Previous().lexeme));
-  }
-  else if (Match(TokenKind::kTrue)) {                        // true
-    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,Previous().lexeme);
-  } 
-  else if (Match(TokenKind::kFalse)) {                        // false
-    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,Previous().lexeme);
-  } 
-  else if (Match(TokenKind::kNull)) {                        // null
-    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNull,Previous().lexeme);
-  } 
-  else if (Match(TokenKind::kLParen)) {      // "("
+  } else if (Match(TokenKind::kString)) {
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kString,
+                                         StripQuotes(Previous().lexeme));
+  } else if (Match(TokenKind::kTrue)) {  // true
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,
+                                         Previous().lexeme);
+  } else if (Match(TokenKind::kFalse)) {  // false
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,
+                                         Previous().lexeme);
+  } else if (Match(TokenKind::kNull)) {  // null
+    return std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kNull,
+                                         Previous().lexeme);
+  } else if (Match(TokenKind::kLParen)) {  // "("
     ExprPtr value = Expression();
     Consume(TokenKind::kRParen, "Expect ')' after expression.");
     return value;
-  }
-  else if (Match(TokenKind::kLBracket)) {    // "["
+  } else if (Match(TokenKind::kLBracket)) {  // "["
     std::vector<ExprPtr> elements;
     while (!Match(TokenKind::kRBracket)) {
       elements.emplace_back(Expression());
@@ -262,8 +271,7 @@ ExprPtr Parser::Primary() {
       Consume(TokenKind::kComma, "Expect ',' after expression.");
     }
     return std::make_unique<ListExpr>(std::move(elements));
-  } 
-  else if (Match(TokenKind::kLBrace)) {     // "{"
+  } else if (Match(TokenKind::kLBrace)) {  // "{"
     std::vector<std::pair<std::string, ExprPtr>> entries;
     while (!Match(TokenKind::kRBrace)) {
       Token key = Consume(TokenKind::kString, "Dict key must be string.");
@@ -274,12 +282,11 @@ ExprPtr Parser::Primary() {
       entries.emplace_back(std::move(str), std::move(value));
       if (Match(TokenKind::kRBrace)) {
         break;
-      } 
+      }
       Consume(TokenKind::kComma, "Expect ',' after expression.");
     }
     return std::make_unique<DictExpr>(std::move(entries));
-  }
-    else {
+  } else {
     assert(false && "未找到此种类型!");
     return nullptr;
   }
@@ -307,7 +314,8 @@ ExprPtr Parser::ProFix() {
         } while (Match(TokenKind::kComma));
       }
       Token paren = Consume(TokenKind::kRParen, "Expect ')' after arguments.");
-      expr = std::make_unique<CallExpr>(std::move(expr), std::move(args), std::move(paren));
+      expr = std::make_unique<CallExpr>(std::move(expr), std::move(args),
+                                        std::move(paren));
       continue;
     }
 
@@ -322,7 +330,6 @@ StmtPtr Parser::PrintStatement() {
   Consume(TokenKind::kSemicolon, "Expect ';' after value.");
   return std::make_unique<PrintStmt>(std::move(value));
 }
-
 
 StmtPtr Parser::BlockStatement() {
   auto block = std::make_unique<BlockStmt>();
@@ -359,8 +366,8 @@ StmtPtr Parser::IndexAssignStatement() {
   ExprPtr value = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after index assignment.");
 
-  return std::make_unique<IndexAssignStmt>(
-      std::move(object), std::move(index), std::move(value));
+  return std::make_unique<IndexAssignStmt>(std::move(object), std::move(index),
+                                           std::move(value));
 }
 
 StmtPtr Parser::ReturnStatement() {
@@ -379,11 +386,9 @@ StmtPtr Parser::WhileStatement() {
   Consume(TokenKind::kLParen, "Expect '(' after while.");
   ExprPtr cond = Expression();
   Consume(TokenKind::kRParen, "Expect ')' after cond.");
-  StmtPtr body = Statement();    // 这里也是，不能直接去确定是块语句
+  StmtPtr body = Statement();  // 这里也是，不能直接去确定是块语句
   return std::make_unique<WhileStmt>(std::move(cond), std::move(body));
 }
-
-
 
 // for
 StmtPtr Parser::ForStatement() {
@@ -397,14 +402,14 @@ StmtPtr Parser::ForStatement() {
       init = AssignStatement();
     }
   } else {
-    Consume(TokenKind::kSemicolon,"Expect ';' after init.");
+    Consume(TokenKind::kSemicolon, "Expect ';' after init.");
   }
 
   ExprPtr cond = nullptr;
   if (!Check(TokenKind::kSemicolon)) {
     cond = Expression();
   }
-  Consume(TokenKind::kSemicolon,"Expect ';' after cond.");
+  Consume(TokenKind::kSemicolon, "Expect ';' after cond.");
 
   StmtPtr step = nullptr;
   if (!Check(TokenKind::kRParen)) {
@@ -416,26 +421,28 @@ StmtPtr Parser::ForStatement() {
   }
   Consume(TokenKind::kRParen, "Expect ')' after step.");
 
-  StmtPtr body;  
-  body = Statement();  // 可以是单句，不一定是块语句，所以不直接等于BlockStatment
-  
+  StmtPtr body;
+  body =
+      Statement();  // 可以是单句，不一定是块语句，所以不直接等于BlockStatment
+
   if (!cond) {
-    cond = std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool,"true");
+    cond =
+        std::make_unique<LiteralExpr>(LiteralExpr::LiteralKind::kBool, "true");
   }
-  
-  return std::make_unique<ForStmt>(std::move(init), std::move(cond), std::move(step), std::move(body));
+
+  return std::make_unique<ForStmt>(std::move(init), std::move(cond),
+                                   std::move(step), std::move(body));
 }
 
 StmtPtr Parser::BreakStatement() {
-  Consume(TokenKind::kSemicolon,"Expect ';' after break.");
+  Consume(TokenKind::kSemicolon, "Expect ';' after break.");
   return std::make_unique<BreakStmt>();
 }
 
 StmtPtr Parser::ContinueStatement() {
-  Consume(TokenKind::kSemicolon,"Expect ';' after continue.");
+  Consume(TokenKind::kSemicolon, "Expect ';' after continue.");
   return std::make_unique<ContinueStmt>();
 }
-
 
 // if
 StmtPtr Parser::IfStatement() {
@@ -444,22 +451,17 @@ StmtPtr Parser::IfStatement() {
   Consume(TokenKind::kRParen, "Expect ')' after condition.");
 
   StmtPtr then_branch_ = Statement();
-  
+
   StmtPtr else_branch_ = nullptr;
   if (Match(TokenKind::kElse)) {
     if (Match(TokenKind::kIf)) {
       else_branch_ = IfStatement();
-    }
-    else else_branch_ = Statement();
+    } else
+      else_branch_ = Statement();
   }
-  return std::make_unique<IfStmt>(std::move(cond), 
-                                  std::move(then_branch_), 
+  return std::make_unique<IfStmt>(std::move(cond), std::move(then_branch_),
                                   std::move(else_branch_));
 }
-
-
-
-
 
 // 主要调用函数
 std::vector<StmtPtr> Parser::ParseProgram() {
@@ -474,7 +476,7 @@ std::vector<StmtPtr> Parser::ParseProgram() {
 StmtPtr Parser::Declaration() {
   if (Match(TokenKind::kVar)) {
     return VarDeclaration();
-  } 
+  }
   if (Match(TokenKind::kFun)) {
     assert(block_depth_ == 0 && "暂时不实现非顶层声明!");
     return FuncitonDeclaration();

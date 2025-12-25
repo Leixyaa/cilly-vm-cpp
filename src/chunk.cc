@@ -1,4 +1,5 @@
 #include "chunk.h"
+
 #include <cassert>
 
 namespace cilly {
@@ -22,7 +23,7 @@ int Chunk::AddConst(const Value& v) {
 
 void Chunk::PatchI32(int index, int32_t value) {
   assert(index >= 0 && index < static_cast<int>(code_.size()));
-  code_[index] = value; 
+  code_[index] = value;
 }
 
 int Chunk::CodeSize() const {
@@ -103,7 +104,5 @@ Chunk Chunk::Load(BytecodeReader& reader) {
 
   return chunk;
 }
-
-
 
 }  // namespace cilly

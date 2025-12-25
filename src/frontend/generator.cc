@@ -1,15 +1,16 @@
-#include <string>
+#include "generator.h"
+
 #include <algorithm>
 #include <iostream>
-#include "generator.h"
+#include <string>
 
 namespace cilly {
 
-Generator::Generator() 
-    : current_fn_(nullptr),
-      next_local_index_(0),
-      max_local_index_(0),
-      scope_stack_()  { 
+Generator::Generator() :
+    current_fn_(nullptr),
+    next_local_index_(0),
+    max_local_index_(0),
+    scope_stack_() {
   scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
@@ -19,7 +20,7 @@ Generator::Generator()
 // 主调用函数
 Function Generator::Generate(const std::vector<StmtPtr>& program) {
   // 每次编译一个脚本，都要从干净状态开始
-  //（注意：functions_ / func_name_to_index_ 要在开头清，不能在结尾清）
+  // （注意：functions_ / func_name_to_index_ 要在开头清，不能在结尾清）
 
   PredeclareFunctions(program);
   for (const auto& s : program) {
@@ -31,7 +32,7 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   local_.clear();
   loop_stack_.clear();
   scope_stack_.clear();
-  scope_stack_.emplace_back();    
+  scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
 
@@ -42,7 +43,8 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   current_fn_ = &script;
 
   for (const auto& s : program) {
-    if (s->kind == Stmt::Kind::kFun) continue;  // 不在顶层执行fun相关，前面已经编译过一次了
+    if (s->kind == Stmt::Kind::kFun)
+      continue;  // 不在顶层执行fun相关，前面已经编译过一次了
     EmitStmt(s);
   }
 
@@ -56,17 +58,18 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   return script;
 }
 
-
 int Generator::FindFunctionIndex(const std::string& name) const {
   auto it = func_name_to_index_.find(name);
   return it == func_name_to_index_.end() ? -1 : it->second;
 }
 
-void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
+void Generator::EmitStmt(const StmtPtr& stmt) {  // 分类处理不同类型语句
   switch (stmt->kind) {
     case Stmt::Kind::kPrint: {
-      auto p = static_cast<PrintStmt*>(stmt.get());  // get()拿出unique_ptr中的原始指针stmt*
-      EmitPrintStmt(p);                              // get只是借出对象，所有权依旧只有stmt，stmt离开作用于后p依旧会失效
+      auto p = static_cast<PrintStmt*>(
+          stmt.get());  // get()拿出unique_ptr中的原始指针stmt*
+      EmitPrintStmt(
+          p);  // get只是借出对象，所有权依旧只有stmt，stmt离开作用于后p依旧会失效
       break;
     }
     case Stmt::Kind::kExpr: {
@@ -132,13 +135,12 @@ void Generator::EmitStmt(const StmtPtr& stmt) {      // 分类处理不同类型语句
   }
 }
 
-
 void Generator::PatchJump(int jump_pos) {
   current_fn_->PatchI32(jump_pos, current_fn_->CodeSize());
   return;
 }
 
-void Generator::PatchJumpTo(int jump_pos, int32_t target){
+void Generator::PatchJumpTo(int jump_pos, int32_t target) {
   current_fn_->PatchI32(jump_pos, target);
   return;
 }
@@ -148,14 +150,16 @@ void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
   func_name_to_index_.clear();
 
   for (const auto& s : program) {
-    if (s->kind != Stmt::Kind::kFun) continue;
+    if (s->kind != Stmt::Kind::kFun)
+      continue;
     auto* fn = static_cast<FunctionStmt*>(s.get());
     const std::string& name = fn->name.lexeme;
 
     assert(func_name_to_index_.count(name) == 0 && "duplicate function name");
 
     int idx = static_cast<int>(functions_.size());
-    functions_.push_back(std::make_unique<Function>(name, (int)fn->params.size()));
+    functions_.push_back(
+        std::make_unique<Function>(name, (int)fn->params.size()));
     func_name_to_index_[name] = idx;
   }
 }
@@ -195,7 +199,8 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
 
     local_[pname] = i;
     next_local_index_++;
-    if (next_local_index_ > max_local_index_) max_local_index_ = next_local_index_;
+    if (next_local_index_ > max_local_index_)
+      max_local_index_ = next_local_index_;
   }
 
   // 编 body
@@ -216,8 +221,6 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
   scope_stack_ = std::move(saved_scope);
 }
 
-
-
 void Generator::EmitPrintStmt(const PrintStmt* stmt) {
   EmitExpr(stmt->expr);
   EmitOp(OpCode::OP_PRINT);
@@ -231,18 +234,19 @@ void Generator::EmitExprStmt(const ExprStmt* stmt) {
 }
 
 void Generator::EmitVarStmt(const VarStmt* stmt) {
-  const std::string& name = stmt->name.lexeme;    // 加move不好排查
+  const std::string& name = stmt->name.lexeme;  // 加move不好排查
   auto& names = scope_stack_.back().names;
   if (std::find(names.begin(), names.end(), name) != names.end()) {
     assert(false && "该变量已存在！");
   }
   names.emplace_back(name);
   int index = next_local_index_;
-  local_[name] = index;   
+  local_[name] = index;
   next_local_index_++;
-  max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_ : max_local_index_;
+  max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
+                                                          : max_local_index_;
   if (stmt->initializer) {
-    EmitExpr(stmt->initializer); 
+    EmitExpr(stmt->initializer);
   } else {
     EmitConst(Value::Null());
   }
@@ -264,7 +268,7 @@ void Generator::EmitAssignStmt(const AssignStmt* stmt) {
 }
 
 void Generator::EmitWhileStmt(const WhileStmt* stmt) {
-  loop_stack_.emplace_back(); // 直接构造了，不用{}
+  loop_stack_.emplace_back();  // 直接构造了，不用{}
   loop_stack_.back().scope_depth = static_cast<int>(scope_stack_.size());
   int loop_start = current_fn_->CodeSize();
   EmitExpr(stmt->cond);
@@ -286,9 +290,10 @@ void Generator::EmitWhileStmt(const WhileStmt* stmt) {
 }
 
 void Generator::EmitForStmt(const ForStmt* stmt) {
-  loop_stack_.emplace_back(); 
+  loop_stack_.emplace_back();
   loop_stack_.back().scope_depth = static_cast<int>(scope_stack_.size());
-  if(stmt->init)EmitStmt(stmt->init);
+  if (stmt->init)
+    EmitStmt(stmt->init);
   int loop_start = current_fn_->CodeSize();
   EmitExpr(stmt->cond);
   EmitOp(OpCode::OP_JUMP_IF_FALSE);
@@ -298,7 +303,8 @@ void Generator::EmitForStmt(const ForStmt* stmt) {
   for (auto i : loop_stack_.back().continue_jumps) {
     PatchJump(i);
   }
-  if(stmt->step)EmitStmt(stmt->step);
+  if (stmt->step)
+    EmitStmt(stmt->step);
   EmitOp(OpCode::OP_JUMP);
   EmitI32(loop_start);
   PatchJump(end_lable);
@@ -312,7 +318,7 @@ void Generator::EmitForStmt(const ForStmt* stmt) {
 void Generator::EmitBreakStmt(const BreakStmt* stmt) {
   assert(!loop_stack_.empty() && "break outside loop");
   EmitUnwindToDepth(loop_stack_.back().scope_depth);
-  EmitOp(OpCode::OP_JUMP);  
+  EmitOp(OpCode::OP_JUMP);
   int break_pos = current_fn_->CodeSize();
   EmitI32(0);
   loop_stack_.back().break_jumps.emplace_back(break_pos);
@@ -341,7 +347,7 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
   EmitOp(OpCode::OP_POPN);
   EmitI32(start);
   EmitI32(count);
-  next_local_index_ =  scope_stack_.back().start_local;
+  next_local_index_ = scope_stack_.back().start_local;
   local_ = scope_stack_.back().shadowns;
   scope_stack_.pop_back();
   return;
@@ -350,7 +356,7 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
 void Generator::EmitIndexAssignStmt(const IndexAssignStmt* stmt) {
   EmitExpr(stmt->object);
   EmitExpr(stmt->index);
-  EmitExpr(stmt->expr); 
+  EmitExpr(stmt->expr);
   EmitOp(OpCode::OP_INDEX_SET);
   return;
 }
@@ -383,7 +389,7 @@ void Generator::EmitReturnStmt(const ReturnStmt* stmt) {
 void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   // 重名检查
   assert(FindFunctionIndex(stmt->name.lexeme) == -1 && "该函数名已定义！");
-  
+
   // 保存当前script现场
   Function* saved_fn = current_fn_;
   auto saved_local = local_;
@@ -394,12 +400,12 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
 
   // 编译函数
   Function fn(stmt->name.lexeme, static_cast<int>(stmt->params.size()));
-  
+
   // 清空编译状态
   local_.clear();
   loop_stack_.clear();
   scope_stack_.clear();
-  scope_stack_.emplace_back(); 
+  scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
 
@@ -424,7 +430,7 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   functions_.push_back(std::make_unique<Function>(std::move(fn)));
   func_name_to_index_[stmt->name.lexeme] = index;
   current_fn_ = functions_[index].get();
-  
+
   EmitBlockStmt(stmt->body.get());
   EmitConst(Value::Null());
   EmitOp(OpCode::OP_RETURN);  // 隐式return
@@ -439,58 +445,58 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   scope_stack_ = std::move(saved_scope);
 }
 
-void Generator::EmitExpr(const ExprPtr& expr) {   // 分类处理不同类型表达式
+void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
   switch (expr->kind) {
-  case Expr::Kind::kLiteral: {
-    auto p = static_cast<LiteralExpr*>(expr.get());
-    EmitLiteralExpr(p);
-    break;
-  }
-  case Expr::Kind::kBinary: {
-    auto p = static_cast<BinaryExpr*>(expr.get());
-    EmitBinaryExpr(p);
-    break;
-  }
-  case Expr::Kind::kUnaryExpr: {
-    auto p = static_cast<UnaryExpr*>(expr.get());
-    EmitUnaryExpr(p);
-    break;
-  }
-  case Expr::Kind::kVariable: {
-    auto p = static_cast<VariableExpr*>(expr.get());
-    EmitVariableExpr(p);
-    break;
-  }
-  case Expr::Kind::kList: {
-    auto p = static_cast<ListExpr*>(expr.get());
-    EmitListExpr(p);
-    break;
-  }
-  case Expr::Kind::kDict: {
-    auto p = static_cast<DictExpr*>(expr.get());
-    EmitDictExpr(p);
-    break;
-  }
-  case Expr::Kind::kIndex: {
-    auto p = static_cast<IndexExpr*>(expr.get());
-    EmitIndexExpr(p);
-    break;
-  }
-  case Expr::Kind::kCall: {
-    auto p = static_cast<CallExpr*>(expr.get());
-    EmitCallExpr(p);
-    break;
-  }
-  default:
-    assert(false && "未找到此类表达式！");
-    break;
+    case Expr::Kind::kLiteral: {
+      auto p = static_cast<LiteralExpr*>(expr.get());
+      EmitLiteralExpr(p);
+      break;
+    }
+    case Expr::Kind::kBinary: {
+      auto p = static_cast<BinaryExpr*>(expr.get());
+      EmitBinaryExpr(p);
+      break;
+    }
+    case Expr::Kind::kUnaryExpr: {
+      auto p = static_cast<UnaryExpr*>(expr.get());
+      EmitUnaryExpr(p);
+      break;
+    }
+    case Expr::Kind::kVariable: {
+      auto p = static_cast<VariableExpr*>(expr.get());
+      EmitVariableExpr(p);
+      break;
+    }
+    case Expr::Kind::kList: {
+      auto p = static_cast<ListExpr*>(expr.get());
+      EmitListExpr(p);
+      break;
+    }
+    case Expr::Kind::kDict: {
+      auto p = static_cast<DictExpr*>(expr.get());
+      EmitDictExpr(p);
+      break;
+    }
+    case Expr::Kind::kIndex: {
+      auto p = static_cast<IndexExpr*>(expr.get());
+      EmitIndexExpr(p);
+      break;
+    }
+    case Expr::Kind::kCall: {
+      auto p = static_cast<CallExpr*>(expr.get());
+      EmitCallExpr(p);
+      break;
+    }
+    default:
+      assert(false && "未找到此类表达式！");
+      break;
   }
 }
 
 void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
   switch (expr->literal_kind) {
     case LiteralExpr::LiteralKind::kNumber: {
-      double num = std::stod(expr->lexeme);    // stod将字符串转化为double
+      double num = std::stod(expr->lexeme);  // stod将字符串转化为double
       Value v = Value::Num(num);
       EmitConst(v);
       return;
@@ -511,10 +517,9 @@ void Generator::EmitLiteralExpr(const LiteralExpr* expr) {
       EmitConst(v);
       return;
     }
-    default: 
+    default:
       assert(false && "未定义此种字面量!");
   }
-  
 }
 
 void Generator::EmitVariableExpr(const VariableExpr* expr) {
@@ -527,7 +532,7 @@ void Generator::EmitVariableExpr(const VariableExpr* expr) {
     EmitI32(it->second);
     return;
   }
-  
+
   // native function
   if (IsBuiltin(name)) {
     int index = BuiltinIndex(name);
@@ -538,7 +543,7 @@ void Generator::EmitVariableExpr(const VariableExpr* expr) {
   // 用户函数
   int user_index = FindFunctionIndex(name);
   if (user_index >= 0) {
-    EmitConst(Value::Callable(user_index + kBuiltinCount) );
+    EmitConst(Value::Callable(user_index + kBuiltinCount));
     return;
   }
   assert(false && "Undefined variable/function name.");
@@ -548,10 +553,10 @@ void Generator::EmitBinaryExpr(const BinaryExpr* expr) {
   EmitExpr(expr->left);
   EmitExpr(expr->right);
   switch (expr->op.kind) {
-    case TokenKind::kPlus: 
+    case TokenKind::kPlus:
       EmitOp(OpCode::OP_ADD);
       break;
-    case TokenKind::kMinus: 
+    case TokenKind::kMinus:
       EmitOp(OpCode::OP_SUB);
       break;
     case TokenKind::kStar:
@@ -594,7 +599,7 @@ void Generator::EmitUnaryExpr(const UnaryExpr* expr) {
       break;
     }
 
-    default: 
+    default:
       assert(false && "未定义此种一元表达式！");
       break;
   }
@@ -614,7 +619,7 @@ void Generator::EmitListExpr(const ListExpr* expr) {
 void Generator::EmitDictExpr(const DictExpr* expr) {
   EmitOp(OpCode::OP_DICT_NEW);
   for (auto& i : expr->entries) {
-    EmitOp(OpCode::OP_DUP); // 防止set时没有保留dict副本导致无法连续set
+    EmitOp(OpCode::OP_DUP);  // 防止set时没有保留dict副本导致无法连续set
     EmitConst(Value::Str(i.first));
     EmitExpr(i.second);
     EmitOp(OpCode::OP_INDEX_SET);
@@ -664,7 +669,6 @@ void Generator::EmitUnwindToDepth(int target_depth) {
   }
 }
 
-
 void Generator::EmitOp(OpCode op) {
   current_fn_->Emit(op, 1);
   return;
@@ -686,11 +690,16 @@ void Generator::InitBuiltins() {
   builtin_name_to_arity_.clear();
   builtin_name_to_index_.clear();
   // 固定顺序 = 固定 index（必须和 VM 注册顺序一致）
-  builtin_name_to_index_["len"]   = 0; builtin_name_to_arity_["len"]   = 1;
-  builtin_name_to_index_["str"]   = 1; builtin_name_to_arity_["str"]   = 1;
-  builtin_name_to_index_["type"]  = 2; builtin_name_to_arity_["type"]  = 1;
-  builtin_name_to_index_["abs"]   = 3; builtin_name_to_arity_["abs"]   = 1;
-  builtin_name_to_index_["clock"] = 4; builtin_name_to_arity_["clock"] = 0;
+  builtin_name_to_index_["len"] = 0;
+  builtin_name_to_arity_["len"] = 1;
+  builtin_name_to_index_["str"] = 1;
+  builtin_name_to_arity_["str"] = 1;
+  builtin_name_to_index_["type"] = 2;
+  builtin_name_to_arity_["type"] = 1;
+  builtin_name_to_index_["abs"] = 3;
+  builtin_name_to_arity_["abs"] = 1;
+  builtin_name_to_index_["clock"] = 4;
+  builtin_name_to_arity_["clock"] = 0;
 }
 
 bool Generator::IsBuiltin(const std::string& name) const {
@@ -706,6 +715,5 @@ int Generator::BuiltinArity(const std::string& name) const {
   auto it = builtin_name_to_arity_.find(name);
   return it == builtin_name_to_arity_.end() ? -1 : it->second;
 }
-
 
 }  // namespace cilly

@@ -1,9 +1,11 @@
 #include "stack_stats.h"
+
 #include <cassert>
 
 namespace cilly {
 
-StackStats::StackStats() : push_count_(0), pop_count_(0), max_depth_(0) {}
+StackStats::StackStats() : push_count_(0), pop_count_(0), max_depth_(0) {
+}
 
 void StackStats::Push(const Value& v) {
   stack_.push_back(v);

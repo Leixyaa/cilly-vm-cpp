@@ -1,14 +1,14 @@
 #ifndef CILLY_VM_CPP_CHUNK_H_
 #define CILLY_VM_CPP_CHUNK_H_
 
-//chunk是可执行字节码的容器，保存指令序列、常量池和行号信息
+// chunk是可执行字节码的容器，保存指令序列、常量池和行号信息
 
 #include <cstdint>
 #include <vector>
 
-#include "value.h"
-#include "opcodes.h"
 #include "bytecode_stream.h"
+#include "opcodes.h"
+#include "value.h"
 
 namespace cilly {
 
@@ -25,7 +25,7 @@ class Chunk {
   int AddConst(const Value& v);
 
   // 占位回填
-  void PatchI32(int index, int32_t value); 
+  void PatchI32(int index, int32_t value);
 
   // 查询接口
   int CodeSize() const;                   // code_ 元素个数（含指令和操作数）
@@ -34,15 +34,16 @@ class Chunk {
   const Value& ConstAt(int index) const;  // 读取常量池中的值
   int LineAt(int index) const;            // 获取行号
 
-  void Save(BytecodeWriter& writer) const;   // 将整个 Chunk 写入二进制流
-  static Chunk Load(BytecodeReader& reader); // 从二进制流中读出一个 Chunk（静态工厂函数）
+  void Save(BytecodeWriter& writer) const;  // 将整个 Chunk 写入二进制流
+  static Chunk Load(
+      BytecodeReader& reader);  // 从二进制流中读出一个 Chunk（静态工厂函数）
 
  private:
-  std::vector<int32_t> code_;        // 指令序列（包含操作数）
-  std::vector<Value> const_pool_;    // 常量池
-  std::vector<int32_t> line_info_;   // 每个 code 元素的源代码行号
+  std::vector<int32_t> code_;       // 指令序列（包含操作数）
+  std::vector<Value> const_pool_;   // 常量池
+  std::vector<int32_t> line_info_;  // 每个 code 元素的源代码行号
 };
 
-}//namespace cilly
+}  // namespace cilly
 
 #endif  // CILLY_VM_CPP_CHUNK_H_

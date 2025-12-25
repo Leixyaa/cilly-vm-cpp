@@ -1,0 +1,5 @@
+bazel-*
+third_party/**
+external/**
+out/**
+build/**

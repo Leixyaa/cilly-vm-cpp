@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
-#include "value.h"
 #include "stack_stats.h"
+#include "value.h"
 
 namespace cilly {
 

@@ -1,5 +1,7 @@
-//覆盖：变量/赋值、if/while/for、break/continue、block+shadowing、list/dict、index get/set、函数参数/return、递归、互递归、
-// call virtual（函数一等值+索引调用）、native builtins（len/str/type/abs/clock）
+// 覆盖：变量/赋值、if/while/for、break/continue、block+shadowing、list/dict、index
+// get/set、函数参数/return、递归、互递归、
+//  call virtual（函数一等值+索引调用）、native
+//  builtins（len/str/type/abs/clock）
 
 #include <gtest/gtest.h>
 
@@ -22,10 +24,14 @@ static void RegisterBuiltins(cilly::VM& vm) {
   int i0 = vm.RegisterNative("len", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr())   return Value::Num((double)v.AsStr().size());
-    if (v.IsList())  return Value::Num((double)v.AsList()->Size());
-    if (v.IsDict())  return Value::Num((double)v.AsDict()->Size());
-    if (v.IsString())return Value::Num((double)v.AsString()->ToRepr().size());
+    if (v.IsStr())
+      return Value::Num((double)v.AsStr().size());
+    if (v.IsList())
+      return Value::Num((double)v.AsList()->Size());
+    if (v.IsDict())
+      return Value::Num((double)v.AsDict()->Size());
+    if (v.IsString())
+      return Value::Num((double)v.AsString()->ToRepr().size());
     assert(false && "len() unsupported type");
     return Value::Null();
   });
@@ -34,7 +40,8 @@ static void RegisterBuiltins(cilly::VM& vm) {
   int i1 = vm.RegisterNative("str", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsStr()) return v;
+    if (v.IsStr())
+      return v;
     return Value::Str(v.ToRepr());
   });
   assert(i1 == 1);
@@ -42,13 +49,20 @@ static void RegisterBuiltins(cilly::VM& vm) {
   int i2 = vm.RegisterNative("type", 1, [](VM&, const Value* args, int argc) {
     assert(argc == 1);
     const Value& v = args[0];
-    if (v.IsNull()) return Value::Str("null");
-    if (v.IsBool()) return Value::Str("bool");
-    if (v.IsNum())  return Value::Str("number");
-    if (v.IsStr() || v.IsString()) return Value::Str("str");
-    if (v.IsList()) return Value::Str("list");
-    if (v.IsDict()) return Value::Str("dict");
-    if (v.IsObj())  return Value::Str("object");
+    if (v.IsNull())
+      return Value::Str("null");
+    if (v.IsBool())
+      return Value::Str("bool");
+    if (v.IsNum())
+      return Value::Str("number");
+    if (v.IsStr() || v.IsString())
+      return Value::Str("str");
+    if (v.IsList())
+      return Value::Str("list");
+    if (v.IsDict())
+      return Value::Str("dict");
+    if (v.IsObj())
+      return Value::Str("object");
     return Value::Str("unknown");
   });
   assert(i2 == 2);
@@ -64,19 +78,22 @@ static void RegisterBuiltins(cilly::VM& vm) {
   int i4 = vm.RegisterNative("clock", 0, [](VM&, const Value*, int) {
     using clock = std::chrono::steady_clock;
     double s = std::chrono::duration_cast<std::chrono::duration<double>>(
-                 clock::now().time_since_epoch()).count();
+                   clock::now().time_since_epoch())
+                   .count();
     return Value::Num(s);
   });
   assert(i4 == 4);
 }
 
 // 允许输出里夹杂其它行，只要求关键 token 按顺序出现
-static void ExpectInOrder(const std::string& out, const std::vector<std::string>& seq) {
+static void ExpectInOrder(const std::string& out,
+                          const std::vector<std::string>& seq) {
   size_t pos = 0;
   for (const auto& s : seq) {
     size_t found = out.find(s, pos);
     ASSERT_NE(found, std::string::npos)
-        << "Missing token: [" << s << "]\n=== output ===\n" << out;
+        << "Missing token: [" << s << "]\n=== output ===\n"
+        << out;
     pos = found + s.size();
   }
 }
@@ -173,22 +190,22 @@ print "END";
 
   // 关键输出顺序校验（不关心中间是否夹杂“Return value: null”等额外行）
   ExpectInOrder(out, {
-    "BEGIN",
-    "3",       // f(1,2)
-    "42",      // o["m"](20,22)
-    "120",     // fact(5)
-    "true",    // is_even(10)
-    "true",    // is_odd(9)
-    "false",   // is_odd(10)
-    "99",      // list index set/get
-    "3",       // dict a+b
-    "4",       // for + break/continue: 0+1+3
-    "1",       // shadowing 后外层 x 仍为 1
-    "3",       // len([1,2,3])
-    "9",       // abs(-9)
-    "number",  // type(123)
-    "number",  // type(clock())
-    "123",     // str(123)
-    "END",
-  });
+                         "BEGIN",
+                         "3",       // f(1,2)
+                         "42",      // o["m"](20,22)
+                         "120",     // fact(5)
+                         "true",    // is_even(10)
+                         "true",    // is_odd(9)
+                         "false",   // is_odd(10)
+                         "99",      // list index set/get
+                         "3",       // dict a+b
+                         "4",       // for + break/continue: 0+1+3
+                         "1",       // shadowing 后外层 x 仍为 1
+                         "3",       // len([1,2,3])
+                         "9",       // abs(-9)
+                         "number",  // type(123)
+                         "number",  // type(clock())
+                         "123",     // str(123)
+                         "END",
+                     });
 }

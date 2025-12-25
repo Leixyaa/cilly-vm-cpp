@@ -2,7 +2,7 @@
 // Author: Leixyaa
 // Date: 11.6
 
-//value.h
+// value.h
 
 // Value 语义说明（当前版本）
 //
@@ -16,13 +16,13 @@
 //   - 对这些堆对象采用“引用语义”：多个 Value 可以共享同一个堆上的对象
 //   - 这样就能实现：修改 list / dict 的内容能在多个变量之间共享
 
-
 #ifndef CILLY_VM_CPP_VALUE_H_
 #define CILLY_VM_CPP_VALUE_H_
 
+#include <memory>
 #include <string>
 #include <variant>
-#include <memory> 
+
 #include "bytecode_stream.h"
 
 namespace cilly {
@@ -35,7 +35,7 @@ class ObjDict;
 
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
-enum class ValueType { kNull, kBool, kNum, kStr, kObj, kCallable};
+enum class ValueType { kNull, kBool, kNum, kStr, kObj, kCallable };
 
 // 运行时的通用值类型。
 // 可存放 null、bool、number、string 四种数据。
@@ -43,7 +43,9 @@ class Value {
  public:
   // 构造与工厂方法
   Value();  // 默认构造成 Null。
-  Value(ValueType x, std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>, int32_t> y);
+  Value(ValueType x, std::variant<std::monostate, bool, double, std::string,
+                                  std::shared_ptr<Object>, int32_t>
+                         y);
   static Value Null();
   static Value Bool(bool b);
   static Value Num(double d);
@@ -75,7 +77,7 @@ class Value {
   std::shared_ptr<ObjList> AsList() const;
   std::shared_ptr<ObjString> AsString() const;
   std::shared_ptr<ObjDict> AsDict() const;
-  
+
   int32_t AsCallable() const;
 
   // 文本表示
@@ -86,13 +88,10 @@ class Value {
   // Str  -> 原样返回（不加引号）
   std::string ToRepr() const;
 
-
   // 比较运算
   // 仅在类型相同情况下比较；类型不同直接返回 false。
   bool operator==(const Value& rhs) const;
   bool operator!=(const Value& rhs) const;
-
-
 
   // 序列化接口
   // Load 是静态的，因为我们还不知道读出来的是什么，
@@ -101,11 +100,11 @@ class Value {
   void Save(BytecodeWriter& writer) const;
   static Value Load(BytecodeReader& reader);
 
-
-
  private:
   ValueType type_ = ValueType::kNull;  // 当前值类型。
-  std::variant<std::monostate, bool, double, std::string, std::shared_ptr<Object>, int32_t> data_;  // 存储实际数据。
+  std::variant<std::monostate, bool, double, std::string,
+               std::shared_ptr<Object>, int32_t>
+      data_;  // 存储实际数据。
 };
 
 }  // namespace cilly

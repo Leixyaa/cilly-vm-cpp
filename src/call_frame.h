@@ -2,6 +2,7 @@
 #define CILLY_VM_CPP_CALL_FRAME_H_
 
 #include <cstdint>
+
 #include "function.h"
 
 namespace cilly {
@@ -17,7 +18,7 @@ struct CallFrame {
   int ip = 0;                    // 指属于 fn 的指令指针
   int ret_ip = -1;               // 返回地址（返回后跳回的位置）
 
-  std::vector<Value> locals_;     // 每个调用帧自己的变量表
+  std::vector<Value> locals_;  // 每个调用帧自己的变量表
 };
 
 }  // namespace cilly

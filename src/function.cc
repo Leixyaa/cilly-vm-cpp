@@ -4,19 +4,20 @@
 
 namespace cilly {
 
-Function::Function()
-    : name_("script"), arity_(0), chunk_(std::make_unique<Chunk>()) {}
+Function::Function() :
+    name_("script"), arity_(0), chunk_(std::make_unique<Chunk>()) {
+}
 
-Function::Function(std::string name, int arity)
-    : name_(std::move(name)),
-      arity_(arity),
-      chunk_(std::make_unique<Chunk>()) {}
+Function::Function(std::string name, int arity) :
+    name_(std::move(name)), arity_(arity), chunk_(std::make_unique<Chunk>()) {
+}
 
-Function::Function(Function&& other) noexcept
-    : name_(std::move(other.name_)),
-      arity_(other.arity_),
-      chunk_(std::move(other.chunk_)),
-      local_count_(other.local_count_) {}
+Function::Function(Function&& other) noexcept :
+    name_(std::move(other.name_)),
+    arity_(other.arity_),
+    chunk_(std::move(other.chunk_)),
+    local_count_(other.local_count_) {
+}
 
 Function& Function::operator=(Function&& other) noexcept {
   if (this != &other) {
@@ -32,13 +33,21 @@ Function& Function::operator=(Function&& other) noexcept {
 
 Function::~Function() = default;
 
-const std::string& Function::name() const { return name_; }
+const std::string& Function::name() const {
+  return name_;
+}
 
-int Function::arity() const { return arity_; }
+int Function::arity() const {
+  return arity_;
+}
 
-Chunk& Function::chunk() { return *chunk_; }
+Chunk& Function::chunk() {
+  return *chunk_;
+}
 
-const Chunk& Function::chunk() const { return *chunk_; }
+const Chunk& Function::chunk() const {
+  return *chunk_;
+}
 
 void Function::Emit(OpCode op, int src_line) {
   chunk_->Emit(op, src_line);
@@ -61,7 +70,7 @@ int Function::ConstSize() const {
 }
 
 std::string Function::Name() const {
-    return name_;
+  return name_;
 }
 
 void Function::SetLocalCount(int count) {
@@ -115,6 +124,5 @@ Function Function::Load(BytecodeReader& reader) {
   // 返回完整构造好的 Function
   return fn;
 }
-
 
 }  // namespace cilly

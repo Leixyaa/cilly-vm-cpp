@@ -1,0 +1,28 @@
+BasedOnStyle: Google
+Language: Cpp
+
+# Google 默认 80 列；如果你希望更宽，可以改 100/120，但建议先保持 80
+ColumnLimit: 80
+
+# 让 include 排序稳定（跨文件、跨机器一致）
+SortIncludes: true
+IncludeBlocks: Regroup
+
+# 让指针风格更贴近 Google 的习惯：type* ptr
+PointerAlignment: Left
+DerivePointerAlignment: false
+
+# 少量工程常见偏好（可不改，但更“Google + 工程实践”）
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# 构造函数初始化列表格式更清晰
+BreakConstructorInitializers: AfterColon
+ConstructorInitializerIndentWidth: 4
+
+# 注释对齐更稳
+AlignTrailingComments: true
+
+# 大括号遵循 Google (Attach)
+BreakBeforeBraces: Attach

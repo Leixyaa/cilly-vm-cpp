@@ -2,6 +2,7 @@
 #define CILLY_VM_CPP_STACK_STATS_H_
 
 #include <vector>
+
 #include "value.h"
 
 namespace cilly {
@@ -35,6 +36,6 @@ class StackStats {
   int max_depth_ = 0;
 };
 
-} 
+}  // namespace cilly
 
 #endif  // CILLY_VM_CPP_STACK_STATS_H_

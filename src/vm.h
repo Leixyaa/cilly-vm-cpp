@@ -2,20 +2,21 @@
 #define CILLY_VM_CPP_VM_H_
 
 #include <cstdint>
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
+
 #include "call_frame.h"
 #include "function.h"
+#include "object.h"
 #include "opcodes.h"
 #include "stack_stats.h"
 #include "value.h"
-#include "object.h"
 
 namespace cilly {
 
-//一个 C++ 函数/闭包”，输入是 VM + 参数数组，输出是一个 Value
-//别名
+// 一个 C++ 函数/闭包”，输入是 VM + 参数数组，输出是一个 Value
+// 别名
 using NativeFn = std::function<Value(class VM&, const Value* args, int argc)>;
 
 struct Callable {
@@ -35,7 +36,6 @@ class VM {
  public:
   VM();
 
-
   // 运行入口：执行给定函数（从头到尾）。
   void Run(const Function& fn);
 
@@ -45,10 +45,12 @@ class VM {
   int Depth() const;
   int MaxDepth() const;
 
-  int RegisterFunction(const Function* fn); // 注册函数并且返回索引 
-  int RegisterNative(const std::string& name, int arity, NativeFn fn);  // 注册原生函数
- 
-  void DoCallByIndex(int call_index, int argc, const Value* argv); // 判断是user函数还是builtin函数
+  int RegisterFunction(const Function* fn);  // 注册函数并且返回索引
+  int RegisterNative(const std::string& name, int arity,
+                     NativeFn fn);  // 注册原生函数
+
+  void DoCallByIndex(int call_index, int argc,
+                     const Value* argv);  // 判断是user函数还是builtin函数
 
  private:
   // 取下一条指令（从 code_ 读取，并自增 ip_）。
@@ -63,12 +65,9 @@ class VM {
   CallFrame& CurrentFrame();
   const CallFrame& CurrentFrame() const;
 
-
   StackStats stack_;  // 运行时栈（带统计）
   std::vector<CallFrame> frames_;
   std::vector<Callable> callables_;
-
-
 };
 
 }  // namespace cilly
