@@ -12,11 +12,73 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "vm_opcode_smoke_test",
+    srcs = ["vm_opcode_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+cc_test(
+    name = "frontend_e2e_test",
+    srcs = ["frontend_e2e_test.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "value_test",
+    srcs = ["value_test.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
+    name = "stack_stats_test",
+    srcs = ["stack_stats_test.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+cc_test(
+    name = "chunk_function_test",
+    srcs = ["chunk_function_test.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
 
 
 test_suite(
     name = "all",
     tests = [
+        ":chunk_function_test",
+        ":stack_stats_test",
+        ":value_test",
+        ":vm_opcode_smoke_test",
         ":milestone_smoke_test",
     ],
 )

@@ -134,22 +134,22 @@ print "END";
 
   // 关键输出顺序校验（不关心中间是否夹杂“Return value: null”等额外行）
   ExpectInOrder(out, {
-                       "BEGIN",
-                       "3",       // f(1,2)
-                       "42",      // o["m"](20,22)
-                       "120",     // fact(5)
-                       "true",    // is_even(10)
-                       "true",    // is_odd(9)
-                       "false",   // is_odd(10)
-                       "99",      // list index set/get
-                       "3",       // dict a+b
-                       "4",       // for + break/continue: 0+1+3
-                       "1",       // shadowing 后外层 x 仍为 1
-                       "3",       // len([1,2,3])
-                       "9",       // abs(-9)
-                       "number",  // type(123)
-                       "number",  // type(clock())
-                       "123",     // str(123)
-                       "END",
-                   });
+                         "BEGIN",
+                         "3",       // f(1,2)
+                         "42",      // o["m"](20,22)
+                         "120",     // fact(5)
+                         "true",    // is_even(10)
+                         "true",    // is_odd(9)
+                         "false",   // is_odd(10)
+                         "99",      // list index set/get
+                         "3",       // dict a+b
+                         "4",       // for + break/continue: 0+1+3
+                         "1",       // shadowing 后外层 x 仍为 1
+                         "3",       // len([1,2,3])
+                         "9",       // abs(-9)
+                         "number",  // type(123)
+                         "number",  // type(clock())
+                         "123",     // str(123)
+                         "END",
+                     });
 }
