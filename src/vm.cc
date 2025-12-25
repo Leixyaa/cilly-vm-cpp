@@ -1,5 +1,5 @@
 #include "vm.h"
-
+#include "builtins.h"
 #include <cassert>
 #include <functional>
 #include <iostream>

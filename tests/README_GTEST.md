@@ -1,6 +1,3 @@
-下面给你一份可以直接放到仓库根目录的 **``**（我按你要求：**配置→使用→日常操作→如何新增用例→排错**，一步一步写得很细）。你直接新建文件并粘贴即可。
-
-````md
 # README_GTEST — GoogleTest（gtest）配置与使用指南（Bazel/Bzlmod）
 
 本仓库使用 **GoogleTest（gtest）** 作为**唯一**的自动化测试入口，配合 **Bazelisk + Bazel + Bzlmod** 管理依赖与构建/测试。
@@ -16,7 +13,7 @@
 
 ### 必备软件
 - Windows 10/11
-- Git for Windows（可选，但推荐）
+- Git for Windows
 - Visual Studio 2022（MSVC 编译器工具链）
 - **Bazelisk**（用来自动下载并使用 `.bazelversion` 指定的 Bazel 版本）
 - Git Bash（用于 Bazel 在 Windows 下的 `BAZEL_SH`，建议装 Git for Windows）
@@ -48,17 +45,17 @@ Bazel 在 Windows 下通常需要一个 bash（来自 Git for Windows）。
 
 在 PowerShell 中执行（按你的实际路径调整）：
 
-```powershell
+````powershell
 $env:BAZEL_SH="D:\Program Files\Git\bin\bash.exe"
 setx BAZEL_SH "D:\Program Files\Git\bin\bash.exe"
-```
+````
 
 验证：
 
-```powershell
+````powershell
 echo $env:BAZEL_SH
 Test-Path $env:BAZEL_SH
-```
+````
 
 > `setx` 设置的是持久环境变量；设置后建议重开一个终端窗口再继续。
 
@@ -68,14 +65,14 @@ Test-Path $env:BAZEL_SH
 
 在仓库根目录执行：
 
-```powershell
+````powershell
 cd D:\dev\cilly-vm-cpp
 bazelisk build //...
-```
+````
 
 ---
 
-## 2. gtest 是如何接入本仓库的（你只需理解这三层）
+## 2. gtest 是如何接入本仓库的
 
 ### 2.1 依赖声明：MODULE.bazel（Bzlmod）
 
@@ -95,39 +92,39 @@ bazelisk build //...
 
 ---
 
-## 3. 常用命令（你日常就记这几条）
+## 3. 常用命令
 
 > 以下命令都在仓库根目录执行：`D:\dev\cilly-vm-cpp`
 
 ### 3.1 构建全部（编译所有 target）
 
-```powershell
+````powershell
 bazelisk build //...
-```
+````
 
 ### 3.2 只构建可执行（如果仓库提供 //src:cilly 之类目标）
 
-```powershell
+````powershell
 bazelisk build //src:cilly
-```
+````
 
 ### 3.3 跑全部单测（推荐带输出）
 
-```powershell
+````powershell
 bazelisk test //tests:all --test_output=all
-```
+````
 
 ### 3.4 只跑里程碑冒烟（最常用的 smoke）
 
-```powershell
+````powershell
 bazelisk test //tests:milestone_smoke_test --test_output=all
-```
+````
 
 ### 3.5 只跑某一个 test target（示例）
 
-```powershell
+````powershell
 bazelisk test //tests:value_stack_test --test_output=all
-```
+````
 
 ---
 
@@ -147,7 +144,7 @@ bazelisk test //tests:value_stack_test --test_output=all
 
 ---
 
-## 5. 如何新增一个 gtest（一步一步）
+## 5. 如何新增一个 gtest
 
 下面以新增 `tests/vm_call_test.cc` 为例。
 
@@ -155,7 +152,7 @@ bazelisk test //tests:value_stack_test --test_output=all
 
 在 `tests/` 下新建 `vm_call_test.cc`：
 
-```cpp
+````cpp
 #include <gtest/gtest.h>
 
 // 视你仓库的头文件组织情况，按需 include
@@ -168,7 +165,7 @@ TEST(VMCallTest, CallNativeOrUserFunction) {
   // Assert:  检查栈顶值、返回值、错误码等
   SUCCEED();
 }
-```
+````
 
 > 建议：尽量用“Arrange-Act-Assert”的结构写，失败时更好定位。
 
@@ -178,7 +175,7 @@ TEST(VMCallTest, CallNativeOrUserFunction) {
 
 打开 `tests/BUILD.bazel`，仿照已有 test 添加：
 
-```bzl
+````bzl
 cc_test(
     name = "vm_call_test",
     srcs = ["vm_call_test.cc"],
@@ -188,7 +185,7 @@ cc_test(
         "@googletest//:gtest_main",
     ],
 )
-```
+````
 
 如果你仓库里没有 `//src:cilly_core`，就换成你已有的 core library target（例如 `//src:vm`、`//src:frontend` 等）。
 
@@ -196,19 +193,19 @@ cc_test(
 
 ### Step 3：运行这个新测试
 
-```powershell
+````powershell
 bazelisk test //tests:vm_call_test --test_output=all
-```
+````
 
 通过后，再跑一次全量回归：
 
-```powershell
+````powershell
 bazelisk test //tests:all --test_output=all
-```
+````
 
 ---
 
-## 6. 如何组织测试（建议的分类与命名）
+## 6. 如何组织测试
 
 为了后续维护方便，建议按模块分层：
 
@@ -227,23 +224,23 @@ bazelisk test //tests:all --test_output=all
 
 ---
 
-## 7. 运行时输出与定位失败（你会经常用到）
+## 7. 运行时输出与定位失败
 
 ### 7.1 打印更完整的测试输出
 
-你已经在用：
+已经在用：
 
-```powershell
+````powershell
 --test_output=all
-```
+````
 
 ### 7.2 只看失败的测试日志
 
 Bazel 会在失败时打印日志路径；你也可以重新跑该 target：
 
-```powershell
+````powershell
 bazelisk test //tests:milestone_smoke_test --test_output=all
-```
+````
 
 ---
 
@@ -262,10 +259,10 @@ bazelisk test //tests:milestone_smoke_test --test_output=all
 
 因为你没写目标。正确写法例如：
 
-```powershell
+````powershell
 bazelisk build //...
 bazelisk build //src:cilly --cxxopt=/std:c++17
-```
+````
 
 ---
 
@@ -274,9 +271,9 @@ bazelisk build //src:cilly --cxxopt=/std:c++17
 这是 Bazel 常见行为。一般直接按提示让它重启即可。
 如果状态异常，可尝试：
 
-```powershell
+````powershell
 bazelisk shutdown
-```
+````
 
 ---
 
@@ -287,15 +284,8 @@ bazelisk shutdown
 
 ---
 
-## 9. 本仓库的测试哲学（给贡献者）
+## 9. 本仓库的测试哲学
 
 * 单测要“快”：能单跑、能增量跑
 * 冒烟要“少而硬”：`milestone_smoke_test` 覆盖关键路径（Native/CallV/Frontend→VM/E2E）
 * 任何 bug 修复都应带一个回归用例（先写 failing test，再修代码）
-
-```
-
----
-
-如果你愿意，我还可以按你仓库当前 `tests/BUILD.bazel` 的 target 名称（比如你提到的 `//tests:all`、`hello_test`、`value_stack_test`、`milestone_smoke_test`）把 README 里示例目标名再更贴合你实际文件，避免别人照着敲时“名字对不上”。你把 `tests/BUILD.bazel` 里那段 `test_suite(name="all", ...)` 和现有 `cc_test` 列表贴我一下，我就能把文档里的示例完全对齐。
-```

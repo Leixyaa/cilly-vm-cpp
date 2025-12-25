@@ -48,6 +48,9 @@
     <ClCompile Include="..\src\util\io.cc">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\builtins.cc">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\frontend\ast.h">
@@ -90,6 +93,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="..\src\util\io.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\builtins.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
