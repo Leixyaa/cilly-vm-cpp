@@ -76,6 +76,15 @@ void RegisterBuiltins(VM& vm) {
     return Value::Num(s);
   });
   assert(i4 == 4);
+
+  // __test_emit(x)  (for gtest only; no-op if sink is not set)
+  int i5 = vm.RegisterNative("__test_emit", 1, [](VM& vm, const Value* args, int argc) {
+    assert(argc == 1);
+    vm.TestEmit(args[0]);
+    return args[0]; 
+  });
+  assert(i5 == 5);
+
 }
 
 }  // namespace cilly

@@ -67,19 +67,17 @@ int VM::MaxDepth() const {
 }
 
 void VM::DoCallByIndex(int call_index, int argc, const Value* argv) {
-  int builtin_count = 5;  // 或常量 5
   assert(call_index >= 0 && call_index < (int)callables_.size());
-  if (call_index < builtin_count) {
-    auto& nb = callables_[call_index];
-    assert(nb.arity == argc);
-    Value ret = nb.native(*this, argv, argc);
+  Callable& c = callables_[call_index];
+  if (c.type == Callable::Type::kNative) {
+    assert(c.arity == argc);
+    Value ret = c.native(*this, argv, argc);
     stack_.Push(ret);
     return;
   }
 
-  int user_index = call_index;
-  assert(user_index >= 0 && user_index < (int)callables_.size());
-  const Function* callee = callables_[user_index].fn;
+  const Function* callee = c.fn;
+  assert(callee != nullptr);
   assert(callee->arity() == argc);
 
   // 为被调用函数创建一个新的调用帧

@@ -96,7 +96,7 @@ class Generator {
       func_name_to_index_;  // 函数名和索引的映射
 
   // 原生函数相关
-  static constexpr int kBuiltinCount = 5;
+  static constexpr int kBuiltinCount = 6;
   std::unordered_map<std::string, int> builtin_name_to_index_;
   std::unordered_map<std::string, int> builtin_name_to_arity_;
 
