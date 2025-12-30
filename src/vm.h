@@ -47,9 +47,9 @@ class VM {
   using TestEmitSink = std::function<void(const Value&)>;
   void SetTestEmitSink(TestEmitSink sink) { test_emit_sink_ = std::move(sink); }
   void TestEmit(const Value& v) {
-    if (test_emit_sink_) test_emit_sink_(v);
+    if (test_emit_sink_)
+      test_emit_sink_(v);
   }
-
 
   // 便于调试：取内部栈的统计指标。
   int PushCount() const;
@@ -83,7 +83,6 @@ class VM {
 
   Value last_return_value_ = Value::Null();
   TestEmitSink test_emit_sink_;
-
 };
 
 }  // namespace cilly

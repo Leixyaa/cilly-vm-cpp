@@ -702,7 +702,6 @@ void Generator::InitBuiltins() {
   builtin_name_to_arity_["clock"] = 0;
   builtin_name_to_index_["__test_emit"] = 5;
   builtin_name_to_arity_["__test_emit"] = 1;
-
 }
 
 bool Generator::IsBuiltin(const std::string& name) const {

@@ -84,7 +84,7 @@ void VM::DoCallByIndex(int call_index, int argc, const Value* argv) {
   CallFrame frame;
   frame.fn = callee;
   frame.ip = 0;       // 被调用函数从头开始执行
-  frame.ret_ip = -1;  // 暂时不用，后续如有跳转再扩展
+  frame.ret_ip = -1;  // 后续如有跳转再扩展
   int local_count = callee->LocalCount();
   frame.locals_.assign(local_count, Value::Null());
 
