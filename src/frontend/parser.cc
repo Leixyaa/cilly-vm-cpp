@@ -70,6 +70,13 @@ bool Parser::IsIndexAssignAhead() const {
   }
 }
 
+bool Parser::IsPropAssignAhead() const {
+  return Check(TokenKind::kIdentifier) &&
+         LookAhead(1).kind == TokenKind::kDot &&
+         LookAhead(2).kind == TokenKind::kIdentifier &&
+         LookAhead(3).kind == TokenKind::kEqual;
+}
+
 bool Parser::Check(TokenKind kind) const {
   if (IsAtEnd())
     return false;
@@ -162,6 +169,9 @@ StmtPtr Parser::Statement() {
   }
   if (Match(TokenKind::kReturn)) {
     return ReturnStatement();
+  }
+  if (IsPropAssignAhead()) {
+    return PropAssignStatement();
   }
   return ExprStatement();
 }
@@ -301,7 +311,7 @@ ExprPtr Parser::ProFix() {
       Consume(TokenKind::kRBracket, "Expect ']' after expression.");
       expr = std::make_unique<IndexExpr>(std::move(expr), std::move(idx));
       continue;
-    }
+    }                                                   
 
     if (Match(TokenKind::kLParen)) {
       std::vector<ExprPtr> args;
@@ -316,6 +326,12 @@ ExprPtr Parser::ProFix() {
       Token paren = Consume(TokenKind::kRParen, "Expect ')' after arguments.");
       expr = std::make_unique<CallExpr>(std::move(expr), std::move(args),
                                         std::move(paren));
+      continue;
+    }
+
+    if (Match(TokenKind::kDot)) {
+      Token name = Consume(TokenKind::kIdentifier, "Expect property name after '.'.");
+      expr = std::make_unique<GetPropExpr>(std::move(expr), name);
       continue;
     }
 
@@ -374,6 +390,17 @@ StmtPtr Parser::ReturnStatement() {
   ExprPtr expr = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after expr.");
   return std::make_unique<ReturnStmt>(std::move(expr));
+}
+
+StmtPtr Parser::PropAssignStatement() {
+  Token obj = Consume(TokenKind::kIdentifier, "Expect object name.");
+  Consume(TokenKind::kDot, "Expect '.' after expr.");
+  Token name = Consume(TokenKind::kIdentifier, "Expect property name.");
+  Consume(TokenKind::kEqual, "Expect '=' after property name.");
+  ExprPtr expr = Expression();
+  Consume(TokenKind::kSemicolon, "Expect ';' after assignment.");
+  ExprPtr obj_expr = std::make_unique<VariableExpr>(std::move(obj));
+  return std::make_unique<PropAssignStmt>(std::move(obj_expr), name, std::move(expr));
 }
 
 StmtPtr Parser::ExprStatement() {

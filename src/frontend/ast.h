@@ -30,8 +30,8 @@ struct Expr {
     kDict,
     kIndex,
     kUnaryExpr,
-    kCall  // 函数调用表达式 如：print add(x,y);
-    // 后面还会加：一元表达式、赋值表达式、函数调用等等
+    kCall,  // 函数调用表达式 如：print add(x,y);
+    kGetProp, 
   };
 
   explicit Expr(Kind kind) : kind(kind) {}
@@ -121,6 +121,14 @@ struct UnaryExpr : public Expr {
   ExprPtr expr;
 };
 
+struct GetPropExpr : public Expr {
+  GetPropExpr(ExprPtr object_, Token name_) :
+      Expr(Kind::kGetProp), object(std::move(object_)), name(name_) {}
+  ExprPtr object;
+  Token name;
+};
+
+
 // ======================
 // 语句（Statement）
 // ======================
@@ -140,6 +148,7 @@ struct Stmt {
     kContinue,
     kIf,
     kReturn,
+    kPropAssign,
   };
 
   explicit Stmt(Kind kind) : kind(kind) {}
@@ -259,7 +268,17 @@ struct IfStmt : public Stmt {
 };
 
 struct ReturnStmt : public Stmt {
-  ReturnStmt(ExprPtr expr_) : Stmt(Kind::kReturn), expr(std::move(expr_)) {};
+  ReturnStmt(ExprPtr expr_) : Stmt(Kind::kReturn), expr(std::move(expr_)) {}
+  ExprPtr expr;
+};
+
+// expr.name = expr;
+struct PropAssignStmt : public Stmt {
+  PropAssignStmt(ExprPtr object_, Token name_, ExprPtr expr_) :
+      Stmt(Kind::kPropAssign), object(std::move(object_)), 
+      name(name_), expr(std::move(expr_)) {}
+  ExprPtr object;
+  Token name;
   ExprPtr expr;
 };
 

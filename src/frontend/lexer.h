@@ -43,6 +43,7 @@ enum class TokenKind {
   kLBracket,   // [
   kRBracket,   // ]
   kColon,      // :
+  kDot,        // .
 
   // ÔËËã·û
   kPlus,        // +

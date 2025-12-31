@@ -130,6 +130,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {  // 分类处理不同类型语句
     case Stmt::Kind::kFun: {
       return;
     }
+    case Stmt::Kind::kPropAssign: {
+      auto p = static_cast<PropAssignStmt*>(stmt.get());
+      EmitPropAssignStmt(p);
+      break;
+    }
     default:
       assert(false && "当前无法处理此类语句");
   }
@@ -445,6 +450,14 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   scope_stack_ = std::move(saved_scope);
 }
 
+void Generator::EmitPropAssignStmt(const PropAssignStmt* stmt) {
+  EmitExpr(stmt->object);
+  EmitExpr(stmt->expr);
+  int name_index = current_fn_->AddConst(Value::Str(stmt->name.lexeme));
+  EmitOp(OpCode::OP_SET_PROP);
+  EmitI32(name_index);
+}
+
 void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
   switch (expr->kind) {
     case Expr::Kind::kLiteral: {
@@ -485,6 +498,11 @@ void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
     case Expr::Kind::kCall: {
       auto p = static_cast<CallExpr*>(expr.get());
       EmitCallExpr(p);
+      break;
+    }
+    case Expr::Kind::kGetProp: {
+      auto p = static_cast<GetPropExpr*>(expr.get());
+      EmitGetPropExpr(p);
       break;
     }
     default:
@@ -643,6 +661,14 @@ void Generator::EmitCallExpr(const CallExpr* expr) {
 
   EmitOp(OpCode::OP_CALLV);
   EmitI32(argc);
+  return;
+}
+
+void Generator::EmitGetPropExpr(const GetPropExpr* expr) {
+  EmitExpr(expr->object);
+  int name_index = current_fn_->AddConst(Value::Str(expr->name.lexeme));
+  EmitOp(OpCode::OP_GET_PROP);
+  EmitI32(name_index);
   return;
 }
 

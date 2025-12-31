@@ -209,14 +209,15 @@ Token Lexer::ScanToken() {
         return MakeToken(TokenKind::kRBracket);
       case ':':
         return MakeToken(TokenKind::kColon);
+      case '.':
+        return MakeToken(TokenKind::kDot);
       default:
         assert(false && "还无法识别其他字符！");
     }
   }
 }
 
-// 现在的简易版：先什么都不切，只返回一个 EOF token，
-// 目的是让整个流程先能跑起来，后面再往这里加真正的扫描逻辑。
+
 std::vector<Token> Lexer::ScanAll() {
   std::vector<Token> tokens;
   while (!IsAtEnd()) {

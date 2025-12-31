@@ -61,6 +61,10 @@ enum class OpCode : int32_t {
 
   OP_INDEX_GET,  // 将List和Dict合并分发处理
   OP_INDEX_SET,
+
+  // 成员相关
+  OP_GET_PROP,  // operand: const string index. stack: ..., obj -> ..., value
+  OP_SET_PROP,  // operand: const string index. stack: ..., obj, value -> ...
 };
 
 }  // namespace cilly

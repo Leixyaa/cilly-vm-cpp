@@ -445,6 +445,47 @@ bool VM::Step_() {
       break;
     }
 
+    case OpCode::OP_GET_PROP: {
+      int name_index = ReadOpnd_();
+      Value name_v = ch.ConstAt(name_index);
+      assert(name_v.IsStr() && "暂时不支持其他类型");
+      const std::string name = name_v.AsStr();
+       
+      Value obj = stack_.Pop();
+      assert(obj.IsObj() && "暂时不支持其他类型");
+      switch (obj.AsObj()->Type()) {
+        case ObjType::kDict: {
+          auto dict = obj.AsDict();
+          stack_.Push(dict->Get(name));
+          break;
+        }
+        default:
+          assert(false && "GET_PROP only supports dict for now.");
+      }
+      break;
+    }
+
+    case OpCode::OP_SET_PROP: {
+      int name_index = ReadOpnd_();
+      Value name_v = ch.ConstAt(name_index);
+      assert(name_v.IsStr() && "暂时不支持其他类型");
+      const std::string name = name_v.AsStr();
+      
+      Value value = stack_.Pop();
+      Value obj = stack_.Pop();
+      assert(obj.IsObj() && "暂时不支持其他类型");
+      switch (obj.AsObj()->Type()) {
+        case ObjType::kDict: {
+          auto dict = obj.AsDict();
+          dict->Set(name, value);
+          break;
+        }
+        default:
+          assert(false && "SET_PROP only supports dict for now.");
+      }
+      break;
+    }
+
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;

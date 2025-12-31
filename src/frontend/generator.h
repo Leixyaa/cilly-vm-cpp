@@ -55,6 +55,7 @@ class Generator {
   void EmitIfStmt(const IfStmt* stmt);
   void EmitReturnStmt(const ReturnStmt* stmt);
   void EmitFunctionStmt(const FunctionStmt* stmt);
+  void EmitPropAssignStmt(const PropAssignStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);
@@ -66,6 +67,7 @@ class Generator {
   void EmitDictExpr(const DictExpr* expr);
   void EmitIndexExpr(const IndexExpr* expr);
   void EmitCallExpr(const CallExpr* expr);
+  void EmitGetPropExpr(const GetPropExpr* expr);
   // 在运行时路径上清理即将跳出的 block locals（只 emit OP_POPN，不改编译期栈）
   void EmitUnwindToDepth(int target_depth);
 
