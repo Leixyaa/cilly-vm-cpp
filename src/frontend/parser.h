@@ -113,7 +113,7 @@ class Parser {
 
   // return返回值
   StmtPtr ReturnStatement();
-  
+
   // 成员赋值语句
   StmtPtr PropAssignStatement();
 

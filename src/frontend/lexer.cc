@@ -217,7 +217,6 @@ Token Lexer::ScanToken() {
   }
 }
 
-
 std::vector<Token> Lexer::ScanAll() {
   std::vector<Token> tokens;
   while (!IsAtEnd()) {

@@ -450,7 +450,7 @@ bool VM::Step_() {
       Value name_v = ch.ConstAt(name_index);
       assert(name_v.IsStr() && "暂时不支持其他类型");
       const std::string name = name_v.AsStr();
-       
+
       Value obj = stack_.Pop();
       assert(obj.IsObj() && "暂时不支持其他类型");
       switch (obj.AsObj()->Type()) {
@@ -470,7 +470,7 @@ bool VM::Step_() {
       Value name_v = ch.ConstAt(name_index);
       assert(name_v.IsStr() && "暂时不支持其他类型");
       const std::string name = name_v.AsStr();
-      
+
       Value value = stack_.Pop();
       Value obj = stack_.Pop();
       assert(obj.IsObj() && "暂时不支持其他类型");

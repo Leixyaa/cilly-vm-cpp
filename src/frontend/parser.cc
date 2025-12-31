@@ -311,7 +311,7 @@ ExprPtr Parser::ProFix() {
       Consume(TokenKind::kRBracket, "Expect ']' after expression.");
       expr = std::make_unique<IndexExpr>(std::move(expr), std::move(idx));
       continue;
-    }                                                   
+    }
 
     if (Match(TokenKind::kLParen)) {
       std::vector<ExprPtr> args;
@@ -330,7 +330,8 @@ ExprPtr Parser::ProFix() {
     }
 
     if (Match(TokenKind::kDot)) {
-      Token name = Consume(TokenKind::kIdentifier, "Expect property name after '.'.");
+      Token name =
+          Consume(TokenKind::kIdentifier, "Expect property name after '.'.");
       expr = std::make_unique<GetPropExpr>(std::move(expr), name);
       continue;
     }
@@ -400,7 +401,8 @@ StmtPtr Parser::PropAssignStatement() {
   ExprPtr expr = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after assignment.");
   ExprPtr obj_expr = std::make_unique<VariableExpr>(std::move(obj));
-  return std::make_unique<PropAssignStmt>(std::move(obj_expr), name, std::move(expr));
+  return std::make_unique<PropAssignStmt>(std::move(obj_expr), name,
+                                          std::move(expr));
 }
 
 StmtPtr Parser::ExprStatement() {

@@ -31,7 +31,7 @@ struct Expr {
     kIndex,
     kUnaryExpr,
     kCall,  // 函数调用表达式 如：print add(x,y);
-    kGetProp, 
+    kGetProp,
   };
 
   explicit Expr(Kind kind) : kind(kind) {}
@@ -127,7 +127,6 @@ struct GetPropExpr : public Expr {
   ExprPtr object;
   Token name;
 };
-
 
 // ======================
 // 语句（Statement）
@@ -275,8 +274,10 @@ struct ReturnStmt : public Stmt {
 // expr.name = expr;
 struct PropAssignStmt : public Stmt {
   PropAssignStmt(ExprPtr object_, Token name_, ExprPtr expr_) :
-      Stmt(Kind::kPropAssign), object(std::move(object_)), 
-      name(name_), expr(std::move(expr_)) {}
+      Stmt(Kind::kPropAssign),
+      object(std::move(object_)),
+      name(name_),
+      expr(std::move(expr_)) {}
   ExprPtr object;
   Token name;
   ExprPtr expr;
