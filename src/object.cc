@@ -43,4 +43,22 @@ std::string ObjDict::ToRepr() const {
   return s;
 }
 
+std::string ObjClass::ToRepr() const {
+  std::string s;
+  s += "<class ";
+  s += name;
+  s += ">";
+  return s;
+}
+
+
+
+std::string ObjInstance::ToRepr() const {
+  std::string s;
+  s += "<";
+  s += klass->Name();
+  s += " Instance>";
+  return s;
+}
+
 }  // namespace cilly

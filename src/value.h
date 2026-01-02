@@ -32,6 +32,8 @@ class Object;
 class ObjList;
 class ObjString;
 class ObjDict;
+class ObjClass;
+class ObjInstance;
 
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
@@ -53,6 +55,8 @@ class Value {
   static Value Obj(std::shared_ptr<ObjList> object);
   static Value Obj(std::shared_ptr<ObjString> object);
   static Value Obj(std::shared_ptr<ObjDict> object);
+  static Value Obj(std::shared_ptr<ObjClass> object);
+  static Value Obj(std::shared_ptr<ObjInstance> object);
   static Value Callable(int32_t);
 
   // 类型判断
@@ -65,6 +69,8 @@ class Value {
   bool IsList() const;
   bool IsString() const;
   bool IsDict() const;
+  bool IsClass() const;
+  bool IsInstance() const;
   bool IsCallable() const;
 
   // 取值接口
@@ -77,6 +83,8 @@ class Value {
   std::shared_ptr<ObjList> AsList() const;
   std::shared_ptr<ObjString> AsString() const;
   std::shared_ptr<ObjDict> AsDict() const;
+  std::shared_ptr<ObjClass> AsClass() const;
+  std::shared_ptr<ObjInstance> AsInstance() const;
 
   int32_t AsCallable() const;
 

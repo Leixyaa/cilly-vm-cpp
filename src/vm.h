@@ -41,6 +41,8 @@ class VM {
   // 供测试使用：拿到最近一次 OP_RETURN 的返回值
   const Value& last_return_value() const { return last_return_value_; }
 
+
+
   // ---------------- test hook ----------------
   // 仅用于单测：脚本里调用 __test_emit(x) 时，会把 x 送到这里。
   // 默认没有 sink；生产运行不受影响。

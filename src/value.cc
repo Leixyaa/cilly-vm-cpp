@@ -78,6 +78,20 @@ Value Value::Obj(std::shared_ptr<ObjDict> object) {
   return v;
 }
 
+Value Value::Obj(std::shared_ptr<ObjClass> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
+Value Value::Obj(std::shared_ptr<ObjInstance> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
 Value Value::Callable(int32_t index) {
   Value v;
   v.type_ = ValueType::kCallable;
@@ -121,6 +135,16 @@ bool Value::IsDict() const {
   return IsObj() && AsObj()->Type() == ObjType::kDict;
 }
 
+bool Value::IsClass() const {
+  return IsObj() && AsObj()->Type() == ObjType::kClass;
+}
+
+bool Value::IsInstance() const {
+  return IsObj() && AsObj()->Type() == ObjType::kInstance;
+}
+
+
+
 bool Value::IsCallable() const {
   return type_ == ValueType::kCallable;
 }
@@ -160,6 +184,16 @@ std::shared_ptr<ObjDict> Value::AsDict() const {
   return std::static_pointer_cast<ObjDict>(AsObj());
 }
 
+std::shared_ptr<ObjClass> Value::AsClass() const {
+  assert(IsClass() && "这不是 Class 对象");
+  return std::static_pointer_cast<ObjClass>(AsObj());
+}
+
+std::shared_ptr<ObjInstance> Value::AsInstance() const {
+  assert(IsInstance() && "这不是 Instance 对象");
+  return std::static_pointer_cast<ObjInstance>(AsObj());
+}
+
 int32_t Value::AsCallable() const {
   return std::get<int32_t>(data_);
 }
@@ -187,7 +221,7 @@ std::string Value::ToRepr() const {
     return obj->ToRepr();
   } else if (IsCallable()) {
     return "<fn #" + std::to_string(std::get<int32_t>(data_)) + ">";
-  }
+  } 
   // Str
   return std::get<std::string>(data_);
 }

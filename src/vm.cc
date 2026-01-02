@@ -296,8 +296,19 @@ bool VM::Step_() {
         argv[i] = stack_.Pop();
 
       Value callee = stack_.Pop();
-      assert(callee.IsCallable() && "Callee is not callable");
-      DoCallByIndex(callee.AsCallable(), argc, argc ? argv.data() : nullptr);
+      if (callee.IsCallable()) {
+        DoCallByIndex(callee.AsCallable(), argc, argc ? argv.data() : nullptr);
+        break;
+      } 
+
+      if (callee.IsClass()) {
+        assert(argc == 0 && "Class call currently supports 0 args only");// 暂时先支持0参数
+        auto klass = callee.AsClass();
+        auto instance = std::make_shared<ObjInstance>(klass);
+        stack_.Push(Value::Obj(instance));
+        break;
+      }
+      assert(false && "Callee is not callable/class");
       break;
     }
 
@@ -459,6 +470,11 @@ bool VM::Step_() {
           stack_.Push(dict->Get(name));
           break;
         }
+        case ObjType::kInstance: {
+          auto instance = obj.AsInstance();
+          stack_.Push(instance->Fields()->Get(name));
+          break;
+        }
         default:
           assert(false && "GET_PROP only supports dict for now.");
       }
@@ -478,6 +494,11 @@ bool VM::Step_() {
         case ObjType::kDict: {
           auto dict = obj.AsDict();
           dict->Set(name, value);
+          break;
+        }
+        case ObjType::kInstance: {
+          auto instance = obj.AsInstance();
+          instance->Fields()->Set(name, value);
           break;
         }
         default:

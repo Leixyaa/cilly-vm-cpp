@@ -100,6 +100,34 @@ cc_test(
 )
 
 
+cc_test(
+    name = "oo_prop_instance_smoke_test",
+    srcs = ["oo_prop_instance_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+cc_test(
+    name = "oo_callv_class_smoke_test",
+    srcs = ["oo_callv_class_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
 test_suite(
     name = "all",
     tests = [
@@ -109,6 +137,8 @@ test_suite(
         ":vm_opcode_smoke_test",
         ":milestone_smoke_test",
         ":script_bridge_smoke_test",
-        ":oo_prop_dict_smoke_test"
+        ":oo_prop_dict_smoke_test",
+        ":oo_prop_instance_smoke_test",
+        ":oo_callv_class_smoke_test",
     ],
 )
