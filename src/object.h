@@ -19,7 +19,13 @@
 
 namespace cilly {
 
-enum class ObjType { kString, kList, kDict, kClass, kInstance };  // 暂时先实现List Dict
+enum class ObjType {
+  kString,
+  kList,
+  kDict,
+  kClass,
+  kInstance
+};  // 暂时先实现List Dict
 
 class Object {
  public:
@@ -110,25 +116,24 @@ class ObjDict : public Object {
 
 };  // Dic
 
-
-
 class ObjClass : public Object {
  public:
   explicit ObjClass(std::string name_) :
       Object(ObjType::kClass, 1), name(std::move(name_)) {}
-  
+
   const std::string& Name() const { return name; }
   std::string ToRepr() const override;
 
-private:
+ private:
   std::string name;
 };  // Class
 
-
 class ObjInstance : public Object {
  public:
-  explicit ObjInstance(std::shared_ptr<ObjClass> klass_) : 
-      Object(ObjType::kInstance, 1), klass(klass_), fields(std::make_unique<ObjDict>()){}
+  explicit ObjInstance(std::shared_ptr<ObjClass> klass_) :
+      Object(ObjType::kInstance, 1),
+      klass(klass_),
+      fields(std::make_unique<ObjDict>()) {}
 
   std::shared_ptr<ObjClass> Klass() const { return klass; }
   ObjDict* Fields() const { return fields.get(); }
@@ -138,7 +143,6 @@ class ObjInstance : public Object {
   std::shared_ptr<ObjClass> klass;
   std::unique_ptr<ObjDict> fields;
 };
-
 
 }  // namespace cilly
 

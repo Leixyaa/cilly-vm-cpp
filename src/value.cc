@@ -143,8 +143,6 @@ bool Value::IsInstance() const {
   return IsObj() && AsObj()->Type() == ObjType::kInstance;
 }
 
-
-
 bool Value::IsCallable() const {
   return type_ == ValueType::kCallable;
 }
@@ -221,7 +219,7 @@ std::string Value::ToRepr() const {
     return obj->ToRepr();
   } else if (IsCallable()) {
     return "<fn #" + std::to_string(std::get<int32_t>(data_)) + ">";
-  } 
+  }
   // Str
   return std::get<std::string>(data_);
 }

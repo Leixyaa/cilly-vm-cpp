@@ -16,7 +16,6 @@ TEST(OOFoundation, DotProp_OnInstance) {
   auto klass = std::make_shared<ObjClass>("A");
   auto inst = std::make_shared<ObjInstance>(klass);
 
-
   // Build bytecode:
   // inst.x = 123; __test_emit(inst.x); return 0;
   Function fn("script", 0);
@@ -41,7 +40,7 @@ TEST(OOFoundation, DotProp_OnInstance) {
   fn.Emit(OpCode::OP_GET_PROP, 1);
   fn.EmitI32(k_name_x, 1);
   fn.Emit(OpCode::OP_CALL, 1);
-  fn.EmitI32(5, 1);  // builtin: __test_emit index == 5
+  fn.EmitI32(5, 1);            // builtin: __test_emit index == 5
   fn.Emit(OpCode::OP_POP, 1);  // pop return of __test_emit
 
   // return 0

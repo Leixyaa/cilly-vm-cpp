@@ -51,8 +51,6 @@ std::string ObjClass::ToRepr() const {
   return s;
 }
 
-
-
 std::string ObjInstance::ToRepr() const {
   std::string s;
   s += "<";

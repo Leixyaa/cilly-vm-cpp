@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include "../object.h"
+
 namespace cilly {
 
 Generator::Generator() :
@@ -133,6 +135,11 @@ void Generator::EmitStmt(const StmtPtr& stmt) {  // 分类处理不同类型语句
     case Stmt::Kind::kPropAssign: {
       auto p = static_cast<PropAssignStmt*>(stmt.get());
       EmitPropAssignStmt(p);
+      break;
+    }
+    case Stmt::Kind::kClass: {
+      auto p = static_cast<ClassStmt*>(stmt.get());
+      EmitClassStmt(p);
       break;
     }
     default:
@@ -456,6 +463,24 @@ void Generator::EmitPropAssignStmt(const PropAssignStmt* stmt) {
   int name_index = current_fn_->AddConst(Value::Str(stmt->name.lexeme));
   EmitOp(OpCode::OP_SET_PROP);
   EmitI32(name_index);
+}
+
+void Generator::EmitClassStmt(const ClassStmt* stmt) {
+  const std::string& name = stmt->name.lexeme;
+  int index = next_local_index_;
+  // 分配变量表
+  local_[name] = index;
+  next_local_index_++;
+  int slot = local_[name];
+  max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
+                                                          : max_local_index_;
+  // 生成ObjClass变量
+  auto klass = std::make_shared<ObjClass>(name);
+  EmitConst(Value::Obj(klass));
+
+  // 存入
+  EmitOp(OpCode::OP_STORE_VAR);
+  EmitI32(slot);
 }
 
 void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式

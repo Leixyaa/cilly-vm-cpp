@@ -148,6 +148,7 @@ struct Stmt {
     kIf,
     kReturn,
     kPropAssign,
+    kClass,
   };
 
   explicit Stmt(Kind kind) : kind(kind) {}
@@ -281,6 +282,12 @@ struct PropAssignStmt : public Stmt {
   ExprPtr object;
   Token name;
   ExprPtr expr;
+};
+
+struct ClassStmt : public Stmt {
+  ClassStmt(Token name_) : Stmt(Kind::kClass), name(std::move(name_)) {}
+
+  Token name;  // 暂时不实现方法
 };
 
 }  // namespace cilly

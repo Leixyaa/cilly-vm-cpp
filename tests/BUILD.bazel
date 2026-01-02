@@ -1,4 +1,15 @@
 
+cc_library(
+    name = "run_script",
+    srcs = ["run_script.cc"],
+    hdrs = ["run_script.h"],
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+    ],
+)
+
+
 cc_test(
     name = "milestone_smoke_test",
     srcs = ["milestone_smoke_test.cc"],
@@ -127,6 +138,21 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "oo_class_decl_smoke_test",
+    srcs = ["oo_class_decl_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "//tests:run_script",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
 
 test_suite(
     name = "all",
@@ -140,5 +166,6 @@ test_suite(
         ":oo_prop_dict_smoke_test",
         ":oo_prop_instance_smoke_test",
         ":oo_callv_class_smoke_test",
+        ":oo_class_decl_smoke_test",
     ],
 )

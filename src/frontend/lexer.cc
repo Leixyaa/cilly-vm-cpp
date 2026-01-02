@@ -119,6 +119,8 @@ Token Lexer::ScanIdentifier() {
     return MakeToken(TokenKind::kNull);
   } else if (s == "return") {
     return MakeToken(TokenKind::kReturn);
+  } else if (s == "class") {
+    return MakeToken(TokenKind::kClass);
   } else
     return MakeToken(TokenKind::kIdentifier);
 }

@@ -56,6 +56,7 @@ class Generator {
   void EmitReturnStmt(const ReturnStmt* stmt);
   void EmitFunctionStmt(const FunctionStmt* stmt);
   void EmitPropAssignStmt(const PropAssignStmt* stmt);
+  void EmitClassStmt(const ClassStmt* stmt);
 
   // 工具：生成一个表达式的字节码，把结果留在栈顶
   void EmitExpr(const ExprPtr& expr);

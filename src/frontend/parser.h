@@ -78,6 +78,9 @@ class Parser {
   // fun ÉùÃ÷Óï¾ä
   StmtPtr FuncitonDeclaration();
 
+  // class ÉùÃ÷Óï¾ä
+  StmtPtr ClassDeclaration();
+
   // print Óï¾ä£ºprint expr;
   StmtPtr PrintStatement();
 

@@ -139,6 +139,13 @@ StmtPtr Parser::FuncitonDeclaration() {
   return std::make_unique<FunctionStmt>(name, params, std::move(body));
 }
 
+StmtPtr Parser::ClassDeclaration() {
+  const Token& name = Consume(TokenKind::kIdentifier, "Expect class name.");
+  Consume(TokenKind::kLBrace, "Expect '{' before class body.");
+  Consume(TokenKind::kRBrace, "Expect '}' after class body.");
+  return std::make_unique<ClassStmt>(name);
+}
+
 StmtPtr Parser::Statement() {
   if (Match(TokenKind::kLBrace)) {
     return BlockStatement();
@@ -509,6 +516,10 @@ StmtPtr Parser::Declaration() {
   if (Match(TokenKind::kFun)) {
     assert(block_depth_ == 0 && "暂时不实现非顶层声明!");
     return FuncitonDeclaration();
+  }
+  if (Match(TokenKind::kClass)) {
+    assert(block_depth_ == 0 && "class 目前只允许顶层声明");
+    return ClassDeclaration();
   }
   return Statement();
 }

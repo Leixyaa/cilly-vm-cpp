@@ -32,6 +32,7 @@ enum class TokenKind {
   kBreak,     // break
   kContinue,  // continue;
   kReturn,    // return
+  kClass,     // class
 
   // ·ûºÅ/·Ö¸ô·û
   kLParen,     // (

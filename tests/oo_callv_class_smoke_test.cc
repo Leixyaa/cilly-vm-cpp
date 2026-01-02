@@ -28,13 +28,13 @@ TEST(OOFoundation, CallV_OnClass_CreatesInstance_AndPropWorks) {
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(k_class, 1);
   fn.Emit(OpCode::OP_CALLV, 1);
-  fn.EmitI32(0, 1);          // argc = 0
+  fn.EmitI32(0, 1);  // argc = 0
   fn.Emit(OpCode::OP_STORE_VAR, 1);
-  fn.EmitI32(0, 1);          // store to local 0
+  fn.EmitI32(0, 1);  // store to local 0
 
   // o.x = 42
   fn.Emit(OpCode::OP_LOAD_VAR, 1);
-  fn.EmitI32(0, 1);          // load o
+  fn.EmitI32(0, 1);  // load o
   fn.Emit(OpCode::OP_CONSTANT, 1);
   fn.EmitI32(k_42, 1);
   fn.Emit(OpCode::OP_SET_PROP, 1);
@@ -46,7 +46,7 @@ TEST(OOFoundation, CallV_OnClass_CreatesInstance_AndPropWorks) {
   fn.Emit(OpCode::OP_GET_PROP, 1);
   fn.EmitI32(k_name_x, 1);
   fn.Emit(OpCode::OP_CALL, 1);
-  fn.EmitI32(5, 1);          // builtin __test_emit index == 5
+  fn.EmitI32(5, 1);  // builtin __test_emit index == 5
   fn.Emit(OpCode::OP_POP, 1);
 
   // return 0
