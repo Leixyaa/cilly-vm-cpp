@@ -285,9 +285,11 @@ struct PropAssignStmt : public Stmt {
 };
 
 struct ClassStmt : public Stmt {
-  ClassStmt(Token name_) : Stmt(Kind::kClass), name(std::move(name_)) {}
+  ClassStmt(Token name_, std::vector<StmtPtr> methods_) :
+      Stmt(Kind::kClass), name(name_), methods(std::move(methods_)) {}
 
-  Token name;  // 暂时不实现方法
+  Token name;
+  std::vector<StmtPtr> methods;
 };
 
 }  // namespace cilly

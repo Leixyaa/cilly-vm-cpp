@@ -117,9 +117,31 @@ StmtPtr Parser::VarDeclaration() {
   return std::make_unique<VarStmt>(name, std::move(initializer));
 }
 
+StmtPtr Parser::ClassDeclaration() {
+  Token name = Consume(TokenKind::kIdentifier, "Expect class name.");
+  Consume(TokenKind::kLBrace, "Expect '{' before class body.");
+
+  std::vector<StmtPtr> methods_;
+  while (!Check(TokenKind::kRBrace) && !IsAtEnd()) {
+    Consume(TokenKind::kFun, "Expect 'fun' in class body (stage2).");
+    StmtPtr func = FuncitonDeclaration();
+
+    // 暂时0参数且无this
+    auto fn = static_cast<FunctionStmt*>(func.get());
+    assert(fn->params.size() == 0 && "method params not supported yet");
+    methods_.emplace_back(std::move(func));
+  }
+  Consume(TokenKind::kRBrace, "Expect '}' after class body.");
+  return std::make_unique<ClassStmt>(name, std::move(methods_));
+}
+
 StmtPtr Parser::FuncitonDeclaration() {
-  Token name = Consume(TokenKind::kIdentifier, "Expect function name!");
+  Token name = Consume(TokenKind::kIdentifier, "Expect function name.");
+  std::cerr << "[debug] after fun name = " << name.lexeme
+            << ", next kind = " << static_cast<int>(Peek().kind)
+            << ", next lexeme = " << Peek().lexeme << "\n";
   Consume(TokenKind::kLParen, "Expect '(' after function name.");
+
   std::vector<Token> params;
   while (!Check(TokenKind::kRParen)) {
     Token name_params =
@@ -137,13 +159,6 @@ StmtPtr Parser::FuncitonDeclaration() {
   auto body =
       std::unique_ptr<BlockStmt>(static_cast<BlockStmt*>(body_stmt.release()));
   return std::make_unique<FunctionStmt>(name, params, std::move(body));
-}
-
-StmtPtr Parser::ClassDeclaration() {
-  const Token& name = Consume(TokenKind::kIdentifier, "Expect class name.");
-  Consume(TokenKind::kLBrace, "Expect '{' before class body.");
-  Consume(TokenKind::kRBrace, "Expect '}' after class body.");
-  return std::make_unique<ClassStmt>(name);
 }
 
 StmtPtr Parser::Statement() {
@@ -518,7 +533,7 @@ StmtPtr Parser::Declaration() {
     return FuncitonDeclaration();
   }
   if (Match(TokenKind::kClass)) {
-    assert(block_depth_ == 0 && "class 目前只允许顶层声明");
+    assert(block_depth_ == 0 && "class must be top-level for now!");
     return ClassDeclaration();
   }
   return Statement();

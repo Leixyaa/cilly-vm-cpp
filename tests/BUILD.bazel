@@ -154,6 +154,19 @@ cc_test(
 
 
 
+cc_test(
+    name = "oo_method_basic_smoke_test",
+    srcs = ["oo_method_basic_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 test_suite(
     name = "all",
     tests = [
@@ -166,6 +179,6 @@ test_suite(
         ":oo_prop_dict_smoke_test",
         ":oo_prop_instance_smoke_test",
         ":oo_callv_class_smoke_test",
-        ":oo_class_decl_smoke_test",
+        ":oo_method_basic_smoke_test",
     ],
 )

@@ -473,7 +473,18 @@ bool VM::Step_() {
         }
         case ObjType::kInstance: {
           auto instance = obj.AsInstance();
-          stack_.Push(instance->Fields()->Get(name));
+
+          // ÏÈÕÒfield
+          if (instance->Fields()->Has(name)) {
+            stack_.Push(instance->Fields()->Get(name));
+            break;
+          }
+          int32_t method_index = instance->Klass()->GetMethodIndex(name);
+          if (method_index >= 0) {
+            stack_.Push(Value::Callable(method_index));
+          } else {
+            stack_.Push(Value::Null());
+          }
           break;
         }
         default:

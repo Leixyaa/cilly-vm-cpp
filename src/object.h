@@ -124,8 +124,20 @@ class ObjClass : public Object {
   const std::string& Name() const { return name; }
   std::string ToRepr() const override;
 
+  void DefineMethod(const std::string& name, int32_t callelabe_index) {
+    methods[name] = callelabe_index;
+  }
+
+  int32_t GetMethodIndex(const std::string& method_name) {
+    auto it = methods.find(method_name);
+    if (it == methods.end())
+      return -1;
+    return it->second;
+  }
+
  private:
   std::string name;
+  std::unordered_map<std::string, int32_t> methods;
 };  // Class
 
 class ObjInstance : public Object {

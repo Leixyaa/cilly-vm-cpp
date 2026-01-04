@@ -75,11 +75,11 @@ class Parser {
   // var ÉùÃ÷Óï¾ä£ºvar x = expr;
   StmtPtr VarDeclaration();
 
-  // fun ÉùÃ÷Óï¾ä
-  StmtPtr FuncitonDeclaration();
-
   // class ÉùÃ÷Óï¾ä
   StmtPtr ClassDeclaration();
+
+  // fun ÉùÃ÷Óï¾ä
+  StmtPtr FuncitonDeclaration();
 
   // print Óï¾ä£ºprint expr;
   StmtPtr PrintStatement();

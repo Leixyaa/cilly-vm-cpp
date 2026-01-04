@@ -40,6 +40,14 @@ class Generator {
 
   void PredeclareFunctions(const std::vector<StmtPtr>& program);
   void CompileFunctionBody(const FunctionStmt* stmt);
+  void CompileFunctionBody(const FunctionStmt* stmt,
+                           const std::string& compiled_name);  // 重载函数编译
+
+  // 命名粉碎
+  static std::string MangleMethodName(const std::string& cls,
+                                      const std::string& method) {
+    return cls + "::" + method;
+  }
 
   // 语句分支
   void EmitPrintStmt(const PrintStmt* stmt);

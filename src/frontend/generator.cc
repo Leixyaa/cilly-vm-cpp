@@ -5,6 +5,7 @@
 #include <string>
 
 #include "../object.h"
+#include "../value.h"
 
 namespace cilly {
 
@@ -28,6 +29,13 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   for (const auto& s : program) {
     if (s->kind == Stmt::Kind::kFun) {
       CompileFunctionBody(static_cast<FunctionStmt*>(s.get()));
+    } else if (s->kind == Stmt::Kind::kClass) {
+      auto* p = static_cast<ClassStmt*>(s.get());
+      for (const auto& i : p->methods) {
+        auto* fn = static_cast<FunctionStmt*>(i.get());
+        CompileFunctionBody(fn,
+                            MangleMethodName(p->name.lexeme, fn->name.lexeme));
+      }
     }
   }
 
@@ -162,22 +170,36 @@ void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
   func_name_to_index_.clear();
 
   for (const auto& s : program) {
-    if (s->kind != Stmt::Kind::kFun)
+    if (s->kind != Stmt::Kind::kFun && s->kind != Stmt::Kind::kClass)
       continue;
-    auto* fn = static_cast<FunctionStmt*>(s.get());
-    const std::string& name = fn->name.lexeme;
+    if (s->kind == Stmt::Kind::kClass) {
+      auto* p = static_cast<ClassStmt*>(s.get());
+      for (const auto& i : p->methods) {
+        auto* fn = static_cast<FunctionStmt*>(i.get());
+        const std::string& name =
+            MangleMethodName(p->name.lexeme, fn->name.lexeme);
+        int idx = static_cast<int>(functions_.size());
+        functions_.push_back(
+            std::make_unique<Function>(name, (int)fn->params.size()));
+        func_name_to_index_[name] = idx;
+      }
+    } else {
+      auto* fn = static_cast<FunctionStmt*>(s.get());
+      const std::string& name = fn->name.lexeme;
 
-    assert(func_name_to_index_.count(name) == 0 && "duplicate function name");
+      assert(func_name_to_index_.count(name) == 0 && "duplicate function name");
 
-    int idx = static_cast<int>(functions_.size());
-    functions_.push_back(
-        std::make_unique<Function>(name, (int)fn->params.size()));
-    func_name_to_index_[name] = idx;
+      int idx = static_cast<int>(functions_.size());
+      functions_.push_back(
+          std::make_unique<Function>(name, (int)fn->params.size()));
+      func_name_to_index_[name] = idx;
+    }
   }
 }
 
-void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
-  int idx = FindFunctionIndex(stmt->name.lexeme);
+void Generator::CompileFunctionBody(const FunctionStmt* stmt,
+                                    const std::string& compiled_name) {
+  int idx = FindFunctionIndex(compiled_name);
   assert(idx >= 0);
 
   // 保存当前 script 现场
@@ -231,6 +253,10 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
   max_local_index_ = saved_max;
   loop_stack_ = std::move(saved_loop);
   scope_stack_ = std::move(saved_scope);
+}
+
+void Generator::CompileFunctionBody(const FunctionStmt* stmt) {
+  CompileFunctionBody(stmt, stmt->name.lexeme);
 }
 
 void Generator::EmitPrintStmt(const PrintStmt* stmt) {
@@ -466,21 +492,39 @@ void Generator::EmitPropAssignStmt(const PropAssignStmt* stmt) {
 }
 
 void Generator::EmitClassStmt(const ClassStmt* stmt) {
-  const std::string& name = stmt->name.lexeme;
+  const std::string& cname = stmt->name.lexeme;
+
+  // 在当前作用域声明
+  auto& names = scope_stack_.back().names;
+  if (std::find(names.begin(), names.end(), cname) != names.end()) {
+    assert(false && "class name already declared in this scope");
+  }
+  names.emplace_back(cname);
+
   int index = next_local_index_;
-  // 分配变量表
-  local_[name] = index;
+  local_[cname] = index;
   next_local_index_++;
-  int slot = local_[name];
   max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
                                                           : max_local_index_;
-  // 生成ObjClass变量
-  auto klass = std::make_shared<ObjClass>(name);
-  EmitConst(Value::Obj(klass));
 
-  // 存入
+  // 创建类对象并且填入methods
+  auto klass = std::make_shared<ObjClass>(cname);
+  for (const auto& m : stmt->methods) {
+    auto* fn = static_cast<FunctionStmt*>(m.get());
+    // 当前阶段0参数
+    assert(fn->params.empty() &&
+           "stage1: method must be 0-arity (no this yet)");
+
+    std::string mangle = MangleMethodName(cname, fn->name.lexeme);
+    int user_index = FindFunctionIndex(mangle);
+    assert(user_index >= 0 && "method function not predeclared");
+    int32_t callable_index = static_cast<int32_t>(user_index + kBuiltinCount);
+    klass->DefineMethod(fn->name.lexeme, callable_index);
+  }
+  // 将类对象压栈
+  EmitConst(Value::Obj(klass));
   EmitOp(OpCode::OP_STORE_VAR);
-  EmitI32(slot);
+  EmitI32(index);
 }
 
 void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
@@ -589,6 +633,7 @@ void Generator::EmitVariableExpr(const VariableExpr* expr) {
     EmitConst(Value::Callable(user_index + kBuiltinCount));
     return;
   }
+  std::cerr << "[gen undefined name] " << name << "\n";
   assert(false && "Undefined variable/function name.");
 }
 
