@@ -19,6 +19,10 @@ struct CallFrame {
   int ret_ip = -1;               // 返回地址（返回后跳回的位置）
 
   std::vector<Value> locals_;  // 每个调用帧自己的变量表
+
+  // 用于init构造调用：返回时用instance覆盖return_value
+  bool return_instance = false;
+  Value instance_to_return = Value::Null();
 };
 
 }  // namespace cilly

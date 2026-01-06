@@ -195,6 +195,34 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "oo_this_bound_method_smoke_test",
+    srcs = ["oo_this_bound_method_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_init0_smoke_test",
+    srcs = ["oo_init0_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
 
 test_suite(
     name = "all",
@@ -211,5 +239,7 @@ test_suite(
         ":oo_method_basic_smoke_test",
         ":oo_bound_method_smoke_test",
         ":oo_this_smoke_test",
+        ":oo_this_bound_method_smoke_test",
+        ":oo_init0_smoke_test",
     ],
 )

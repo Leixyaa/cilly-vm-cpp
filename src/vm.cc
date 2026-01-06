@@ -242,6 +242,9 @@ bool VM::Step_() {
     case OpCode::OP_RETURN: {
       Value ret = stack_.Pop();  // 先弹出返回值；
       last_return_value_ = ret;
+      // 保存当前frame
+      bool return_instance = frames_.back().return_instance;
+      Value instance_to_return = frames_.back().instance_to_return;
 
       frames_.pop_back();
       if (frames_
@@ -250,8 +253,11 @@ bool VM::Step_() {
                   << std::endl;  // 打印返回值
         return false;            // 结束整个 VM（返回 false）
       } else {                   // 如果还有上层调用帧：
-        stack_.Push(ret);        // 把返回值压回栈顶，留给调用者继续使用
-        return true;             // 继续执行
+        if (return_instance) {
+          ret = instance_to_return;  // 返回值修改成实例
+        }
+        stack_.Push(ret);  // 把返回值压回栈顶，留给调用者继续使用
+        return true;       // 继续执行
       }
     }
 
@@ -307,7 +313,19 @@ bool VM::Step_() {
                "Class call currently supports 0 args only");  // 暂时先支持0参数
         auto klass = callee.AsClass();
         auto instance = std::make_shared<ObjInstance>(klass);
-        stack_.Push(Value::Obj(instance));
+        // 先创建实例
+        Value inst_val = Value::Obj(instance);
+        // 获取init的index
+        auto init_index = klass->GetMethodIndex("init");
+        if (init_index == -1) {
+          stack_.Push(inst_val);
+          break;
+        }
+        // 传入this作为第一个参数
+        Value argv0 = inst_val;
+        DoCallByIndex(init_index, 1, &argv0);
+        frames_.back().return_instance = true;
+        frames_.back().instance_to_return = inst_val;
         break;
       }
 
