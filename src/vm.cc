@@ -79,7 +79,7 @@ void VM::DoCallByIndex(int call_index, int argc,
 
   const Function* callee = c.fn;
   assert(callee != nullptr);
-  assert(callee->arity() == argc);
+  assert(c.arity == argc);
 
   // 为被调用函数创建一个新的调用帧
   CallFrame frame;
@@ -309,21 +309,33 @@ bool VM::Step_() {
       }
 
       if (callee.IsClass()) {
-        assert(argc == 0 &&
-               "Class call currently supports 0 args only");  // 暂时先支持0参数
         auto klass = callee.AsClass();
         auto instance = std::make_shared<ObjInstance>(klass);
         // 先创建实例
         Value inst_val = Value::Obj(instance);
         // 获取init的index
+
         auto init_index = klass->GetMethodIndex("init");
         if (init_index == -1) {
+          assert(argc == 0 && "Class call without init supports 0 args only");
           stack_.Push(inst_val);
           break;
         }
         // 传入this作为第一个参数
-        Value argv0 = inst_val;
-        DoCallByIndex(init_index, 1, &argv0);
+        std::vector<Value> argv2(argc + 1);
+        argv2[0] = inst_val;
+
+        for (int i = 0; i < argc; i++) {
+          argv2[i + 1] = argv[i];
+        }
+
+        // debug
+        std::cerr << "[debug] ctor init_index=" << init_index
+                  << " argc_call=" << (argc + 1)
+                  << " callee_arity=" << callables_[init_index].arity
+                  << " callee_name=" << callables_[init_index].name << "\n";
+
+        DoCallByIndex(init_index, argc + 1, argv2.data());
         frames_.back().return_instance = true;
         frames_.back().instance_to_return = inst_val;
         break;

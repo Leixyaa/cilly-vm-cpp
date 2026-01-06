@@ -521,9 +521,6 @@ void Generator::EmitClassStmt(const ClassStmt* stmt) {
   auto klass = std::make_shared<ObjClass>(cname);
   for (const auto& m : stmt->methods) {
     auto* fn = static_cast<FunctionStmt*>(m.get());
-    // 当前阶段0参数
-    assert(fn->params.empty() &&
-           "stage3: method explicit params not supported yet");
 
     std::string mangle = MangleMethodName(cname, fn->name.lexeme);
     int user_index = FindFunctionIndex(mangle);

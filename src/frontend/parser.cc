@@ -126,9 +126,7 @@ StmtPtr Parser::ClassDeclaration() {
     Consume(TokenKind::kFun, "Expect 'fun' in class body (stage2).");
     StmtPtr func = FuncitonDeclaration();
 
-    // 暂时0参数且无this
     auto fn = static_cast<FunctionStmt*>(func.get());
-    assert(fn->params.size() == 0 && "method params not supported yet");
     methods_.emplace_back(std::move(func));
   }
   Consume(TokenKind::kRBrace, "Expect '}' after class body.");
