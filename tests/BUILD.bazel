@@ -238,6 +238,22 @@ cc_test(
 )
 
 
+cc_test(
+    name = "oo_ctor_no_init_args_fail_test",
+    srcs = ["oo_ctor_no_init_args_fail_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+
+
 test_suite(
     name = "all",
     tests = [
@@ -256,5 +272,6 @@ test_suite(
         ":oo_this_bound_method_smoke_test",
         ":oo_init0_smoke_test",
         ":oo_init1_smoke_test",
+        ":oo_ctor_no_init_args_fail_test",
     ],
 )
