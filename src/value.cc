@@ -92,6 +92,13 @@ Value Value::Obj(std::shared_ptr<ObjInstance> object) {
   return v;
 }
 
+Value Value::Obj(std::shared_ptr<ObjBoundMethod> object) {
+  Value v;
+  v.type_ = ValueType::kObj;
+  v.data_ = object;
+  return v;
+}
+
 Value Value::Callable(int32_t index) {
   Value v;
   v.type_ = ValueType::kCallable;
@@ -147,6 +154,10 @@ bool Value::IsCallable() const {
   return type_ == ValueType::kCallable;
 }
 
+bool Value::IsBoundMethod() const {
+  return IsObj() && AsObj()->Type() == ObjType::kBoundMethod;
+}
+
 bool Value::AsBool() const {
   assert(IsBool() && "这不是Bool类型的数据");
   return std::get<bool>(data_);
@@ -190,6 +201,11 @@ std::shared_ptr<ObjClass> Value::AsClass() const {
 std::shared_ptr<ObjInstance> Value::AsInstance() const {
   assert(IsInstance() && "这不是 Instance 对象");
   return std::static_pointer_cast<ObjInstance>(AsObj());
+}
+
+std::shared_ptr<ObjBoundMethod> Value::AsBoundMethod() const {
+  assert(IsBoundMethod() && "这不是BoundMethod 对象");
+  return std::static_pointer_cast<ObjBoundMethod>(AsObj());
 }
 
 int32_t Value::AsCallable() const {

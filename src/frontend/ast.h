@@ -32,6 +32,7 @@ struct Expr {
     kUnaryExpr,
     kCall,  // 函数调用表达式 如：print add(x,y);
     kGetProp,
+    kThis,
   };
 
   explicit Expr(Kind kind) : kind(kind) {}
@@ -126,6 +127,11 @@ struct GetPropExpr : public Expr {
       Expr(Kind::kGetProp), object(std::move(object_)), name(name_) {}
   ExprPtr object;
   Token name;
+};
+
+struct ThisExpr : public Expr {
+  ThisExpr(Token keyword_) : Expr(Kind::kThis), keyword(std::move(keyword_)) {}
+  Token keyword;
 };
 
 // ======================

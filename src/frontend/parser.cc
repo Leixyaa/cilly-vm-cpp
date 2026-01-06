@@ -71,7 +71,7 @@ bool Parser::IsIndexAssignAhead() const {
 }
 
 bool Parser::IsPropAssignAhead() const {
-  return Check(TokenKind::kIdentifier) &&
+  return (Check(TokenKind::kIdentifier) || Check(TokenKind::kThis)) &&
          LookAhead(1).kind == TokenKind::kDot &&
          LookAhead(2).kind == TokenKind::kIdentifier &&
          LookAhead(3).kind == TokenKind::kEqual;
@@ -318,6 +318,8 @@ ExprPtr Parser::Primary() {
       Consume(TokenKind::kComma, "Expect ',' after expression.");
     }
     return std::make_unique<DictExpr>(std::move(entries));
+  } else if (Match(TokenKind::kThis)) {
+    return std::make_unique<ThisExpr>(Previous());
   } else {
     assert(false && "未找到此种类型!");
     return nullptr;
@@ -416,13 +418,22 @@ StmtPtr Parser::ReturnStatement() {
 }
 
 StmtPtr Parser::PropAssignStatement() {
-  Token obj = Consume(TokenKind::kIdentifier, "Expect object name.");
+  ExprPtr obj_expr = nullptr;
+
+  if (Match(TokenKind::kThis)) {
+    Token t = Previous();
+    obj_expr = std::make_unique<ThisExpr>(t);
+  } else {
+    Token obj = Consume(TokenKind::kIdentifier, "Expect object name.");
+    obj_expr = std::make_unique<VariableExpr>(std::move(obj));
+  }
+
   Consume(TokenKind::kDot, "Expect '.' after expr.");
   Token name = Consume(TokenKind::kIdentifier, "Expect property name.");
   Consume(TokenKind::kEqual, "Expect '=' after property name.");
   ExprPtr expr = Expression();
   Consume(TokenKind::kSemicolon, "Expect ';' after assignment.");
-  ExprPtr obj_expr = std::make_unique<VariableExpr>(std::move(obj));
+
   return std::make_unique<PropAssignStmt>(std::move(obj_expr), name,
                                           std::move(expr));
 }

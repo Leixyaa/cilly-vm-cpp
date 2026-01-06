@@ -2,14 +2,6 @@
 #ifndef CILLY_VM_CPP_OBJECT_H_
 #define CILLY_VM_CPP_OBJECT_H_
 // 内存所有权
-//
-// 方案 1（入门版）：std::shared_ptr<Obj> 存在 Value 里
-// 好处：先不用自己数引用计数。
-// 坏处：以后做真正 GC 时要把它替换掉。
-//
-// 方案 2（进阶版）：Obj* + VM 自己维护 std::vector<Obj*> heap_
-// 好处：以后做 mark-sweep 很自然。
-// 坏处：现在需要你更小心地管理 new/delete（不过我们会渐进过渡）
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -24,8 +16,9 @@ enum class ObjType {
   kList,
   kDict,
   kClass,
-  kInstance
-};  // 暂时先实现List Dict
+  kInstance,
+  kBoundMethod,
+};
 
 class Object {
  public:
@@ -154,6 +147,23 @@ class ObjInstance : public Object {
  private:
   std::shared_ptr<ObjClass> klass;
   std::unique_ptr<ObjDict> fields;
+};
+
+class ObjBoundMethod : public Object {
+ public:
+  explicit ObjBoundMethod(Value receiver_, int32_t index) :
+      Object(ObjType::kBoundMethod, 1), receiver(receiver_), method(index) {}
+
+  const Value& Receiver() { return receiver; }
+  int32_t Method() { return method; }
+
+  std::string ToRepr() const override {
+    return "<bound_method #" + std::to_string(method) + ">";
+  }
+
+ private:
+  Value receiver;
+  int32_t method;
 };
 
 }  // namespace cilly

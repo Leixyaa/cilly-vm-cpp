@@ -33,6 +33,7 @@ enum class TokenKind {
   kContinue,  // continue;
   kReturn,    // return
   kClass,     // class
+  kThis,      // this
 
   // ·ûºÅ/·Ö¸ô·û
   kLParen,     // (

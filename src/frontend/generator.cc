@@ -179,8 +179,8 @@ void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
         const std::string& name =
             MangleMethodName(p->name.lexeme, fn->name.lexeme);
         int idx = static_cast<int>(functions_.size());
-        functions_.push_back(
-            std::make_unique<Function>(name, (int)fn->params.size()));
+        functions_.push_back(std::make_unique<Function>(
+            name, (int)fn->params.size() + 1));  // +1是为this预留
         func_name_to_index_[name] = idx;
       }
     } else {
@@ -224,14 +224,24 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt,
   next_local_index_ = 0;
   max_local_index_ = 0;
 
+  bool is_method =
+      (compiled_name.find("::") != std::string::npos);  // 判断是否是方法
+  int base = 0;
+  if (is_method) {
+    local_["this"] = 0;
+    next_local_index_ = 1;
+    max_local_index_ = 1;
+    base = 1;  // 是方法则预留一位
+  }
   // 参数绑定：params -> locals[0..arity-1]
   std::unordered_map<std::string, bool> seen;
   for (int i = 0; i < (int)stmt->params.size(); i++) {
     const std::string& pname = stmt->params[i].lexeme;
+    assert(pname != "this" && "parameter cannot be named `this`");
     assert(!seen.count(pname) && "duplicate parameter name");
     seen[pname] = true;
 
-    local_[pname] = i;
+    local_[pname] = base + i;
     next_local_index_++;
     if (next_local_index_ > max_local_index_)
       max_local_index_ = next_local_index_;
@@ -513,7 +523,7 @@ void Generator::EmitClassStmt(const ClassStmt* stmt) {
     auto* fn = static_cast<FunctionStmt*>(m.get());
     // 当前阶段0参数
     assert(fn->params.empty() &&
-           "stage1: method must be 0-arity (no this yet)");
+           "stage3: method explicit params not supported yet");
 
     std::string mangle = MangleMethodName(cname, fn->name.lexeme);
     int user_index = FindFunctionIndex(mangle);
@@ -572,6 +582,11 @@ void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
     case Expr::Kind::kGetProp: {
       auto p = static_cast<GetPropExpr*>(expr.get());
       EmitGetPropExpr(p);
+      break;
+    }
+    case Expr::Kind::kThis: {
+      auto p = static_cast<ThisExpr*>(expr.get());
+      EmitThisExpr(p);
       break;
     }
     default:
@@ -740,6 +755,13 @@ void Generator::EmitGetPropExpr(const GetPropExpr* expr) {
   EmitOp(OpCode::OP_GET_PROP);
   EmitI32(name_index);
   return;
+}
+
+void Generator::EmitThisExpr(const ThisExpr* expr) {
+  auto it = local_.find("this");
+  assert(it != local_.end() && "'this' used outside of method.");
+  EmitOp(OpCode::OP_LOAD_VAR);
+  EmitI32(0);
 }
 
 void Generator::EmitUnwindToDepth(int target_depth) {

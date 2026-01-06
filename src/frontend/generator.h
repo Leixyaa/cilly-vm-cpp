@@ -77,6 +77,8 @@ class Generator {
   void EmitIndexExpr(const IndexExpr* expr);
   void EmitCallExpr(const CallExpr* expr);
   void EmitGetPropExpr(const GetPropExpr* expr);
+  void EmitThisExpr(const ThisExpr* expr);
+
   // 在运行时路径上清理即将跳出的 block locals（只 emit OP_POPN，不改编译期栈）
   void EmitUnwindToDepth(int target_depth);
 

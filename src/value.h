@@ -34,6 +34,7 @@ class ObjString;
 class ObjDict;
 class ObjClass;
 class ObjInstance;
+class ObjBoundMethod;
 
 // 运行时值的类型枚举。
 // 用于标识当前 Value 中存放的数据类型。
@@ -57,6 +58,7 @@ class Value {
   static Value Obj(std::shared_ptr<ObjDict> object);
   static Value Obj(std::shared_ptr<ObjClass> object);
   static Value Obj(std::shared_ptr<ObjInstance> object);
+  static Value Obj(std::shared_ptr<ObjBoundMethod> Object);
   static Value Callable(int32_t);
 
   // 类型判断
@@ -72,6 +74,7 @@ class Value {
   bool IsClass() const;
   bool IsInstance() const;
   bool IsCallable() const;
+  bool IsBoundMethod() const;
 
   // 取值接口
   // 类型不匹配时，可选择断言或异常（实现中保持一致）。
@@ -85,6 +88,7 @@ class Value {
   std::shared_ptr<ObjDict> AsDict() const;
   std::shared_ptr<ObjClass> AsClass() const;
   std::shared_ptr<ObjInstance> AsInstance() const;
+  std::shared_ptr<ObjBoundMethod> AsBoundMethod() const;
 
   int32_t AsCallable() const;
 

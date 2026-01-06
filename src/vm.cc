@@ -66,7 +66,8 @@ int VM::MaxDepth() const {
   return stack_.MaxDepth();
 }
 
-void VM::DoCallByIndex(int call_index, int argc, const Value* argv) {
+void VM::DoCallByIndex(int call_index, int argc,
+                       const Value* argv) {  // 快速调用函数
   assert(call_index >= 0 && call_index < (int)callables_.size());
   Callable& c = callables_[call_index];
   if (c.type == Callable::Type::kNative) {
@@ -309,7 +310,19 @@ bool VM::Step_() {
         stack_.Push(Value::Obj(instance));
         break;
       }
-      assert(false && "Callee is not callable/class");
+
+      if (callee.IsBoundMethod()) {
+        auto bm = callee.AsBoundMethod();
+
+        std::vector<Value> argv2(argc + 1);
+        argv2[0] = bm->Receiver();
+        for (int i = 0; i < argc; i++)
+          argv2[i + 1] = argv[i];
+
+        DoCallByIndex(bm->Method(), argc + 1, argv2.data());
+        break;
+      }
+      assert(false && "Callee is not callable/class/boundmethod");
       break;
     }
 
@@ -481,7 +494,8 @@ bool VM::Step_() {
           }
           int32_t method_index = instance->Klass()->GetMethodIndex(name);
           if (method_index >= 0) {
-            stack_.Push(Value::Callable(method_index));
+            auto bm = std::make_shared<ObjBoundMethod>(obj, method_index);
+            stack_.Push(Value::Obj(bm));
           } else {
             stack_.Push(Value::Null());
           }
