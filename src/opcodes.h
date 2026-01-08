@@ -65,6 +65,9 @@ enum class OpCode : int32_t {
   // 成员相关
   OP_GET_PROP,  // operand: const string index. stack: ..., obj -> ..., value
   OP_SET_PROP,  // operand: const string index. stack: ..., obj, value -> ...
+
+  // super
+  OP_GET_SUPER,
 };
 
 }  // namespace cilly

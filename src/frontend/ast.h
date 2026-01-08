@@ -34,6 +34,7 @@ struct Expr {
     kCall,  // 函数调用表达式 如：print add(x,y);
     kGetProp,
     kThis,
+    kSuper,
   };
 
   explicit Expr(Kind kind) : kind(kind) {}
@@ -133,6 +134,15 @@ struct GetPropExpr : public Expr {
 struct ThisExpr : public Expr {
   ThisExpr(Token keyword_) : Expr(Kind::kThis), keyword(std::move(keyword_)) {}
   Token keyword;
+};
+
+struct SuperExpr : public Expr {
+  SuperExpr(Token keyword_, Token method_) :
+      Expr(Kind::kSuper),
+      keyword(std::move(keyword_)),
+      method(std::move(method_)) {}
+  Token keyword;  // 用于报错定位
+  Token method;   // 方法名
 };
 
 // ======================

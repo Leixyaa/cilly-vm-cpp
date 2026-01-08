@@ -123,6 +123,8 @@ Token Lexer::ScanIdentifier() {
     return MakeToken(TokenKind::kClass);
   } else if (s == "this") {
     return MakeToken(TokenKind::kThis);
+  } else if (s == "super") {
+    return MakeToken(TokenKind::kSuper);
   } else
     return MakeToken(TokenKind::kIdentifier);
 }

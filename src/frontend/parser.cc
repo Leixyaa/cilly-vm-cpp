@@ -327,6 +327,12 @@ ExprPtr Parser::Primary() {
     return std::make_unique<DictExpr>(std::move(entries));
   } else if (Match(TokenKind::kThis)) {
     return std::make_unique<ThisExpr>(Previous());
+  } else if (Match(TokenKind::kSuper)) {
+    Token keyword = Previous();
+    Consume(TokenKind::kDot, "Expect '.' after 'super'.");
+    Token method = Consume(TokenKind::kIdentifier,
+                           "Expect superclass method name after 'super.'.");
+    return std::make_unique<SuperExpr>(std::move(keyword), std::move(method));
   } else {
     assert(false && "未找到此种类型!");
     return nullptr;

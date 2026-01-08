@@ -80,6 +80,7 @@ class Generator {
   void EmitCallExpr(const CallExpr* expr);
   void EmitGetPropExpr(const GetPropExpr* expr);
   void EmitThisExpr(const ThisExpr* expr);
+  void EmitSuperExpr(const SuperExpr* expr);
 
   // 在运行时路径上清理即将跳出的 block locals（只 emit OP_POPN，不改编译期栈）
   void EmitUnwindToDepth(int target_depth);
@@ -123,6 +124,16 @@ class Generator {
 
   std::unordered_map<std::string, std::shared_ptr<ObjClass>>
       class_env_;  // 可见类对象表
+
+  // 编译期类对象表：className -> ObjClass
+  std::unordered_map<std::string, std::shared_ptr<ObjClass>> class_map_;
+
+  // className -> superclassName（如果没有父类就不在表里）
+  std::unordered_map<std::string, std::string> super_name_map_;
+
+  // 当前正在编译的 method 属于哪个类（仅在 CompileFunctionBody(method)
+  // 期间有效）
+  std::string current_class_name_;
 };
 
 }  // namespace cilly

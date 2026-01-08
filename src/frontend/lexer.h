@@ -34,6 +34,7 @@ enum class TokenKind {
   kReturn,    // return
   kClass,     // class
   kThis,      // this
+  kSuper,     // super
 
   // ·ûºÅ/·Ö¸ô·û
   kLParen,     // (

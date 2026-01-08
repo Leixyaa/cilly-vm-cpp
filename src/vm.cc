@@ -563,6 +563,29 @@ bool VM::Step_() {
       break;
     }
 
+    case OpCode::OP_GET_SUPER: {
+      int super_idx = ReadI32_();
+      int name_index = ReadI32_();
+
+      Value receiver = stack_.Pop();
+      Value super_v = CurrentFrame().fn->chunk().ConstAt(super_idx);
+      Value name_v = CurrentFrame().fn->chunk().ConstAt(name_index);
+
+      assert(receiver.IsInstance() && "super receiver must be instance");
+      assert(super_v.IsClass() && "super const must be class");
+      assert(name_v.IsStr() && "super name must be string");
+
+      auto super_cls = super_v.AsClass();
+      std::string name = name_v.AsStr();
+
+      int method_idx = super_cls->GetMethodIndex(name);
+      assert(method_idx >= 0 && "Undefined superclass method.");
+
+      auto bm = std::make_shared<ObjBoundMethod>(receiver, method_idx);
+      stack_.Push(Value::Obj(bm));
+      break;
+    }
+
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;

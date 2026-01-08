@@ -177,6 +177,17 @@ void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
       continue;
     if (s->kind == Stmt::Kind::kClass) {
       auto* p = static_cast<ClassStmt*>(s.get());
+      const std::string cname = p->name.lexeme;
+
+      // 创建类对象
+      if (!class_map_.count(cname)) {
+        class_map_[cname] = std::make_shared<ObjClass>(cname);
+      }
+      // 把父类和派生类对应起来
+      if (p->suprerclass.has_value()) {
+        super_name_map_[cname] = p->suprerclass->lexeme;
+      }
+
       for (const auto& i : p->methods) {
         auto* fn = static_cast<FunctionStmt*>(i.get());
         const std::string& name =
@@ -232,10 +243,14 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt,
       (compiled_name.find("::") != std::string::npos);  // 判断是否是方法
   int base = 0;
   if (is_method) {
+    auto pos = compiled_name.find("::");
+    current_class_name_ = compiled_name.substr(0, pos);
     local_["this"] = 0;
     next_local_index_ = 1;
     max_local_index_ = 1;
     base = 1;  // 是方法则预留一位
+  } else {
+    current_class_name_.clear();
   }
   // 参数绑定：params -> locals[0..arity-1]
   std::unordered_map<std::string, bool> seen;
@@ -526,15 +541,17 @@ void Generator::EmitClassStmt(const ClassStmt* stmt) {
   next_local_index_++;
   max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
                                                           : max_local_index_;
+  auto it = class_map_.find(cname);
+  assert(it != class_map_.end());
+  auto klass = it->second;
 
-  // 创建类对象并且填入methods
-  auto klass = std::make_shared<ObjClass>(cname);
-  // 要求父类先定义
-  if (stmt->suprerclass.has_value()) {
-    const std::string& sname = stmt->suprerclass->lexeme;
-    auto it = class_env_.find(sname);
-    assert(it != class_env_.end() && "Undefined superclass");
-    klass->SetSuperclass(it->second);
+  // 根据派生类名和父类名对应表 搜索到父类名 再通过类表得到父类指针
+  auto sit = super_name_map_.find(cname);
+  if (sit != super_name_map_.end()) {
+    const std::string& sname = sit->second;
+    auto it2 = class_map_.find(sname);
+    assert(it2 != class_map_.end() && "Superclass not found.");
+    klass->SetSuperclass(it2->second);
   }
 
   for (const auto& m : stmt->methods) {
@@ -603,6 +620,11 @@ void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
     case Expr::Kind::kThis: {
       auto p = static_cast<ThisExpr*>(expr.get());
       EmitThisExpr(p);
+      break;
+    }
+    case Expr::Kind::kSuper: {
+      auto p = static_cast<SuperExpr*>(expr.get());
+      EmitSuperExpr(p);
       break;
     }
     default:
@@ -778,6 +800,36 @@ void Generator::EmitThisExpr(const ThisExpr* expr) {
   assert(it != local_.end() && "'this' used outside of method.");
   EmitOp(OpCode::OP_LOAD_VAR);
   EmitI32(0);
+}
+
+void Generator::EmitSuperExpr(const SuperExpr* expr) {
+  // 只能在方法里用
+  auto it = local_.find("this");
+  assert(it != local_.end() && "'super' used outside of method.");
+
+  // 当前类必须要有父类
+  // super必须在方法中，必须有当前类名
+  assert(!current_class_name_.empty() && "super used without class context.");
+  // 取出父类名
+  auto sit = super_name_map_.find(current_class_name_);
+  assert(sit != super_name_map_.end() &&
+         "Cannot use 'super' in a class with no superclass.");
+  const std::string& super_name = sit->second;
+  // 根据父类名取出父类指针
+  auto cit = class_map_.find(super_name);
+  assert(cit != class_map_.end() && "Superclass not found at compile time.");
+
+  // 把receiver压栈
+  EmitOp(OpCode::OP_LOAD_VAR);
+  EmitI32(0);
+
+  // 发出 OP_GET_SUPER(superclass_const, method_name_const)
+  int super_idx = current_fn_->AddConst(Value::Obj(cit->second));
+  int name_idx = current_fn_->AddConst(Value::Str(expr->method.lexeme));
+
+  EmitOp(OpCode::OP_GET_SUPER);
+  EmitI32(super_idx);
+  EmitI32(name_idx);
 }
 
 void Generator::EmitUnwindToDepth(int target_depth) {
