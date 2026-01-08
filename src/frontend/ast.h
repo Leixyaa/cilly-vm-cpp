@@ -3,6 +3,7 @@
 
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -291,10 +292,15 @@ struct PropAssignStmt : public Stmt {
 };
 
 struct ClassStmt : public Stmt {
-  ClassStmt(Token name_, std::vector<StmtPtr> methods_) :
-      Stmt(Kind::kClass), name(name_), methods(std::move(methods_)) {}
+  ClassStmt(Token name_, std::optional<Token> suprerclass_,
+            std::vector<StmtPtr> methods_) :
+      Stmt(Kind::kClass),
+      name(name_),
+      suprerclass(std::move(suprerclass_)),
+      methods(std::move(methods_)) {}
 
   Token name;
+  std::optional<Token> suprerclass;
   std::vector<StmtPtr> methods;
 };
 

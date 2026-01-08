@@ -51,6 +51,30 @@ std::string ObjClass::ToRepr() const {
   return s;
 }
 
+void ObjClass::DefineMethod(const std::string& name, int32_t callelabe_index) {
+  methods[name] = callelabe_index;
+}
+
+int32_t ObjClass::GetMethodIndex(const std::string& method_name) {
+  const ObjClass* k = this;
+  while (k != nullptr) {
+    auto it = k->methods.find(method_name);
+    if (it != k->methods.end()) {
+      return it->second;
+    }
+    k = k->superclass.get();
+  }
+  return -1;
+}
+
+void ObjClass::SetSuperclass(std::shared_ptr<ObjClass> superclass_) {
+  superclass = std::move(superclass_);
+}
+
+const std::shared_ptr<ObjClass> ObjClass::Superclass() const {
+  return superclass;
+}
+
 std::string ObjInstance::ToRepr() const {
   std::string s;
   s += "<";

@@ -11,6 +11,8 @@
 
 namespace cilly {
 
+class ObjClass;
+
 // 负责把 AST (Stmt/Expr) 生成字节码（一个 Function）
 class Generator {
  public:
@@ -33,7 +35,7 @@ class Generator {
   int next_local_index_;
   int max_local_index_;
 
-  // 工具：生成一条语句
+  // 工具
   void EmitStmt(const StmtPtr& stmt);
   void PatchJump(int jump_pos);
   void PatchJumpTo(int jump_pos, int32_t target);
@@ -99,6 +101,7 @@ class Generator {
   struct Scope {
     int start_local = 0;
     std::unordered_map<std::string, int> shadowns;
+    std::unordered_map<std::string, std::shared_ptr<ObjClass>> class_shadows;
     std::vector<std::string> names;
   };
 
@@ -117,6 +120,9 @@ class Generator {
   bool IsBuiltin(const std::string& name) const;
   int BuiltinIndex(const std::string& name) const;
   int BuiltinArity(const std::string& name) const;
+
+  std::unordered_map<std::string, std::shared_ptr<ObjClass>>
+      class_env_;  // 可见类对象表
 };
 
 }  // namespace cilly

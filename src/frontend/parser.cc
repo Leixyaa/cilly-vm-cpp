@@ -119,6 +119,14 @@ StmtPtr Parser::VarDeclaration() {
 
 StmtPtr Parser::ClassDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect class name.");
+
+  std::optional<Token> superclass;
+  // ผฬณะ
+  if (Match(TokenKind::kColon)) {
+    superclass =
+        Consume(TokenKind::kIdentifier, "Expect superclass name after ':'.");
+  }
+
   Consume(TokenKind::kLBrace, "Expect '{' before class body.");
 
   std::vector<StmtPtr> methods_;
@@ -130,7 +138,8 @@ StmtPtr Parser::ClassDeclaration() {
     methods_.emplace_back(std::move(func));
   }
   Consume(TokenKind::kRBrace, "Expect '}' after class body.");
-  return std::make_unique<ClassStmt>(name, std::move(methods_));
+  return std::make_unique<ClassStmt>(name, std::move(superclass),
+                                     std::move(methods_));
 }
 
 StmtPtr Parser::FuncitonDeclaration() {

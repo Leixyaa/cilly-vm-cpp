@@ -567,7 +567,6 @@ bool VM::Step_() {
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;
   }
-
   return true;  // 当前没有函数调用栈，持续执行到字节码末尾
 }
 

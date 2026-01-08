@@ -25,6 +25,7 @@ struct Callable {
   int arity = 0;
 
   // bytecode
+  int fn_index = -1;  // 指向 VM::functions_ 的下标
   const Function* fn = nullptr;
 
   // native

@@ -17,6 +17,7 @@ Generator::Generator() :
   scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
   InitBuiltins();
 }
 
@@ -40,11 +41,13 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   }
 
   local_.clear();
+  class_env_.clear();
   loop_stack_.clear();
   scope_stack_.clear();
   scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
 
   next_local_index_ = 0;
   max_local_index_ = 0;
@@ -205,11 +208,11 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt,
   // 保存当前 script 现场
   Function* saved_fn = current_fn_;
   auto saved_local = local_;
+  auto save_class_env = class_env_;
   int saved_next = next_local_index_;
   int saved_max = max_local_index_;
   auto saved_loop = loop_stack_;
   auto saved_scope = scope_stack_;
-
   // 切到该函数（第一遍已经创建好空 Function）
   current_fn_ = functions_[idx].get();
 
@@ -220,6 +223,7 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt,
   scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
 
   next_local_index_ = 0;
   max_local_index_ = 0;
@@ -259,6 +263,7 @@ void Generator::CompileFunctionBody(const FunctionStmt* stmt,
   // 恢复 script 现场
   current_fn_ = saved_fn;
   local_ = std::move(saved_local);
+  class_env_ = std::move(save_class_env);
   next_local_index_ = saved_next;
   max_local_index_ = saved_max;
   loop_stack_ = std::move(saved_loop);
@@ -387,6 +392,7 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
   scope_stack_.emplace_back();
   scope_stack_.back().start_local = next_local_index_;
   scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
   for (auto& i : stmt->statements) {
     EmitStmt(i);
   }
@@ -397,6 +403,7 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
   EmitI32(count);
   next_local_index_ = scope_stack_.back().start_local;
   local_ = scope_stack_.back().shadowns;
+  class_env_ = scope_stack_.back().class_shadows;
   scope_stack_.pop_back();
   return;
 }
@@ -441,6 +448,7 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   // 保存当前script现场
   Function* saved_fn = current_fn_;
   auto saved_local = local_;
+  auto saved_class_env = class_env_;
   int saved_next = next_local_index_;
   int saved_max = max_local_index_;
   auto saved_loop = loop_stack_;
@@ -456,6 +464,7 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
 
   next_local_index_ = 0;
   max_local_index_ = 0;
@@ -487,6 +496,7 @@ void Generator::EmitFunctionStmt(const FunctionStmt* stmt) {
   // 回复上一层的script相关信息
   current_fn_ = saved_fn;
   local_ = std::move(saved_local);
+  class_env_ = std::move(saved_class_env);
   next_local_index_ = saved_next;
   max_local_index_ = saved_max;
   loop_stack_ = std::move(saved_loop);
@@ -519,6 +529,14 @@ void Generator::EmitClassStmt(const ClassStmt* stmt) {
 
   // 创建类对象并且填入methods
   auto klass = std::make_shared<ObjClass>(cname);
+  // 要求父类先定义
+  if (stmt->suprerclass.has_value()) {
+    const std::string& sname = stmt->suprerclass->lexeme;
+    auto it = class_env_.find(sname);
+    assert(it != class_env_.end() && "Undefined superclass");
+    klass->SetSuperclass(it->second);
+  }
+
   for (const auto& m : stmt->methods) {
     auto* fn = static_cast<FunctionStmt*>(m.get());
 
@@ -532,6 +550,7 @@ void Generator::EmitClassStmt(const ClassStmt* stmt) {
   EmitConst(Value::Obj(klass));
   EmitOp(OpCode::OP_STORE_VAR);
   EmitI32(index);
+  class_env_[cname] = klass;
 }
 
 void Generator::EmitExpr(const ExprPtr& expr) {  // 分类处理不同类型表达式
