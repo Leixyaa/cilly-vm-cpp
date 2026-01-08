@@ -266,6 +266,20 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "oo_inherit_override_smoke_test",
+    srcs = ["oo_inherit_override_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
 
 test_suite(
     name = "all",
@@ -287,5 +301,6 @@ test_suite(
         ":oo_init1_smoke_test",
         ":oo_ctor_no_init_args_fail_test",
         ":oo_inherit_basic_smoke_test",
+        ":oo_inherit_override_smoke_test",
     ],
 )
