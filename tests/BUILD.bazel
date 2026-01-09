@@ -294,6 +294,92 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "oo_inherit_init0_smoke_test",
+    srcs = ["oo_inherit_init0_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_inherit_init1_smoke_test",
+    srcs = ["oo_inherit_init1_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_inherit_init_arity_fail_test",
+    srcs = ["oo_inherit_init_arity_fail_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_super_multilevel_smoke_test",
+    srcs = ["oo_super_multilevel_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_super_init_chain_smoke_test",
+    srcs = ["oo_super_init_chain_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+cc_test(
+    name = "oo_super_override_smoke_test",
+    srcs = ["oo_super_override_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
+
+
+
 test_suite(
     name = "all",
     tests = [
@@ -316,5 +402,11 @@ test_suite(
         ":oo_inherit_basic_smoke_test",
         ":oo_inherit_override_smoke_test",
         ":oo_super_basic_smoke_test",
+        ":oo_inherit_init0_smoke_test",
+        ":oo_inherit_init1_smoke_test",
+        ":oo_inherit_init_arity_fail_test",
+        ":oo_super_multilevel_smoke_test",
+        ":oo_super_init_chain_smoke_test",
+        ":oo_super_override_smoke_test",
     ],
 )
