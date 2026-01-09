@@ -378,7 +378,19 @@ cc_test(
     ],
 )
 
-
+cc_test(
+    name = "no_debug_output_smoke_test",
+    srcs = ["no_debug_output_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+        ":run_script",
+    ],
+)
 
 test_suite(
     name = "all",
@@ -408,5 +420,6 @@ test_suite(
         ":oo_super_multilevel_smoke_test",
         ":oo_super_init_chain_smoke_test",
         ":oo_super_override_smoke_test",
+        ":no_debug_output_smoke_test",
     ],
 )

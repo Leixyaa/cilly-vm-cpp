@@ -3,6 +3,8 @@
 #include <initializer_list>
 #include <iostream>
 
+#include "debug_log.h"
+
 namespace cilly {
 
 Parser::Parser(std::vector<Token> tokens) :
@@ -144,9 +146,9 @@ StmtPtr Parser::ClassDeclaration() {
 
 StmtPtr Parser::FuncitonDeclaration() {
   Token name = Consume(TokenKind::kIdentifier, "Expect function name.");
-  std::cerr << "[debug] after fun name = " << name.lexeme
-            << ", next kind = " << static_cast<int>(Peek().kind)
-            << ", next lexeme = " << Peek().lexeme << "\n";
+  CILLY_DLOG("[debug] after fun name = "
+             << name.lexeme << ", next kind = " << static_cast<int>(Peek().kind)
+             << ", next lexeme = " << Peek().lexeme << "\n");
   Consume(TokenKind::kLParen, "Expect '(' after function name.");
 
   std::vector<Token> params;

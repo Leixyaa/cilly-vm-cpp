@@ -5,6 +5,7 @@
 #include <iostream>
 
 #include "builtins.h"
+#include "debug_log.h"
 
 namespace cilly {
 
@@ -249,10 +250,9 @@ bool VM::Step_() {
       frames_.pop_back();
       if (frames_
               .empty()) {  // 如果已经没有上层调用帧了，说明返回的是最外层函数
-        std::cout << "Return value: " << ret.ToRepr()
-                  << std::endl;  // 打印返回值
-        return false;            // 结束整个 VM（返回 false）
-      } else {                   // 如果还有上层调用帧：
+        CILLY_DLOG("Return value: " << ret.ToRepr() << "\n");  // 返回值
+        return false;  // 结束整个 VM（返回 false）
+      } else {         // 如果还有上层调用帧：
         if (return_instance) {
           ret = instance_to_return;  // 返回值修改成实例
         }
@@ -330,10 +330,10 @@ bool VM::Step_() {
         }
 
         // debug
-        std::cerr << "[debug] ctor init_index=" << init_index
-                  << " argc_call=" << (argc + 1)
-                  << " callee_arity=" << callables_[init_index].arity
-                  << " callee_name=" << callables_[init_index].name << "\n";
+        CILLY_DLOG("[debug] ctor init_index="
+                   << init_index << " argc_call=" << (argc + 1)
+                   << " callee_arity=" << callables_[init_index].arity
+                   << " callee_name=" << callables_[init_index].name << "\n");
 
         DoCallByIndex(init_index, argc + 1, argv2.data());
         frames_.back().return_instance = true;
