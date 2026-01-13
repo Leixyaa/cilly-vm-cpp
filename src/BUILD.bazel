@@ -14,3 +14,14 @@ cc_binary(
         "//src/frontend:frontend",
     ],
 )
+
+cc_library(
+    name = "gc",
+    srcs = ["gc/gc.cc"],
+    hdrs = [
+        "gc/gc.h",
+        "gc/gc_object.h",
+    ],
+    includes = ["."],
+    visibility = ["//visibility:public"],
+)

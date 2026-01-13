@@ -392,6 +392,20 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "gc_root_guard_smoke_test",
+    srcs = ["gc_root_guard_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:gc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+
+
 test_suite(
     name = "all",
     tests = [
@@ -421,5 +435,6 @@ test_suite(
         ":oo_super_init_chain_smoke_test",
         ":oo_super_override_smoke_test",
         ":no_debug_output_smoke_test",
+        ":gc_root_guard_smoke_test",
     ],
 )

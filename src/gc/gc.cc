@@ -1,0 +1,133 @@
+#include "gc.h"
+
+namespace cilly::gc {
+
+Collector::Collector() = default;
+
+Collector::~Collector() {
+  // Collector 拥有 all_objects_ 的生命周期：析构时兜底释放，避免泄漏
+  FreeAll();
+}
+
+void Collector::PushRoot(GcObject* obj) {
+  if (!obj)
+    return;
+  temp_roots_.push_back(obj);
+}
+
+void Collector::PopRoot(GcObject* obj) {
+  // RootGuard 设计为严格 LIFO：作用域嵌套天然形成栈结构
+  // 这样能极早发现错误用法（多 pop/少 pop/pop 错对象），避免隐蔽 UAF
+  assert(!temp_roots_.empty());
+  assert(temp_roots_.back() == obj);
+  temp_roots_.pop_back();
+}
+
+std::size_t Collector::object_count() const {
+  return object_count_;
+}
+std::size_t Collector::last_swept_count() const {
+  return last_swept_count_;
+}
+std::size_t Collector::last_marked_count() const {
+  return last_marked_count_;
+}
+
+void Collector::Collect() {
+  // 清空上次统计：让测试能准确断言本轮发生了什么
+  last_swept_count_ = 0;
+  last_marked_count_ = 0;
+
+  // 1) MARK：闭环0 只从 temp_roots_ 出发
+  // 后续闭环1会加入 VM roots（stack/locals/globals/constants/builtins）
+  for (GcObject* r : temp_roots_) {
+    Mark(r);
+  }
+  DrainGrayStack();
+
+  // 2) SWEEP：回收未标记对象
+  Sweep();
+}
+
+void Collector::FreeAll() {
+  // “关机清空堆”：不做可达性分析，直接释放所有对象
+  GcObject* obj = all_objects_;
+  while (obj) {
+    GcObject* next = obj->next();
+    delete obj;  // 虚析构：会调用派生类析构，释放内部资源
+    obj = next;
+  }
+  all_objects_ = nullptr;
+  object_count_ = 0;
+}
+
+void Collector::Mark(GcObject* obj) {
+  if (!obj)
+    return;
+
+  // 已标记就不用重复入栈，否则会导致重复 Trace，浪费时间
+  if (obj->marked())
+    return;
+
+  obj->set_marked(true);
+  ++last_marked_count_;
+
+  // gray_stack_：迭代式遍历对象图，避免递归爆栈
+  gray_stack_.push_back(obj);
+}
+
+void Collector::DrainGrayStack() {
+  // 典型三色标记的简化版：
+  // - gray_stack_ 里是“已标记但尚未扫描引用”的对象（灰）
+  // - 弹出后调用 Trace，把引用对象 Mark 掉（推进可达集合）
+  while (!gray_stack_.empty()) {
+    GcObject* obj = gray_stack_.back();
+    gray_stack_.pop_back();
+    obj->Trace(*this);
+  }
+}
+
+void Collector::Sweep() {
+  // Sweep 需要从 intrusive 链表中删除节点：
+  // - prev 指向当前节点的前一个
+  // - obj 是当前遍历节点
+  GcObject* prev = nullptr;
+  GcObject* obj = all_objects_;
+  while (obj) {
+    if (obj->marked()) {
+      // 活对象 为下一轮清理marke
+      obj->set_marked(false);
+      prev = obj;
+      obj = obj->next();
+      continue;
+    }
+
+    // 死对象 从链表中摘除并释放
+    GcObject* dead = obj;
+    obj = obj->next();
+
+    if (prev)
+      prev->set_next(obj);
+    else
+      all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
+
+    delete dead;
+
+    --object_count_;
+    ++last_swept_count_;
+  }
+}
+
+RootGuard::RootGuard(Collector& c, GcObject* obj) : c_(c), obj_(obj) {
+  // 构造即保护：把 obj 压入临时 roots
+  if (obj_)
+    c_.PushRoot(obj_);
+}
+
+RootGuard::~RootGuard() {
+  // 析构即解除保护：从临时 roots 弹出
+  if (obj_)
+    c_.PopRoot(obj_);
+}
+
+}  // namespace cilly::gc
