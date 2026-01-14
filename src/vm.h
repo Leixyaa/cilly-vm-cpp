@@ -13,6 +13,10 @@
 #include "stack_stats.h"
 #include "value.h"
 
+namespace cilly::gc {
+class Collector;
+}
+
 namespace cilly {
 
 // 一个 C++ 函数/闭包”，输入是 VM + 参数数组，输出是一个 Value
@@ -35,7 +39,9 @@ struct Callable {
 // 最小可运行 VM:OP_CONSTANT / OP_ADD / OP_PRINT。
 class VM {
  public:
+  // 两种构造方式（原方式保留默认构造）
   VM();
+  explicit VM(gc::Collector* gc);
 
   // 运行入口：执行给定函数（从头到尾）。
   void Run(const Function& fn);
@@ -84,6 +90,9 @@ class VM {
 
   Value last_return_value_ = Value::Null();
   TestEmitSink test_emit_sink_;
+
+  // GC相关
+  gc::Collector* gc_ = nullptr;
 };
 
 }  // namespace cilly

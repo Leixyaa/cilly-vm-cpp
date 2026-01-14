@@ -398,8 +398,10 @@ cc_test(
     srcs = ["gc_smoke_test.cc"],
     deps = [
         "//src:cilly_core",
+        "//src/frontend:frontend",
         "//src:gc",
         "@googletest//:gtest_main",
+        ":run_script",
     ],
 )
 

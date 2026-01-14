@@ -6,10 +6,13 @@
 
 #include "builtins.h"
 #include "debug_log.h"
+#include "gc/gc.h"
 
 namespace cilly {
 
 VM::VM() = default;
+VM::VM(gc::Collector* gc) : gc_(gc) {
+}
 
 void VM::Run(const Function& fn) {
   frames_.clear();
@@ -310,7 +313,11 @@ bool VM::Step_() {
 
       if (callee.IsClass()) {
         auto klass = callee.AsClass();
-        auto instance = std::make_shared<ObjInstance>(klass);
+        std::shared_ptr<ObjInstance> instance;
+        if (gc_)
+          instance = gc::MakeShared<ObjInstance>(*gc_, klass);
+        else
+          instance = std::make_shared<ObjInstance>(klass);
         // 先创建实例
         Value inst_val = Value::Obj(instance);
         // 获取init的index
@@ -360,6 +367,8 @@ bool VM::Step_() {
     // 创建新列表
     case OpCode::OP_LIST_NEW: {
       auto list = std::make_shared<ObjList>();
+      if (gc_)
+        list = gc::MakeShared<ObjList>(*gc_);
       stack_.Push(Value::Obj(list));
       break;
     }
@@ -410,6 +419,8 @@ bool VM::Step_() {
     // 创建新Dict
     case OpCode::OP_DICT_NEW: {
       auto dict = std::make_shared<ObjDict>();
+      if (gc_)
+        dict = gc::MakeShared<ObjDict>(*gc_);
       stack_.Push(Value::Obj(dict));
       break;
     }
@@ -524,7 +535,11 @@ bool VM::Step_() {
           }
           int32_t method_index = instance->Klass()->GetMethodIndex(name);
           if (method_index >= 0) {
-            auto bm = std::make_shared<ObjBoundMethod>(obj, method_index);
+            std::shared_ptr<ObjBoundMethod> bm;
+            if (gc_)
+              bm = gc::MakeShared<ObjBoundMethod>(*gc_, obj, method_index);
+            else
+              bm = std::make_shared<ObjBoundMethod>(obj, method_index);
             stack_.Push(Value::Obj(bm));
           } else {
             stack_.Push(Value::Null());
@@ -580,8 +595,11 @@ bool VM::Step_() {
 
       int method_idx = super_cls->GetMethodIndex(name);
       assert(method_idx >= 0 && "Undefined superclass method.");
-
-      auto bm = std::make_shared<ObjBoundMethod>(receiver, method_idx);
+      std::shared_ptr<ObjBoundMethod> bm;
+      if (gc_)
+        bm = gc::MakeShared<ObjBoundMethod>(*gc_, receiver, method_idx);
+      else
+        bm = std::make_shared<ObjBoundMethod>(receiver, method_idx);
       stack_.Push(Value::Obj(bm));
       break;
     }

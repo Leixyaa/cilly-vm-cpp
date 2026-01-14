@@ -4,17 +4,32 @@
 #include <iostream>
 #include <string>
 
+#include "../gc/gc.h"
 #include "../object.h"
 #include "../value.h"
 
 namespace cilly {
 
 Generator::Generator() :
+    gc_(nullptr),
     current_fn_(nullptr),
     next_local_index_(0),
     max_local_index_(0),
     scope_stack_() {
   scope_stack_.emplace_back();  // 只会在第一次创建实例的时候执行
+  scope_stack_.back().start_local = 0;
+  scope_stack_.back().shadowns = local_;
+  scope_stack_.back().class_shadows = class_env_;
+  InitBuiltins();
+}
+
+Generator::Generator(gc::Collector* gc) :
+    gc_(gc),
+    current_fn_(nullptr),
+    next_local_index_(0),
+    max_local_index_(0),
+    scope_stack_() {
+  scope_stack_.emplace_back();
   scope_stack_.back().start_local = 0;
   scope_stack_.back().shadowns = local_;
   scope_stack_.back().class_shadows = class_env_;
@@ -181,7 +196,12 @@ void Generator::PredeclareFunctions(const std::vector<StmtPtr>& program) {
 
       // 创建类对象
       if (!class_map_.count(cname)) {
-        class_map_[cname] = std::make_shared<ObjClass>(cname);
+        // gc分支
+        if (gc_)
+          class_map_[cname] = gc::MakeShared<ObjClass>(*gc_, cname);
+        // 无gc分支
+        else
+          class_map_[cname] = std::make_shared<ObjClass>(cname);
       }
       // 把父类和派生类对应起来
       if (p->suprerclass.has_value()) {

@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "gc/gc_object.h"
 #include "value.h"
 
 namespace cilly {
@@ -20,12 +21,17 @@ enum class ObjType {
   kBoundMethod,
 };
 
-class Object {
+class Object : public gc::GcObject {
  public:
   Object(ObjType type, int ref_count) : type_(type), ref_count_(ref_count) {}
 
   ObjType Type() const { return type_; }
   virtual std::string ToRepr() const { return ""; }
+
+  // 现在先空实现：本步不做真正可达性遍历。
+  // 下一步会为 ObjList/ObjDict/ObjInstance/ObjClass/ObjBoundMethod 等补齐
+  // Trace。
+  void Trace(gc::Collector&) override {}
 
   virtual ~Object() = default;
   // mark bit,next	 // 以后可添加mark bit(GC 用)，指针next等

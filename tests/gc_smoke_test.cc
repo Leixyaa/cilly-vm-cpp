@@ -69,5 +69,17 @@ TEST(GcSmokeTest, RunResultKeepsCollectorAlive) {
   EXPECT_EQ(r.gc_keepalive->object_count(), 1u);
 }
 
+TEST(GcSmokeTest, RunScriptAllocatesRuntimeObjectsIntoInjectedCollector) {
+  auto r = cilly::test::RunScript(R"(
+    class A { fun init() {} }
+    var a = A();
+    return 0;
+  )");
+
+  ASSERT_TRUE(r.gc_keepalive);
+  EXPECT_GT(r.gc_keepalive->object_count(), 0u);
+  EXPECT_EQ(r.ret.AsNum(), 0);
+}
+
 }  // namespace
 }  // namespace cilly

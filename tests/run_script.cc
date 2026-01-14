@@ -14,23 +14,24 @@ RunResult RunScript(const std::string& src) {
   // 先创建一个Collector并放进RunResult保活
   auto gc = std::make_shared<gc::Collector>();
 
+  // Capture emit
+  RunResult r;
+  // 放入RunResult 保活
+  r.gc_keepalive = gc;
+
   // Compile
   Lexer lexer(src);
   std::vector<Token> tokens = lexer.ScanAll();
   Parser parser(tokens);
   auto program = parser.ParseProgram();
 
-  Generator gen;
+  Generator gen(r.gc_keepalive.get());
   Function main_fn = gen.Generate(program);
 
   // VM + builtins
-  VM vm;
+  VM vm(r.gc_keepalive.get());
   RegisterBuiltins(vm);
 
-  // Capture emit
-  RunResult r;
-  // 放入RunResult 保活
-  r.gc_keepalive = gc;
   vm.SetTestEmitSink([&](const Value& v) { r.emitted.push_back(v); });
 
   // Register user functions

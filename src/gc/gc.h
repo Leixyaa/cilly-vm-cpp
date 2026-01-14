@@ -3,6 +3,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <memory>
 #include <type_traits>
 #include <utility>
 #include <vector>
@@ -130,6 +131,15 @@ class RootGuard {
   Collector& c_;
   GcObject* obj_ = nullptr;
 };
+
+// 生成一个“由 GC 拥有内存”的 shared_ptr 句柄。
+// 注意：这个 shared_ptr 只用于在现阶段尽量少改 Value 的表示方式；
+// deleter 是 no-op，真正释放在将来由 Collector::Sweep/FreeAll 负责。
+template <class T, class... Args>
+std::shared_ptr<T> MakeShared(Collector& c, Args&&... args) {
+  T* obj = c.New<T>(std::forward<Args>(args)...);
+  return std::shared_ptr<T>(obj, [](T*) {});
+}
 
 }  // namespace cilly::gc
 

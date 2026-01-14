@@ -9,6 +9,10 @@
 #include "../opcodes.h"
 #include "ast.h"
 
+namespace cilly::gc {
+class Collector;
+}
+
 namespace cilly {
 
 class ObjClass;
@@ -18,6 +22,7 @@ class Generator {
  public:
   // 生成器不一定需要 VM，先不依赖 VM，只生成 Function。
   Generator();
+  explicit Generator(gc::Collector* gc);
 
   // 输入：一整棵 AST
   // 输出：一个可在 VM 中执行的 Function
@@ -26,6 +31,7 @@ class Generator {
   const std::vector<std::unique_ptr<Function>>& Functions() const {
     return functions_;
   }  // 只读接口
+
   int FindFunctionIndex(const std::string& name) const;
 
  private:
@@ -134,6 +140,9 @@ class Generator {
   // 当前正在编译的 method 属于哪个类（仅在 CompileFunctionBody(method)
   // 期间有效）
   std::string current_class_name_;
+
+  // GC 相关
+  gc::Collector* gc_ = nullptr;
 };
 
 }  // namespace cilly
