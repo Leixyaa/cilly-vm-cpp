@@ -5,6 +5,7 @@ cc_library(
     hdrs = ["run_script.h"],
     deps = [
         "//src:cilly_core",
+        "//src:gc",
         "//src/frontend:frontend",
     ],
 )
@@ -393,28 +394,15 @@ cc_test(
 )
 
 cc_test(
-    name = "gc_root_guard_smoke_test",
-    srcs = ["gc_root_guard_smoke_test.cc"],
-    size = "small",
-    timeout = "short",
+    name = "gc_smoke_test",
+    srcs = ["gc_smoke_test.cc"],
     deps = [
+        "//src:cilly_core",
         "//src:gc",
-        "@googletest//:gtest",
         "@googletest//:gtest_main",
     ],
 )
 
-cc_test(
-    name = "gc_collect_with_roots_smoke_test",
-    srcs = ["gc_collect_with_roots_smoke_test.cc"],
-    size = "small",
-    timeout = "short",
-    deps = [
-        "//src:gc",
-        "@googletest//:gtest",
-        "@googletest//:gtest_main",
-    ],
-)
 
 
 test_suite(
@@ -446,7 +434,6 @@ test_suite(
         ":oo_super_init_chain_smoke_test",
         ":oo_super_override_smoke_test",
         ":no_debug_output_smoke_test",
-        ":gc_root_guard_smoke_test",
-        ":gc_collect_with_roots_smoke_test",
+        ":gc_smoke_test",
     ],
 )

@@ -5,11 +5,15 @@
 #include "src/frontend/lexer.h"
 #include "src/frontend/parser.h"
 #include "src/function.h"
+#include "src/gc/gc.h"
 #include "src/vm.h"
 
 namespace cilly::test {
 
 RunResult RunScript(const std::string& src) {
+  // 先创建一个Collector并放进RunResult保活
+  auto gc = std::make_shared<gc::Collector>();
+
   // Compile
   Lexer lexer(src);
   std::vector<Token> tokens = lexer.ScanAll();
@@ -25,6 +29,8 @@ RunResult RunScript(const std::string& src) {
 
   // Capture emit
   RunResult r;
+  // 放入RunResult 保活
+  r.gc_keepalive = gc;
   vm.SetTestEmitSink([&](const Value& v) { r.emitted.push_back(v); });
 
   // Register user functions
