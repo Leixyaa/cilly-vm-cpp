@@ -404,6 +404,17 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "gc_collect_with_roots_smoke_test",
+    srcs = ["gc_collect_with_roots_smoke_test.cc"],
+    size = "small",
+    timeout = "short",
+    deps = [
+        "//src:gc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
 
 
 test_suite(
@@ -436,5 +447,6 @@ test_suite(
         ":oo_super_override_smoke_test",
         ":no_debug_output_smoke_test",
         ":gc_root_guard_smoke_test",
+        ":gc_collect_with_roots_smoke_test",
     ],
 )

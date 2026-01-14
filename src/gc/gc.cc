@@ -34,19 +34,7 @@ std::size_t Collector::last_marked_count() const {
 }
 
 void Collector::Collect() {
-  // 清空上次统计：让测试能准确断言本轮发生了什么
-  last_swept_count_ = 0;
-  last_marked_count_ = 0;
-
-  // 1) MARK：闭环0 只从 temp_roots_ 出发
-  // 后续闭环1会加入 VM roots（stack/locals/globals/constants/builtins）
-  for (GcObject* r : temp_roots_) {
-    Mark(r);
-  }
-  DrainGrayStack();
-
-  // 2) SWEEP：回收未标记对象
-  Sweep();
+  CollectWithRoots([](Collector&) {});
 }
 
 void Collector::FreeAll() {

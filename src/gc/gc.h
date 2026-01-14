@@ -36,6 +36,28 @@ class Collector {
     return obj;
   }
 
+  template <class F>
+  void CollectWithRoots(F&& trace_roots) {
+    // 统计重置
+    last_swept_count_ = 0;
+    last_marked_count_ = 0;
+    gray_stack_.clear();
+
+    // 1.标记临时root
+    for (auto i : temp_roots_) {
+      Mark(i);
+    }
+
+    // 2.再标记外部roots
+    trace_roots(*this);
+
+    // 扫描对象图
+    DrainGrayStack();
+
+    // 清理
+    Sweep();
+  }
+
   /*
    临时 roots（给 RootGuard 用）：
    - 解决坑：对象如果只存在于 C++ 局部变量里，GC 扫不到就会误回收 -> UAF
