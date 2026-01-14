@@ -5,10 +5,11 @@ cc_library(
     hdrs = ["run_script.h"],
     deps = [
         "//src:cilly_core",
-        "//src:gc",
         "//src/frontend:frontend",
+        "//src/gc:gc", 
     ],
 )
+
 
 
 cc_test(
@@ -399,7 +400,8 @@ cc_test(
     deps = [
         "//src:cilly_core",
         "//src/frontend:frontend",
-        "//src:gc",
+        "//src/gc:gc",
+        "@googletest//:gtest",
         "@googletest//:gtest_main",
         ":run_script",
     ],

@@ -2,6 +2,8 @@
 
 #include "gtest/gtest.h"
 #include "src/gc/gc.h"
+#include "src/object.h"
+#include "src/value.h"
 #include "tests/run_script.h"
 
 namespace cilly {
@@ -79,6 +81,54 @@ TEST(GcSmokeTest, RunScriptAllocatesRuntimeObjectsIntoInjectedCollector) {
   ASSERT_TRUE(r.gc_keepalive);
   EXPECT_GT(r.gc_keepalive->object_count(), 0u);
   EXPECT_EQ(r.ret.AsNum(), 0);
+}
+
+TEST(GcSmokeTest, Trace_ListDictChainKeepsReachablesAlive) {
+  gc::Collector c;
+
+  // 分配 4 个 GC 对象：list -> dict -> string，以及一个 garbage string
+  auto list = gc::MakeShared<ObjList>(c);
+  auto dict = gc::MakeShared<ObjDict>(c);
+  auto alive_str = gc::MakeShared<ObjString>(c, "alive");
+  auto dead_str = gc::MakeShared<ObjString>(c, "dead");  // 不挂到任何可达结构上
+
+  dict->Set("k", Value::Obj(alive_str));
+  list->Push(Value::Obj(dict));
+
+  EXPECT_EQ(c.object_count(), 4u);
+
+  c.CollectWithRoots([&](gc::Collector& gc) {
+    gc.Mark(list.get());  // root: list
+  });
+
+  // dead_str 应该被 sweep，其他三个对象可达而存活
+  EXPECT_EQ(c.object_count(), 3u);
+  EXPECT_EQ(c.last_swept_count(), 1u);
+}
+
+/////补齐对象图Trace（list/dict/instance/class/boundmethod）/////
+TEST(GcSmokeTest, Trace_InstanceMarksKlassAndFieldValues) {
+  gc::Collector c;
+
+  auto klass = gc::MakeShared<ObjClass>(c, "A");
+  auto inst = gc::MakeShared<ObjInstance>(c, klass);
+
+  auto field_str = gc::MakeShared<ObjString>(c, "field");
+  auto dead_str = gc::MakeShared<ObjString>(c, "dead");
+
+  // instance.fields 是 ObjDict（unique_ptr），但 dict 的 entries_ 里保存
+  // Value::Obj(field_str)
+  inst->Fields()->Set("x", Value::Obj(field_str));
+
+  EXPECT_EQ(c.object_count(), 4u);
+
+  c.CollectWithRoots([&](gc::Collector& gc) {
+    gc.Mark(inst.get());  // root: instance
+  });
+
+  // inst 可达 -> klass 可达；inst.fields 里的 field_str 可达；dead_str 不可达
+  EXPECT_EQ(c.object_count(), 3u);
+  EXPECT_EQ(c.last_swept_count(), 1u);
 }
 
 }  // namespace

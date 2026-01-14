@@ -7,6 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
+#include "gc/gc.h"
 #include "gc/gc_object.h"
 #include "value.h"
 
@@ -74,6 +75,8 @@ class ObjList : public Object {
 
   std::string ToRepr() const override;
 
+  void Trace(gc::Collector& c) override;
+
   ~ObjList() override = default;
 
  private:
@@ -108,6 +111,8 @@ class ObjDict : public Object {
 
   std::string ToRepr() const override;
 
+  void Trace(gc::Collector& c) override;
+
   ~ObjDict() override = default;
 
  private:
@@ -130,6 +135,8 @@ class ObjClass : public Object {
   void SetSuperclass(std::shared_ptr<ObjClass> superclass_);
   const std::shared_ptr<ObjClass> Superclass() const;
 
+  void Trace(gc::Collector& c) override;
+
  private:
   std::string name;
   std::shared_ptr<ObjClass> superclass;
@@ -147,6 +154,8 @@ class ObjInstance : public Object {
   ObjDict* Fields() const { return fields.get(); }
   std::string ToRepr() const override;
 
+  void Trace(gc::Collector& c) override;
+
  private:
   std::shared_ptr<ObjClass> klass;
   std::unique_ptr<ObjDict> fields;
@@ -163,6 +172,8 @@ class ObjBoundMethod : public Object {
   std::string ToRepr() const override {
     return "<bound_method #" + std::to_string(method) + ">";
   }
+
+  void Trace(gc::Collector& c) override;
 
  private:
   Value receiver;

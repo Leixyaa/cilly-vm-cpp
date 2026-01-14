@@ -4,6 +4,9 @@ cc_library(
     hdrs = glob(["*.h"]),
     includes = ["."],
     visibility = ["//visibility:public"],
+    deps = [
+        "//src/gc:gc", 
+    ],
 )
 
 cc_binary(
@@ -13,15 +16,4 @@ cc_binary(
         "//src:cilly_core",
         "//src/frontend:frontend",
     ],
-)
-
-cc_library(
-    name = "gc",
-    srcs = ["gc/gc.cc"],
-    hdrs = [
-        "gc/gc.h",
-        "gc/gc_object.h",
-    ],
-    includes = ["."],
-    visibility = ["//visibility:public"],
 )

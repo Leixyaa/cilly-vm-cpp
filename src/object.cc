@@ -83,4 +83,50 @@ std::string ObjInstance::ToRepr() const {
   return s;
 }
 
+////////////////////////////////////////////// Trace
+////////////////////////////////////////////////////
+// ObjList: list 里每个元素都是 Value；如果 Value 引用堆对象，则继续标记。
+void ObjList::Trace(gc::Collector& c) {
+  for (const Value& v : element) {
+    if (v.IsObj())
+      c.Mark(v.AsObj().get());
+  }
+}
+
+// ObjDict: dict 的 key 是 std::string（不是 Value），不需要 Mark；只需要遍历
+// value。
+void ObjDict::Trace(gc::Collector& c) {
+  for (const auto& [k, v] : entries_) {
+    if (v.IsObj())
+      c.Mark(v.AsObj().get());
+  }
+}
+
+// ObjClass: methods 里存的是 callable index（int32），不是对象引用；
+// 但 superclass 是 ObjClass 对象引用，需要标记。
+void ObjClass::Trace(gc::Collector& c) {
+  if (superclass)
+    c.Mark(superclass.get());
+}
+
+// ObjInstance: instance -> klass（类对象）必须活；
+// instance 的字段放在 fields（unique_ptr<ObjDict>）里，虽然 fields 自己不是 GC
+// 管理对象（目前）， 但它里面的 Value 可能引用 GC 对象，所以要沿着字段表继续
+// Trace。
+void ObjInstance::Trace(gc::Collector& c) {
+  if (klass) {
+    c.Mark(klass.get());
+  }
+  if (fields) {
+    fields->Trace(c);  // 继续标记字段 dict 中引用到的对象
+  }
+}
+
+// ObjBoundMethod: receiver 是 Value（通常是 instance），若引用对象则需要标记。
+// method 是 int32 index，不需要标记。
+void ObjBoundMethod::Trace(gc::Collector& c) {
+  if (receiver.IsObj())
+    c.Mark(receiver.AsObj().get());
+}
+
 }  // namespace cilly
