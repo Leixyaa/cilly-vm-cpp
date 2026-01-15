@@ -97,6 +97,21 @@ void RegisterBuiltins(VM& vm) {
   // builtin 索引要固定，确保 Generator 与 VM
   // 的映射一致（否则脚本解析/生成会错位）
   assert(i6 == 6);
+
+  // __gc_touch(x)
+  // 仅用于测试：验证 “native 调用期间 argv 保活” 是否正确。
+  // 行为：触发一次 GC，然后把参数 x 原样返回。
+  // 如果 VM 在进入 native 前没有把 argv 里的 Obj 临时压入 roots，
+  // 那么 CollectGarbage() 可能会把 x 指向的对象 sweep 掉，导致 UAF/崩溃。
+  int i7 = vm.RegisterNative("__gc_touch", 1,
+                             [](VM& vm, const Value* args, int argc) {
+                               (void)argc;
+                               // 在 native 内触发 GC，模拟最危险的窗口期
+                               vm.CollectGarbage();
+                               // 直接返回参数
+                               return args[0];
+                             });
+  assert(i7 == 7);
 }
 
 }  // namespace cilly

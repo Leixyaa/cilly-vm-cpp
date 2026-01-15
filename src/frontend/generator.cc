@@ -914,6 +914,10 @@ void Generator::InitBuiltins() {
   // GC bring-up：脚本执行中主动触发 GC，用于验证 VM roots 扫描是否正确
   builtin_name_to_index_["__gc_collect"] = 6;
   builtin_name_to_arity_["__gc_collect"] = 0;
+
+  // native 内触发 GC 后返回参数，用于验证 argv pinning
+  builtin_name_to_index_["__gc_touch"] = 7;
+  builtin_name_to_arity_["__gc_touch"] = 1;
 }
 
 bool Generator::IsBuiltin(const std::string& name) const {

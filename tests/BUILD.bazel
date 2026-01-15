@@ -433,6 +433,19 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "gc_native_argv_pinning_smoke_test",
+    srcs = ["gc_native_argv_pinning_smoke_test.cc"],
+    deps = [
+        ":run_script",
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "//src/gc:gc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 
 
 
@@ -468,5 +481,6 @@ test_suite(
         ":gc_smoke_test",
         ":gc_vm_roots_smoke_test",
         ":gc_vm_auto_collect_smoke_test",
+        ":gc_native_argv_pinning_smoke_test"
     ],
 )
