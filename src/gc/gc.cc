@@ -27,10 +27,13 @@ std::size_t Collector::object_count() const {
   return object_count_;
 }
 std::size_t Collector::heap_bytes() const {
-  return heap_bytes_;
+  return RecomputeHeapBytes_();
 }
 std::size_t Collector::last_swept_count() const {
   return last_swept_count_;
+}
+std::size_t Collector::total_swept_count() const {
+  return total_swept_count_;
 }
 std::size_t Collector::last_marked_count() const {
   return last_marked_count_;
@@ -103,14 +106,23 @@ void Collector::Sweep() {
     else
       all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
 
-    // 释放前先从堆字节统计里扣掉
-    heap_bytes_ -= dead->SizeBytes();
-
     delete dead;
 
     --object_count_;
     ++last_swept_count_;
+    ++total_swept_count_;
   }
+  heap_bytes_ = RecomputeHeapBytes_();
+}
+
+std::size_t Collector::RecomputeHeapBytes_() const {
+  std::size_t sum = 0;
+  for (GcObject* obj = all_objects_; obj; obj = obj->next()) {
+    // SizeBytes() 由各对象（ObjList/ObjDict/ObjString...）按 capacity/bucket
+    // 等返回
+    sum += obj->SizeBytes();
+  }
+  return sum;
 }
 
 RootGuard::RootGuard(Collector& c, GcObject* obj) : c_(c), obj_(obj) {

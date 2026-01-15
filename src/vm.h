@@ -70,6 +70,11 @@ class VM {
   void CollectGarbage();
   // 仅测试使用：把下一次 GC 触发阈值调小，确保测试稳定触发
   void SetNextGcBytesThresholdForTest(std::size_t bytes);
+  // 仅测试使用：把下一次 GC 的“对象数触发阈值”调成指定值
+  // 用途：在 bytes-budget 测试里把对象阈值拉到很大，确保只走 bytes 条件
+  void SetNextGcObjectThresholdForTest(std::size_t n) {
+    next_gc_threshold_ = n;
+  }
 
   int RegisterFunction(const Function* fn);  // 注册函数并且返回索引
   int RegisterNative(const std::string& name, int arity,
@@ -106,7 +111,11 @@ class VM {
   // - 安全点选择在 Step_ 开始处（即将执行本条指令之前）
   // - 这样可保证所有活跃 Value 都还在 VM 栈/locals 中，不会漏标
   void MaybeCollectGarbage_();
-  // 默认阈值：工程运行用（建议先 16KB）
+
+  // -------- GC 自动触发阈值（两条线：对象数 / 字节数）--------
+  // 对象数阈值：对“很多小对象”敏感
+  std::size_t next_gc_threshold_ = 256;
+  // 字节阈值：对“少量大对象 / 容器扩容”敏感（建议默认 16KB 起）
   std::size_t next_gc_bytes_threshold_ = 16 * 1024;
 };
 

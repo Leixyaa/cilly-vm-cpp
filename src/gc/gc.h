@@ -81,6 +81,7 @@ class Collector {
   std::size_t object_count() const;
   std::size_t heap_bytes() const;
   std::size_t last_swept_count() const;
+  std::size_t total_swept_count() const;
   std::size_t last_marked_count() const;
 
   /*
@@ -124,9 +125,12 @@ class Collector {
   // 每次 Collect 的统计数据（用于 gtest 断言）
   std::size_t last_swept_count_ = 0;
   std::size_t last_marked_count_ = 0;
+  std::size_t total_swept_count_ = 0;
 
   // 当前堆上对象近似字节数（sum(sizeof(T)) - swept）
   std::size_t heap_bytes_ = 0;
+  // 重新遍历 all_objects_ 计算“实时准确”的堆字节数
+  std::size_t RecomputeHeapBytes_() const;
 
   friend class RootGuard;
 };

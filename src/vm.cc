@@ -718,25 +718,37 @@ void VM::TraceRoots(gc::Collector& c) const {
 void VM::MaybeCollectGarbage_() {
   if (!gc_)
     return;
-  // object_count 即在堆上的对象的数量
-  // 未超过阈值则不触发GC
-  if (gc_->object_count() < next_gc_bytes_threshold_)
+
+  const bool hit_object_budget = (gc_->object_count() >= next_gc_threshold_);
+  const bool hit_bytes_budget = (gc_->heap_bytes() >= next_gc_bytes_threshold_);
+
+  if (!hit_object_budget && !hit_bytes_budget)
     return;
 
   // 触发一次GC
   CollectGarbage();
 
-  // GC 后存活堆字节数（近似）
-  std::size_t live = gc_->heap_bytes();
+  // ---- GC 后更新两个阈值，避免频繁抖动 ----
+  // 1.对象阈值：沿用你原来的策略（live*2+64，且下限256）
+  {
+    std::size_t live = gc_->object_count();
+    std::size_t next = live * 2 + 64;
+    if (next < 256)
+      next = 256;
+    next_gc_threshold_ = next;
+  }
 
-  // 下一次阈值：live * 2 + 4KB（给一点缓冲，避免频繁触发）
-  std::size_t next = live * 2 + 64;
+  // 2.字节阈值：按当前存活字节数扩大（live_bytes*2），并给个下限
+  {
+    std::size_t live_bytes = gc_->heap_bytes();
+    std::size_t next_bytes = live_bytes * 2;
 
-  // 下限：至少 8KB，避免小脚本频繁 GC
-  if (next < 8 * 1024)
-    next = 8 * 1024;
+    // 下限：避免脚本很小导致 bytes 阈值过低而频繁 GC
+    if (next_bytes < 16 * 1024)
+      next_bytes = 16 * 1024;
 
-  next_gc_bytes_threshold_ = next;
+    next_gc_bytes_threshold_ = next_bytes;
+  }
 }
 
 int VM::RegisterFunction(const Function* fn) {
