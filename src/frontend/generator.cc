@@ -918,6 +918,9 @@ void Generator::InitBuiltins() {
   // native 内触发 GC 后返回参数，用于验证 argv pinning
   builtin_name_to_index_["__gc_touch"] = 7;
   builtin_name_to_arity_["__gc_touch"] = 1;
+
+  builtin_name_to_index_["__make_big_dict"] = 8;
+  builtin_name_to_arity_["__make_big_dict"] = 1;
 }
 
 bool Generator::IsBuiltin(const std::string& name) const {

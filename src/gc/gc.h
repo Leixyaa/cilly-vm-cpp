@@ -40,7 +40,7 @@ class Collector {
     ++object_count_;
 
     // 总字节数统计
-    heap_bytes_ += obj->size_bytes();
+    heap_bytes_ += obj->SizeBytes();
 
     return obj;
   }

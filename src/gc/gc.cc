@@ -104,7 +104,7 @@ void Collector::Sweep() {
       all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
 
     // 释放前先从堆字节统计里扣掉
-    heap_bytes_ -= dead->size_bytes();
+    heap_bytes_ -= dead->SizeBytes();
 
     delete dead;
 

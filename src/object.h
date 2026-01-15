@@ -55,6 +55,8 @@ class ObjString : public Object {
 
   std::string ToRepr() const override { return value_; }
 
+  std::size_t SizeBytes() const override;
+
   ~ObjString() override = default;
 
  private:
@@ -77,6 +79,8 @@ class ObjList : public Object {
 
   void Trace(gc::Collector& c) override;
 
+  std::size_t SizeBytes() const override;
+
   ~ObjList() override = default;
 
  private:
@@ -86,6 +90,11 @@ class ObjList : public Object {
 class ObjDict : public Object {
  public:
   ObjDict() : Object(ObjType::kDict, 1), entries_() {};
+
+  // 测试/优化用：预留 n 个元素容量，保证构造结束后 SizeBytes 变大
+  explicit ObjDict(std::size_t reserve_entries) : Object(ObjType::kDict, 1) {
+    entries_.reserve(reserve_entries);
+  }
 
   explicit ObjDict(std::unordered_map<std::string, Value> index) :
       Object(ObjType::kDict, 1), entries_(std::move(index)) {}
@@ -112,6 +121,8 @@ class ObjDict : public Object {
   std::string ToRepr() const override;
 
   void Trace(gc::Collector& c) override;
+
+  std::size_t SizeBytes() const override;
 
   ~ObjDict() override = default;
 

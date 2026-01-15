@@ -56,6 +56,14 @@ int32_t VM::ReadOpnd_() {
   return ReadI32_();
 }
 
+std::shared_ptr<ObjDict> VM::NewDictReservedForTest(
+    std::size_t reserve_entries) {
+  if (gc_) {
+    return gc::MakeShared<ObjDict>(*gc_, reserve_entries);
+  }
+  return std::make_shared<ObjDict>(reserve_entries);
+}
+
 int VM::PushCount() const {
   return stack_.PushCount();
 }

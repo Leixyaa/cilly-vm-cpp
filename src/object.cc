@@ -84,7 +84,6 @@ std::string ObjInstance::ToRepr() const {
 }
 
 ////////////////////////////////////////////// Trace
-////////////////////////////////////////////////////
 // ObjList: list 里每个元素都是 Value；如果 Value 引用堆对象，则继续标记。
 void ObjList::Trace(gc::Collector& c) {
   for (const Value& v : element) {
@@ -127,6 +126,26 @@ void ObjInstance::Trace(gc::Collector& c) {
 void ObjBoundMethod::Trace(gc::Collector& c) {
   if (receiver.IsObj())
     c.Mark(receiver.AsObj().get());
+}
+
+////////////////////////////////////////////// SizeBytes
+std::size_t ObjString::SizeBytes() const {
+  return size_bytes() + value_.capacity();
+}
+
+std::size_t ObjList::SizeBytes() const {
+  return size_bytes() + element.capacity() * sizeof(Value);
+}
+
+std::size_t ObjDict::SizeBytes() const {
+  // 基础对象大小
+  std::size_t bytes = size_bytes();
+  // bucket 数组：每个 bucket 通常至少对应一个指针/索引
+  bytes += entries_.bucket_count() * sizeof(void*);
+  // 节点粗估：pair<const string, Value> + 指针开销
+  bytes += entries_.size() *
+           (sizeof(std::pair<const std::string, Value>) + 2 * sizeof(void*));
+  return bytes;
 }
 
 }  // namespace cilly

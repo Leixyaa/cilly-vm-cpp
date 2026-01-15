@@ -112,6 +112,28 @@ void RegisterBuiltins(VM& vm) {
                                return args[0];
                              });
   assert(i7 == 7);
+
+  // __make_big_dict(n)
+  // 仅用于测试/bring-up：创建一个“内部 reserve 很大”的 dict
+  // 目的：用极少对象制造较大 heap_bytes，占用在“构造阶段”就可见，从而稳定触发
+  // bytes-budget 的自动 GC。
+  int i8 = vm.RegisterNative(
+      "__make_big_dict", 1, [](VM& vm, const Value* args, int argc) {
+        assert(argc == 1);
+        assert(args[0].IsNum());
+
+        // 这里传入“期望的 reserve 条目数”，越大 bucket_count
+        // 越大，占用估算越大
+        const std::size_t n = static_cast<std::size_t>(args[0].AsNum());
+
+        // 走 VM 的 GC 管理创建路径（保证进入 GC 的 all_objects_ 链表）
+        auto dict = vm.NewDictReservedForTest(n);
+
+        // Value::Obj 你在 vm.cc 里已经用过（绑定方法就是这么 push
+        // 的），因此这里完全匹配
+        return Value::Obj(dict);
+      });
+  assert(i8 == 8);
 }
 
 }  // namespace cilly

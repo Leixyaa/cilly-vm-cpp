@@ -58,6 +58,7 @@ class VM {
     if (test_emit_sink_)
       test_emit_sink_(v);
   }
+  std::shared_ptr<ObjDict> NewDictReservedForTest(std::size_t reserve_entries);
 
   // 便于调试：取内部栈的统计指标。
   int PushCount() const;

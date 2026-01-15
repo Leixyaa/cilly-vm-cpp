@@ -22,10 +22,11 @@ class GcObject {
   bool marked() { return marked_; }
   void set_marked(bool flag) { marked_ = flag; }
 
-  // ==================== 近似“堆字节数”统计 ====================
-  // 说明：
-  // - 用 sizeof(T) 作为该对象在 GC 堆上的“近似占用”
-  // - 这不包含对象内部动态分配（vector/string capacity），但足以提供稳定触发器
+  // ==================== 堆占用估算 ====================
+  // 默认返回基础大小（sizeof(派生类) 由 New<T> 写入 size_bytes_）。
+  // 派生类可以 override，把内部动态容量（vector/string 等）也算进去。
+  virtual std::size_t SizeBytes() const { return size_bytes_; }
+  // 旧计算 防止回归出错故保留
   std::size_t size_bytes() const { return size_bytes_; }
   void set_size_bytes(std::size_t n) { size_bytes_ = n; }
 
