@@ -125,7 +125,7 @@ class Generator {
   // 6     : __gc_collect（GC bring-up）
   // 注意：这里的数量必须与 VM 注册的 builtin
   // 一致，否则生成字节码时会越界或映射错误。
-  static constexpr int kBuiltinCount = 8;
+  static constexpr int kBuiltinCount = 9;
   std::unordered_map<std::string, int> builtin_name_to_index_;
   std::unordered_map<std::string, int> builtin_name_to_arity_;
 

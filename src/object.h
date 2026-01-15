@@ -156,10 +156,25 @@ class ObjClass : public Object {
 
 class ObjInstance : public Object {
  public:
-  explicit ObjInstance(std::shared_ptr<ObjClass> klass_) :
+  // 约定：fields 也是 GC 管理对象（ObjDict），由 VM 在“知道 gc_
+  // 是否存在”时创建好再传进来。 这样 ObjInstance 本身不用关心“怎么分配
+  // fields”，避免 ObjInstance 内部偷偷 new 出一个 GC 看不见的 dict会让 bytes
+  // budget / 统计体系失真
+  ObjInstance(std::shared_ptr<ObjClass> klass_,
+              std::shared_ptr<ObjDict> fields_) :
       Object(ObjType::kInstance, 1),
-      klass(klass_),
-      fields(std::make_unique<ObjDict>()) {}
+      klass(std::move(klass_)),
+      fields(std::move(fields_)) {
+    // 防御：理论上 VM 不该传空；但为了鲁棒性，空就退化成普通 shared_ptr（无 GC
+    // 时也能工作）
+    if (!fields) {
+      fields = std::make_shared<ObjDict>();
+    }
+  }
+
+  // 兼容过去版本
+  explicit ObjInstance(std::shared_ptr<ObjClass> klass_) :
+      ObjInstance(std::move(klass_), std::make_shared<ObjDict>()) {}
 
   std::shared_ptr<ObjClass> Klass() const { return klass; }
   ObjDict* Fields() const { return fields.get(); }
@@ -169,7 +184,7 @@ class ObjInstance : public Object {
 
  private:
   std::shared_ptr<ObjClass> klass;
-  std::unique_ptr<ObjDict> fields;
+  std::shared_ptr<ObjDict> fields;
 };
 
 class ObjBoundMethod : public Object {

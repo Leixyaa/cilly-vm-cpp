@@ -351,11 +351,20 @@ bool VM::Step_() {
 
       if (callee.IsClass()) {
         auto klass = callee.AsClass();
+
+        std::shared_ptr<ObjDict> fields;
+        if (gc_) {
+          fields = gc::MakeShared<ObjDict>(*gc_);
+        } else {
+          fields = std::make_shared<ObjDict>();
+        }
+
         std::shared_ptr<ObjInstance> instance;
         if (gc_)
           instance = gc::MakeShared<ObjInstance>(*gc_, klass);
         else
           instance = std::make_shared<ObjInstance>(klass);
+
         // 先创建实例
         Value inst_val = Value::Obj(instance);
         // 获取init的index
@@ -369,7 +378,6 @@ bool VM::Step_() {
         // 传入this作为第一个参数
         std::vector<Value> argv2(argc + 1);
         argv2[0] = inst_val;
-
         for (int i = 0; i < argc; i++) {
           argv2[i + 1] = argv[i];
         }
@@ -416,7 +424,19 @@ bool VM::Step_() {
       Value value = stack_.Pop();
       Value list_v = stack_.Pop();
       auto list = list_v.AsList();
+
+      std::size_t old_bytes = 0;
+      if (gc_)
+        old_bytes = list->SizeBytes();
+
       list->Push(value);
+      if (gc_) {
+        std::size_t new_bytes = list->SizeBytes();
+        if (new_bytes != old_bytes) {
+          gc_->AddHeapBytesDelta(static_cast<std::ptrdiff_t>(new_bytes) -
+                                 static_cast<std::ptrdiff_t>(old_bytes));
+        }
+      }
       stack_.Push(list_v);
       break;
     }
@@ -538,9 +558,21 @@ bool VM::Step_() {
           assert(index_v.IsStr() && "关键词输入错误！");
           std::string key = index_v.AsStr();
           auto dict = object_v.AsDict();
+
+          std::size_t old_bytes = 0;
+          if (gc_)
+            old_bytes = dict->SizeBytes();
+
           dict->Set(key, value);
+
+          if (gc_) {
+            std::size_t new_bytes = dict->SizeBytes();
+            if (new_bytes != old_bytes) {
+              gc_->AddHeapBytesDelta(static_cast<std::ptrdiff_t>(new_bytes) -
+                                     static_cast<std::ptrdiff_t>(old_bytes));
+            }
+          }
           break;
-          ;
         }
         default:
           assert(false && "未找到该类型变量！");
@@ -602,7 +634,20 @@ bool VM::Step_() {
       switch (obj.AsObj()->Type()) {
         case ObjType::kDict: {
           auto dict = obj.AsDict();
+
+          std::size_t old_bytes = 0;
+          if (gc_)
+            old_bytes = dict->SizeBytes();
+
           dict->Set(name, value);
+
+          if (gc_) {
+            std::size_t new_bytes = dict->SizeBytes();
+            if (new_bytes != old_bytes) {
+              gc_->AddHeapBytesDelta(static_cast<std::ptrdiff_t>(new_bytes) -
+                                     static_cast<std::ptrdiff_t>(old_bytes));
+            }
+          }
           break;
         }
         case ObjType::kInstance: {

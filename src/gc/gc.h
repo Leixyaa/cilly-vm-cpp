@@ -84,6 +84,10 @@ class Collector {
   std::size_t total_swept_count() const;
   std::size_t last_marked_count() const;
 
+  // 增量调整堆字节统计：用于容器扩容/rehash
+  // 这类“对象仍活着但占用变大”的场景。
+  void AddHeapBytesDelta(std::ptrdiff_t delta);
+
   /*
     Collect：一次完整 GC
   */
@@ -130,6 +134,7 @@ class Collector {
   // 当前堆上对象近似字节数（sum(sizeof(T)) - swept）
   std::size_t heap_bytes_ = 0;
   // 重新遍历 all_objects_ 计算“实时准确”的堆字节数
+  // 用于自检/debug
   std::size_t RecomputeHeapBytes_() const;
 
   friend class RootGuard;

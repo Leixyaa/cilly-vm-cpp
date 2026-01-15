@@ -500,6 +500,19 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "gc_instance_fields_is_gc_object_smoke_test",
+    srcs = ["gc_instance_fields_is_gc_object_smoke_test.cc"],
+    deps = [
+        ":run_script",
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "//src/gc:gc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 
 test_suite(
     name = "all",
@@ -538,5 +551,6 @@ test_suite(
         ":gc_vm_default_threshold_no_collect_smoke_test",
         ":gc_bytes_budget_large_object_smoke_test",
         ":gc_bytes_budget_growth_smoke_test",
+        ":gc_instance_fields_is_gc_object_smoke_test",
     ],
 )

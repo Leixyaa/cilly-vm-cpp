@@ -27,7 +27,7 @@ std::size_t Collector::object_count() const {
   return object_count_;
 }
 std::size_t Collector::heap_bytes() const {
-  return RecomputeHeapBytes_();
+  return heap_bytes_;
 }
 std::size_t Collector::last_swept_count() const {
   return last_swept_count_;
@@ -37,6 +37,27 @@ std::size_t Collector::total_swept_count() const {
 }
 std::size_t Collector::last_marked_count() const {
   return last_marked_count_;
+}
+
+void Collector::AddHeapBytesDelta(std::ptrdiff_t delta) {
+  if (delta >= 0) {
+    heap_bytes_ += static_cast<std::size_t>(delta);
+    return;
+  }
+
+  const std::size_t dec = static_cast<std::size_t>(-delta);
+  if (heap_bytes_ >= dec) {
+    heap_bytes_ -= dec;
+    return;
+  }
+
+  const std::size_t recomputed = RecomputeHeapBytes_();
+  heap_bytes_ = recomputed;
+  if (heap_bytes_ >= dec) {
+    heap_bytes_ -= dec;
+  } else {
+    heap_bytes_ = 0;
+  }
 }
 
 void Collector::Collect() {
@@ -54,6 +75,7 @@ void Collector::FreeAll() {
   all_objects_ = nullptr;
   object_count_ = 0;
   heap_bytes_ = 0;
+  total_swept_count_ = 0;
 }
 
 void Collector::Mark(GcObject* obj) {
@@ -106,13 +128,16 @@ void Collector::Sweep() {
     else
       all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
 
+    // 释放前先从堆字节统计里扣掉（必须保留：否则 heap_bytes() O(1)
+    // 就会越来越大，预算不准）
+    AddHeapBytesDelta(-static_cast<std::ptrdiff_t>(dead->SizeBytes()));
+
     delete dead;
 
     --object_count_;
     ++last_swept_count_;
     ++total_swept_count_;
   }
-  heap_bytes_ = RecomputeHeapBytes_();
 }
 
 std::size_t Collector::RecomputeHeapBytes_() const {

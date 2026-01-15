@@ -117,7 +117,9 @@ void ObjInstance::Trace(gc::Collector& c) {
     c.Mark(klass.get());
   }
   if (fields) {
-    fields->Trace(c);  // 继续标记字段 dict 中引用到的对象
+    // fields 本身也是一个 GC 对象（ObjDict），应当通过 Mark 进入 gray_stack，
+    // 再由 GC 统一调用 fields->Trace(c) 继续遍历 dict 内部的 Value。
+    c.Mark(fields.get());
   }
 }
 
