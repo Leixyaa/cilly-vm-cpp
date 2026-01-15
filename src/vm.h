@@ -1,6 +1,7 @@
 #ifndef CILLY_VM_CPP_VM_H_
 #define CILLY_VM_CPP_VM_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <string>
@@ -97,6 +98,16 @@ class VM {
   // GC相关
   gc::Collector* gc_ = nullptr;
   void TraceRoots(gc::Collector& c) const;
+  // 在“安全点”尝试触发一次 GC
+  // 说明：
+  // - 安全点选择在 Step_ 开始处（即将执行本条指令之前）
+  // - 这样可保证所有活跃 Value 都还在 VM 栈/locals 中，不会漏标
+  void MaybeCollectGarbage_();
+  // 下一次自动触发 GC 的阈值（按对象总数）
+  // 说明：
+  // - object_count() 是堆上当前对象数（all_objects_ 链表长度）
+  // - 触发一次 GC 后，我们会把阈值调大，避免每条指令都 GC
+  std::size_t next_gc_threshold_ = 256;
 };
 
 }  // namespace cilly

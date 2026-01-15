@@ -12,6 +12,8 @@ namespace cilly {
 
 VM::VM() = default;
 VM::VM(gc::Collector* gc) : gc_(gc) {
+  // 自动GC初始阈值，可以先保守点，防止频繁触发
+  next_gc_threshold_ = 256;
 }
 
 void VM::Run(const Function& fn) {
@@ -122,6 +124,14 @@ void VM::DoCallByIndex(int call_index, int argc,
 }
 
 bool VM::Step_() {
+  // ==================== GC 自动触发的安全点 ====================
+  // 放在“读指令/执行指令”之前：
+  // - 这时上一条指令已经完成，所有 Value 都已经回到 VM
+  // 管理结构（stack_/locals_）
+  // - 不会出现“Value 被 Pop 到 C++ 局部变量但尚未 Push 回去”的窗口期
+  MaybeCollectGarbage_();
+  // ============================================================
+
   CallFrame& cf = CurrentFrame();
   const Chunk& ch = cf.fn->chunk();
   int32_t raw = ReadI32_();
@@ -698,6 +708,29 @@ void VM::TraceRoots(gc::Collector& c) const {
       trace_consts(cb.fn);
     }
   }
+}
+
+void VM::MaybeCollectGarbage_() {
+  if (!gc_)
+    return;
+  // object_count 即在堆上的对象的数量
+  // 未超过阈值则不触发GC
+  if (gc_->object_count() < next_gc_threshold_)
+    return;
+
+  // 触发一次GC
+  CollectGarbage();
+
+  // GC后的object_count() 就是当前存活的对象数
+  // 下一次阈值按照 live * 2 + 64 增长
+  std::size_t live = gc_->object_count();
+  std::size_t next = live * 2 + 64;
+
+  // 下限 避免脚本很小但因为 live 小导致阈值太低、频繁的去gc
+  if (next < 256)
+    next = 256;
+
+  next_gc_threshold_ = next;
 }
 
 int VM::RegisterFunction(const Function* fn) {
