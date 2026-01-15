@@ -906,8 +906,14 @@ void Generator::InitBuiltins() {
   builtin_name_to_arity_["abs"] = 1;
   builtin_name_to_index_["clock"] = 4;
   builtin_name_to_arity_["clock"] = 0;
+
+  // 测试桥：gtest 通过 __test_emit(x) 把 Value 回传到测试端进行断言
   builtin_name_to_index_["__test_emit"] = 5;
   builtin_name_to_arity_["__test_emit"] = 1;
+
+  // GC bring-up：脚本执行中主动触发 GC，用于验证 VM roots 扫描是否正确
+  builtin_name_to_index_["__gc_collect"] = 6;
+  builtin_name_to_arity_["__gc_collect"] = 0;
 }
 
 bool Generator::IsBuiltin(const std::string& name) const {

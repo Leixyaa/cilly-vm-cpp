@@ -23,6 +23,9 @@ class StackStats {
   int PushCount() const;
   int PopCount() const;
 
+  // 暴露stack内容给VM root扫描
+  const std::vector<Value>& values() const;
+
   // 清空栈并重置统计数据
   void Clear();
 

@@ -44,6 +44,10 @@ int StackStats::PopCount() const {
   return pop_count_;
 }
 
+const std::vector<Value>& StackStats::values() const {
+  return stack_;
+}
+
 void StackStats::Clear() {
   stack_.clear();
   ResetStats();

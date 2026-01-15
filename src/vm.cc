@@ -76,7 +76,27 @@ void VM::DoCallByIndex(int call_index, int argc,
   Callable& c = callables_[call_index];
   if (c.type == Callable::Type::kNative) {
     assert(c.arity == argc);
+    // 在进入 native 之前，把 argv 里所有 Obj 临时压入 GC 的 temp roots 栈
+    std::vector<gc::GcObject*> pinned;
+    if (gc_) {
+      pinned.reserve(argc);
+      for (int i = 0; i < argc; ++i) {
+        if (argv[i].IsObj()) {
+          gc::GcObject* obj = argv[i].AsObj().get();
+          gc_->PushRoot(obj);  // 临时root栈
+          pinned.push_back(obj);
+        }
+      }
+    }
+
     Value ret = c.native(*this, argv, argc);
+    if (gc_) {
+      // 退出native之后再弹出roots
+      for (auto it = pinned.rbegin(); it != pinned.rend(); ++it) {
+        gc_->PopRoot(*it);
+      }
+    }
+
     stack_.Push(ret);
     return;
   }
@@ -617,6 +637,67 @@ CallFrame& VM::CurrentFrame() {
 
 const CallFrame& VM::CurrentFrame() const {
   return frames_.back();
+}
+
+void VM::CollectGarbage() {
+  if (!gc_)
+    return;
+  gc_->CollectWithRoots([this](gc::Collector& c) { this->TraceRoots(c); });
+}
+
+void VM::TraceRoots(gc::Collector& c) const {
+  // 工具：标记一个Value（只有对象类型才需要标记）
+  auto mark_value = [&c](const Value& v) {
+    if (v.IsObj()) {
+      // Mark只接受罗指针（GcObject*）
+      c.Mark(v.AsObj().get());
+    }
+  };
+
+  // 1.VM操作数栈是最重要的roots,脚本执行过程中几乎所有临时值都在栈上
+  for (const auto& v : stack_.values()) {
+    mark_value(v);
+  }
+
+  // 2.每个CallFrame 的 locals 也必须扫描
+  // - 方法调用的 this、局部变量、临时变量可能保存在 locals 里
+  // - 不扫描会导致函数执行中对象被误回收
+  for (const auto& f : frames_) {
+    for (const auto& v : f.locals_) {
+      mark_value(v);
+    }
+
+    // init 构造链会用到 instance_to_return，保险起见也将其标记
+    mark_value(f.instance_to_return);
+  }
+
+  // 3.最近一次的返回值（暂时保守处理）
+  mark_value(last_return_value_);
+
+  // 4.保守扫描：把已知函数的 Chunk 常量池也当 roots
+  // 说明：
+  // - 常量池里可能放 class、string、函数对象等
+  // - 暂时为了避免 “常量池对象被扫掉导致后续加载崩溃”，先整体扫描
+  auto trace_consts = [&](const Function* fn) {
+    if (!fn)
+      return;
+    const Chunk& ch = fn->chunk();
+    for (int i = 0; i < ch.ConstSize(); i++) {
+      mark_value(ch.ConstAt(i));
+    }
+  };
+
+  // 4.1 扫描当前活跃的frames对应的函数常量池
+  for (const auto& f : frames_) {
+    trace_consts(f.fn);
+  }
+
+  // 4.2 扫描VM已经注册的所有 bytecode callable
+  for (const auto& cb : callables_) {
+    if (cb.type == Callable::Type::kBytecode) {
+      trace_consts(cb.fn);
+    }
+  }
 }
 
 int VM::RegisterFunction(const Function* fn) {

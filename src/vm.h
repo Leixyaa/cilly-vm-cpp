@@ -64,6 +64,9 @@ class VM {
   int Depth() const;
   int MaxDepth() const;
 
+  // GC相关
+  void CollectGarbage();
+
   int RegisterFunction(const Function* fn);  // 注册函数并且返回索引
   int RegisterNative(const std::string& name, int arity,
                      NativeFn fn);  // 注册原生函数
@@ -93,6 +96,7 @@ class VM {
 
   // GC相关
   gc::Collector* gc_ = nullptr;
+  void TraceRoots(gc::Collector& c) const;
 };
 
 }  // namespace cilly

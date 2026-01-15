@@ -85,6 +85,18 @@ void RegisterBuiltins(VM& vm) {
                                return args[0];
                              });
   assert(i5 == 5);
+
+  // __gc_collect()
+  // 仅用于测试/bring-up：让脚本在执行过程中主动触发一次 GC。
+  // 这样就能用 gtest 验证：VM roots 扫描是否正确、是否会误回收可达对象。
+  int i6 = vm.RegisterNative("__gc_collect", 0, [](VM& vm, const Value*, int) {
+    vm.CollectGarbage();
+    return Value::Null();
+  });
+
+  // builtin 索引要固定，确保 Generator 与 VM
+  // 的映射一致（否则脚本解析/生成会错位）
+  assert(i6 == 6);
 }
 
 }  // namespace cilly

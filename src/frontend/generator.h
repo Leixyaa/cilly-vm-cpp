@@ -119,7 +119,13 @@ class Generator {
       func_name_to_index_;  // 函数名和索引的映射
 
   // 原生函数相关
-  static constexpr int kBuiltinCount = 6;
+  // 目前内建函数索引：
+  // 0..4  : len/str/type/abs/clock
+  // 5     : __test_emit（测试桥）
+  // 6     : __gc_collect（GC bring-up）
+  // 注意：这里的数量必须与 VM 注册的 builtin
+  // 一致，否则生成字节码时会越界或映射错误。
+  static constexpr int kBuiltinCount = 7;
   std::unordered_map<std::string, int> builtin_name_to_index_;
   std::unordered_map<std::string, int> builtin_name_to_arity_;
 
