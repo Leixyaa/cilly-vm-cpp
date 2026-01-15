@@ -10,7 +10,7 @@
 
 namespace cilly::test {
 
-RunResult RunScript(const std::string& src) {
+RunResult RunScript(const std::string& src, VmInitHook vm_init) {
   // 先创建一个Collector并放进RunResult保活
   auto gc = std::make_shared<gc::Collector>();
 
@@ -37,6 +37,11 @@ RunResult RunScript(const std::string& src) {
   // Register user functions
   for (const auto& fn : gen.Functions()) {
     vm.RegisterFunction(fn.get());
+  }
+
+  // 注入阈值
+  if (vm_init) {
+    vm_init(vm);
   }
 
   // Run

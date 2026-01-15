@@ -13,7 +13,7 @@ namespace cilly {
 VM::VM() = default;
 VM::VM(gc::Collector* gc) : gc_(gc) {
   // 自动GC初始阈值，可以先保守点，防止频繁触发
-  next_gc_threshold_ = 256;
+  next_gc_bytes_threshold_ = 1024;
 }
 
 void VM::Run(const Function& fn) {
@@ -655,6 +655,10 @@ void VM::CollectGarbage() {
   gc_->CollectWithRoots([this](gc::Collector& c) { this->TraceRoots(c); });
 }
 
+void VM::SetNextGcBytesThresholdForTest(std::size_t bytes) {
+  next_gc_bytes_threshold_ = bytes;
+}
+
 void VM::TraceRoots(gc::Collector& c) const {
   // 工具：标记一个Value（只有对象类型才需要标记）
   auto mark_value = [&c](const Value& v) {
@@ -697,16 +701,9 @@ void VM::TraceRoots(gc::Collector& c) const {
     }
   };
 
-  // 4.1 扫描当前活跃的frames对应的函数常量池
+  // 扫描当前活跃的frames对应的函数常量池
   for (const auto& f : frames_) {
     trace_consts(f.fn);
-  }
-
-  // 4.2 扫描VM已经注册的所有 bytecode callable
-  for (const auto& cb : callables_) {
-    if (cb.type == Callable::Type::kBytecode) {
-      trace_consts(cb.fn);
-    }
   }
 }
 
@@ -715,22 +712,23 @@ void VM::MaybeCollectGarbage_() {
     return;
   // object_count 即在堆上的对象的数量
   // 未超过阈值则不触发GC
-  if (gc_->object_count() < next_gc_threshold_)
+  if (gc_->object_count() < next_gc_bytes_threshold_)
     return;
 
   // 触发一次GC
   CollectGarbage();
 
-  // GC后的object_count() 就是当前存活的对象数
-  // 下一次阈值按照 live * 2 + 64 增长
-  std::size_t live = gc_->object_count();
+  // GC 后存活堆字节数（近似）
+  std::size_t live = gc_->heap_bytes();
+
+  // 下一次阈值：live * 2 + 4KB（给一点缓冲，避免频繁触发）
   std::size_t next = live * 2 + 64;
 
-  // 下限 避免脚本很小但因为 live 小导致阈值太低、频繁的去gc
-  if (next < 256)
-    next = 256;
+  // 下限：至少 8KB，避免小脚本频繁 GC
+  if (next < 8 * 1024)
+    next = 8 * 1024;
 
-  next_gc_threshold_ = next;
+  next_gc_bytes_threshold_ = next;
 }
 
 int VM::RegisterFunction(const Function* fn) {

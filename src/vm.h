@@ -65,8 +65,10 @@ class VM {
   int Depth() const;
   int MaxDepth() const;
 
-  // GC相关
+  /////////// GC相关
   void CollectGarbage();
+  // 仅测试使用：把下一次 GC 触发阈值调小，确保测试稳定触发
+  void SetNextGcBytesThresholdForTest(std::size_t bytes);
 
   int RegisterFunction(const Function* fn);  // 注册函数并且返回索引
   int RegisterNative(const std::string& name, int arity,
@@ -103,11 +105,8 @@ class VM {
   // - 安全点选择在 Step_ 开始处（即将执行本条指令之前）
   // - 这样可保证所有活跃 Value 都还在 VM 栈/locals 中，不会漏标
   void MaybeCollectGarbage_();
-  // 下一次自动触发 GC 的阈值（按对象总数）
-  // 说明：
-  // - object_count() 是堆上当前对象数（all_objects_ 链表长度）
-  // - 触发一次 GC 后，我们会把阈值调大，避免每条指令都 GC
-  std::size_t next_gc_threshold_ = 256;
+  // 默认阈值：工程运行用（建议先 16KB）
+  std::size_t next_gc_bytes_threshold_ = 16 * 1024;
 };
 
 }  // namespace cilly

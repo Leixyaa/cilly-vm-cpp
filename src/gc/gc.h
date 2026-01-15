@@ -31,9 +31,17 @@ class Collector {
                   "T must derive from GcObject");
     T* obj = new T(std::forward<Args>(
         args)...);  // 避免引用折叠 避免期望触发移动反而触发拷贝、
+
+    // 记录该对象的“近似占用字节数”
+    obj->set_size_bytes(sizeof(T));
+
     obj->set_next(all_objects_);
     all_objects_ = obj;
     ++object_count_;
+
+    // 总字节数统计
+    heap_bytes_ += obj->size_bytes();
+
     return obj;
   }
 
@@ -71,6 +79,7 @@ class Collector {
 
   // 统计：为了让 GC 可测（gtest 能断言 sweep/mark 的数量）
   std::size_t object_count() const;
+  std::size_t heap_bytes() const;
   std::size_t last_swept_count() const;
   std::size_t last_marked_count() const;
 
@@ -115,6 +124,9 @@ class Collector {
   // 每次 Collect 的统计数据（用于 gtest 断言）
   std::size_t last_swept_count_ = 0;
   std::size_t last_marked_count_ = 0;
+
+  // 当前堆上对象近似字节数（sum(sizeof(T)) - swept）
+  std::size_t heap_bytes_ = 0;
 
   friend class RootGuard;
 };

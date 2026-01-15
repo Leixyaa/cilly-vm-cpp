@@ -26,6 +26,9 @@ void Collector::PopRoot(GcObject* obj) {
 std::size_t Collector::object_count() const {
   return object_count_;
 }
+std::size_t Collector::heap_bytes() const {
+  return heap_bytes_;
+}
 std::size_t Collector::last_swept_count() const {
   return last_swept_count_;
 }
@@ -47,6 +50,7 @@ void Collector::FreeAll() {
   }
   all_objects_ = nullptr;
   object_count_ = 0;
+  heap_bytes_ = 0;
 }
 
 void Collector::Mark(GcObject* obj) {
@@ -98,6 +102,9 @@ void Collector::Sweep() {
       prev->set_next(obj);
     else
       all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
+
+    // 释放前先从堆字节统计里扣掉
+    heap_bytes_ -= dead->size_bytes();
 
     delete dead;
 

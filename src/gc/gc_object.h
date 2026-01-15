@@ -22,6 +22,13 @@ class GcObject {
   bool marked() { return marked_; }
   void set_marked(bool flag) { marked_ = flag; }
 
+  // ==================== 近似“堆字节数”统计 ====================
+  // 说明：
+  // - 用 sizeof(T) 作为该对象在 GC 堆上的“近似占用”
+  // - 这不包含对象内部动态分配（vector/string capacity），但足以提供稳定触发器
+  std::size_t size_bytes() const { return size_bytes_; }
+  void set_size_bytes(std::size_t n) { size_bytes_ = n; }
+
   // 子类覆写：告诉GC我引用了哪些对象
   // 只负责“报告引用”，不做业务逻辑
   /*
@@ -34,6 +41,8 @@ class GcObject {
  private:
   GcObject* next_ = nullptr;
   bool marked_ = false;
+  // 近似字节数：由 Collector::New<T>() 设置为 sizeof(T)
+  std::size_t size_bytes_ = 0;
 };
 
 }  // namespace cilly::gc

@@ -16,15 +16,17 @@ TEST(GcVmAutoCollectSmokeTest, AutoGcRunsDuringExecutionWithoutExplicitCall) {
   // 注意：
   // - 这里不强制精确回收数，因为实现细节会影响对象数量
   // - 只要 last_swept_count() > 0，就说明自动 GC 确实发生过
-  auto r = cilly::test::RunScript(R"(
+  auto r = cilly::test::RunScript(
+      R"(
     var i = 0;
-    while (i < 800) {
+    while (i < 2000) {
       var t = [i, i + 1, i + 2];  // 每次都会分配一个 ObjList
       t = null;                  // 立刻丢弃引用，使其不可达
       i = i + 1;
     }
     return 123;
-  )");
+  )",
+      [](cilly::VM& vm) { vm.SetNextGcBytesThresholdForTest(1024); });
 
   ASSERT_TRUE(r.ret.IsNum());
   EXPECT_EQ(r.ret.AsNum(), 123);
