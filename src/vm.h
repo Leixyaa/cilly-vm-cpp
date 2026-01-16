@@ -112,6 +112,8 @@ class VM {
   // - 这样可保证所有活跃 Value 都还在 VM 栈/locals 中，不会漏标
   void MaybeCollectGarbage_();
 
+  void GcSafePoint_();
+
   // -------- GC 自动触发阈值（两条线：对象数 / 字节数）--------
   // 对象数阈值：对“很多小对象”敏感
   std::size_t next_gc_threshold_ = 256;

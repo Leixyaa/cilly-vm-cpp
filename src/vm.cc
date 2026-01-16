@@ -12,8 +12,6 @@ namespace cilly {
 
 VM::VM() = default;
 VM::VM(gc::Collector* gc) : gc_(gc) {
-  // 自动GC初始阈值，可以先保守点，防止频繁触发
-  next_gc_bytes_threshold_ = 1024;
 }
 
 void VM::Run(const Function& fn) {
@@ -132,14 +130,6 @@ void VM::DoCallByIndex(int call_index, int argc,
 }
 
 bool VM::Step_() {
-  // ==================== GC 自动触发的安全点 ====================
-  // 放在“读指令/执行指令”之前：
-  // - 这时上一条指令已经完成，所有 Value 都已经回到 VM
-  // 管理结构（stack_/locals_）
-  // - 不会出现“Value 被 Pop 到 C++ 局部变量但尚未 Push 回去”的窗口期
-  MaybeCollectGarbage_();
-  // ============================================================
-
   CallFrame& cf = CurrentFrame();
   const Chunk& ch = cf.fn->chunk();
   int32_t raw = ReadI32_();
@@ -333,6 +323,8 @@ bool VM::Step_() {
         argv[i] = stack_.Pop();
 
       DoCallByIndex(func_index, argc, argc ? argv.data() : nullptr);
+      // 触发gc节点
+      GcSafePoint_();
       break;
     }
 
@@ -346,6 +338,8 @@ bool VM::Step_() {
       Value callee = stack_.Pop();
       if (callee.IsCallable()) {
         DoCallByIndex(callee.AsCallable(), argc, argc ? argv.data() : nullptr);
+        // 触发gc节点
+        GcSafePoint_();
         break;
       }
 
@@ -373,6 +367,9 @@ bool VM::Step_() {
         if (init_index == -1) {
           assert(argc == 0 && "Class call without init supports 0 args only");
           stack_.Push(inst_val);
+          // 触发gc节点
+          GcSafePoint_();
+
           break;
         }
         // 传入this作为第一个参数
@@ -389,6 +386,9 @@ bool VM::Step_() {
                    << " callee_name=" << callables_[init_index].name << "\n");
 
         DoCallByIndex(init_index, argc + 1, argv2.data());
+        // 触发gc节点
+        GcSafePoint_();
+
         frames_.back().return_instance = true;
         frames_.back().instance_to_return = inst_val;
         break;
@@ -403,6 +403,8 @@ bool VM::Step_() {
           argv2[i + 1] = argv[i];
 
         DoCallByIndex(bm->Method(), argc + 1, argv2.data());
+        // 触发gc节点
+        GcSafePoint_();
         break;
       }
       assert(false && "Callee is not callable/class/boundmethod");
@@ -416,6 +418,9 @@ bool VM::Step_() {
       if (gc_)
         list = gc::MakeShared<ObjList>(*gc_);
       stack_.Push(Value::Obj(list));
+
+      // 触发gc节点
+      GcSafePoint_();
       break;
     }
 
@@ -438,6 +443,9 @@ bool VM::Step_() {
         }
       }
       stack_.Push(list_v);
+
+      // 触发gc节点
+      GcSafePoint_();
       break;
     }
 
@@ -480,6 +488,8 @@ bool VM::Step_() {
       if (gc_)
         dict = gc::MakeShared<ObjDict>(*gc_);
       stack_.Push(Value::Obj(dict));
+      // 触发gc节点
+      GcSafePoint_();
       break;
     }
 
@@ -572,6 +582,9 @@ bool VM::Step_() {
                                      static_cast<std::ptrdiff_t>(old_bytes));
             }
           }
+
+          // 触发gc节点
+          GcSafePoint_();
           break;
         }
         default:
@@ -611,8 +624,15 @@ bool VM::Step_() {
             else
               bm = std::make_shared<ObjBoundMethod>(obj, method_index);
             stack_.Push(Value::Obj(bm));
+
+            // 触发gc节点
+            GcSafePoint_();
+
           } else {
             stack_.Push(Value::Null());
+
+            // 触发gc节点
+            GcSafePoint_();
           }
           break;
         }
@@ -648,6 +668,9 @@ bool VM::Step_() {
                                      static_cast<std::ptrdiff_t>(old_bytes));
             }
           }
+
+          // 触发gc节点
+          GcSafePoint_();
           break;
         }
         case ObjType::kInstance: {
@@ -684,9 +707,12 @@ bool VM::Step_() {
       else
         bm = std::make_shared<ObjBoundMethod>(receiver, method_idx);
       stack_.Push(Value::Obj(bm));
+
+      // 触发gc节点
+      GcSafePoint_();
+
       break;
     }
-
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;
@@ -758,6 +784,20 @@ void VM::TraceRoots(gc::Collector& c) const {
   for (const auto& f : frames_) {
     trace_consts(f.fn);
   }
+
+  for (const auto& callee : callables_) {
+    if (callee.type != Callable::Type::kBytecode)
+      continue;
+    const Function* fn = callee.fn;
+    if (!fn)
+      continue;
+    const Chunk& ch = fn->chunk();
+    for (int i = 0; i < ch.ConstSize(); ++i) {
+      const Value& v = ch.ConstAt(i);
+      if (v.IsObj())
+        c.Mark(v.AsObj().get());
+    }
+  }
 }
 
 void VM::MaybeCollectGarbage_() {
@@ -794,6 +834,12 @@ void VM::MaybeCollectGarbage_() {
 
     next_gc_bytes_threshold_ = next_bytes;
   }
+}
+
+void VM::GcSafePoint_() {
+  if (!gc_)
+    return;
+  MaybeCollectGarbage_();
 }
 
 int VM::RegisterFunction(const Function* fn) {
