@@ -68,6 +68,11 @@ enum class OpCode : int32_t {
 
   // super
   OP_GET_SUPER,
+
+  // globals
+  OP_DEFINE_GLOBAL,
+  OP_GET_GLOBAL,
+  OP_SET_GLOBAL,
 };
 
 }  // namespace cilly

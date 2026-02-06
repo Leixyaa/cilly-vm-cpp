@@ -41,6 +41,14 @@ Function Generator::Generate(const std::vector<StmtPtr>& program) {
   // 每次编译一个脚本，都要从干净状态开始
   // （注意：functions_ / func_name_to_index_ 要在开头清，不能在结尾清）
 
+  globals_.clear();
+  for (const auto& s : program) {
+    if (s->kind == Stmt::Kind::kVar) {
+      auto* p = static_cast<VarStmt*>(s.get());
+      globals_[p->name.lexeme] = 0;
+    }
+  }
+
   PredeclareFunctions(program);
   for (const auto& s : program) {
     if (s->kind == Stmt::Kind::kFun) {
@@ -323,24 +331,40 @@ void Generator::EmitExprStmt(const ExprStmt* stmt) {
 
 void Generator::EmitVarStmt(const VarStmt* stmt) {
   const std::string& name = stmt->name.lexeme;  // 加move不好排查
-  auto& names = scope_stack_.back().names;
-  if (std::find(names.begin(), names.end(), name) != names.end()) {
-    assert(false && "该变量已存在！");
-  }
-  names.emplace_back(name);
-  int index = next_local_index_;
-  local_[name] = index;
-  next_local_index_++;
-  max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
-                                                          : max_local_index_;
-  if (stmt->initializer) {
-    EmitExpr(stmt->initializer);
+  if (scope_stack_.size() == 1) {               // 如果在顶层 即全局变量
+    int index = current_fn_->AddConst(Value::Str(name));
+
+    globals_[name] = index;  // 存入编译期全局变量表
+
+    if (stmt->initializer) {
+      EmitExpr(stmt->initializer);
+    } else {
+      EmitConst(Value::Null());
+    }
+
+    EmitOp(OpCode::OP_DEFINE_GLOBAL);
+    EmitI32(index);
+    return;
   } else {
-    EmitConst(Value::Null());
+    auto& names = scope_stack_.back().names;
+    if (std::find(names.begin(), names.end(), name) != names.end()) {
+      assert(false && "该变量已存在！");
+    }
+    names.emplace_back(name);
+    int index = next_local_index_;
+    local_[name] = index;
+    next_local_index_++;
+    max_local_index_ = max_local_index_ < next_local_index_ ? next_local_index_
+                                                            : max_local_index_;
+    if (stmt->initializer) {
+      EmitExpr(stmt->initializer);
+    } else {
+      EmitConst(Value::Null());
+    }
+    EmitOp(OpCode::OP_STORE_VAR);
+    EmitI32(index);
+    return;
   }
-  EmitOp(OpCode::OP_STORE_VAR);
-  EmitI32(index);
-  return;
 }
 
 void Generator::EmitAssignStmt(const AssignStmt* stmt) {
@@ -348,7 +372,14 @@ void Generator::EmitAssignStmt(const AssignStmt* stmt) {
   EmitExpr(stmt->expr);
   auto it = local_.find(name);
   if (it == local_.end()) {
-    assert(false && "该变量未定义！");
+    // 去全局变量中寻找
+    assert(globals_.find(name) != globals_.end() && "该变量未定义！");
+
+    int index = current_fn_->AddConst(Value::Str(name));
+
+    EmitOp(OpCode::OP_SET_GLOBAL);
+    EmitI32(index);
+    return;
   }
   EmitOp(OpCode::OP_STORE_VAR);
   EmitI32(it->second);
@@ -433,6 +464,8 @@ void Generator::EmitBlockStmt(const BlockStmt* stmt) {
   }
   int start = scope_stack_.back().start_local;
   int count = next_local_index_ - scope_stack_.back().start_local;
+
+  // 清除local中的残留局部变量，不再持有对象引用，root扫描才能正确
   EmitOp(OpCode::OP_POPN);
   EmitI32(start);
   EmitI32(count);
@@ -690,6 +723,14 @@ void Generator::EmitVariableExpr(const VariableExpr* expr) {
   if (it != local_.end()) {
     EmitOp(OpCode::OP_LOAD_VAR);
     EmitI32(it->second);
+    return;
+  }
+
+  it = globals_.find(name);
+  if (it != globals_.end()) {
+    index = current_fn_->AddConst(Value::Str(name));
+    EmitOp(OpCode::OP_GET_GLOBAL);
+    EmitI32(index);
     return;
   }
 

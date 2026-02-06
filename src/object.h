@@ -21,7 +21,7 @@ enum class ObjType {
   kInstance,
   kBoundMethod,
 };
-
+//////////////// Object //////////////
 class Object : public gc::GcObject {
  public:
   Object(ObjType type, int ref_count) : type_(type), ref_count_(ref_count) {}
@@ -44,6 +44,7 @@ class Object : public gc::GcObject {
   int ref_count_;
 };
 
+//////////////// ObjString //////////////
 class ObjString : public Object {
  public:
   ObjString() : Object(ObjType::kString, 1), value_("") {};
@@ -63,6 +64,7 @@ class ObjString : public Object {
   std::string value_;
 };
 
+//////////////// ObjList //////////////
 class ObjList : public Object {
  public:
   ObjList() : Object(ObjType::kList, 1), element() {};
@@ -87,6 +89,7 @@ class ObjList : public Object {
   std::vector<Value> element;
 };  // List
 
+//////////////// ObjDict //////////////
 class ObjDict : public Object {
  public:
   ObjDict() : Object(ObjType::kDict, 1), entries_() {};
@@ -131,6 +134,7 @@ class ObjDict : public Object {
 
 };  // Dic
 
+//////////////// ObjClass //////////////
 class ObjClass : public Object {
  public:
   explicit ObjClass(std::string name_) :
@@ -154,6 +158,7 @@ class ObjClass : public Object {
   std::unordered_map<std::string, int32_t> methods;
 };  // Class
 
+//////////////// ObjInstance //////////////
 class ObjInstance : public Object {
  public:
   // 约定：fields 也是 GC 管理对象（ObjDict），由 VM 在“知道 gc_
@@ -187,6 +192,7 @@ class ObjInstance : public Object {
   std::shared_ptr<ObjDict> fields;
 };
 
+//////////////// ObjBoundMethod //////////////
 class ObjBoundMethod : public Object {
  public:
   explicit ObjBoundMethod(Value receiver_, int32_t index) :

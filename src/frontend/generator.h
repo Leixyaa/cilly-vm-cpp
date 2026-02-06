@@ -38,6 +38,7 @@ class Generator {
   // 当前正在生成字节码的函数
   Function* current_fn_;
   std::unordered_map<std::string, int> local_;
+  std::unordered_map<std::string, int> globals_;
   int next_local_index_;
   int max_local_index_;
 

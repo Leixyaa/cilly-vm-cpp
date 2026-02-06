@@ -526,10 +526,23 @@ cc_test(
     ],
 )
 
+cc_test(
+    name = "global_variable_test",
+    srcs = ["global_variable_test.cc"],
+    deps = [
+        ":run_script",
+        "//src:cilly_core",
+        "//src/frontend:frontend",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
 
 test_suite(
     name = "all",
     tests = [
+        ":global_variable_test",
         ":chunk_function_test",
         ":stack_stats_test",
         ":value_test",

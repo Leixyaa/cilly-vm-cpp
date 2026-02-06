@@ -96,8 +96,8 @@ void VM::DoCallByIndex(int call_index, int argc,
         }
       }
     }
+    Value ret = c.native(*this, argv, argc);  // 将参数给到native函数，带入执行
 
-    Value ret = c.native(*this, argv, argc);
     if (gc_) {
       // 退出native之后再弹出roots
       for (auto it = pinned.rbegin(); it != pinned.rend(); ++it) {
@@ -375,6 +375,7 @@ bool VM::Step_() {
         // 传入this作为第一个参数
         std::vector<Value> argv2(argc + 1);
         argv2[0] = inst_val;
+
         for (int i = 0; i < argc; i++) {
           argv2[i + 1] = argv[i];
         }
@@ -713,6 +714,48 @@ bool VM::Step_() {
 
       break;
     }
+
+    //////////////////////// globals相关 //////////////////////////
+    case OpCode::OP_DEFINE_GLOBAL: {
+      int global_name_index = ReadI32_();
+      Value global_name = CurrentFrame().fn->chunk().ConstAt(global_name_index);
+      assert(global_name.IsStr() && "global name must be string");
+      std::string name = global_name.AsStr();
+
+      Value global_v = stack_.Pop();
+      globals_[name] = global_v;
+      break;
+    }
+
+    case OpCode::OP_GET_GLOBAL: {
+      int global_name_index = ReadI32_();
+      Value global_name = CurrentFrame().fn->chunk().ConstAt(global_name_index);
+      assert(global_name.IsStr() && "global name must be string");
+      std::string name = global_name.AsStr();
+
+      if (globals_.count(name)) {
+        stack_.Push(globals_[name]);
+      } else {
+        assert(false && "find not this name's global");
+      }
+      break;
+    }
+
+    case OpCode::OP_SET_GLOBAL: {
+      int global_name_index = ReadI32_();
+      Value global_name = CurrentFrame().fn->chunk().ConstAt(global_name_index);
+      assert(global_name.IsStr() && "global name must be string");
+      std::string name = global_name.AsStr();
+
+      Value globals_new_v = stack_.Pop();
+      if (globals_.count(name)) {
+        globals_[name] = globals_new_v;
+      } else {
+        assert(false && "find not this name's global");
+      }
+      break;
+    }
+
     default:
       assert(false && "没有相关命令（未知或未实现的 OpCode）");
       break;
@@ -742,7 +785,7 @@ void VM::TraceRoots(gc::Collector& c) const {
   // 工具：标记一个Value（只有对象类型才需要标记）
   auto mark_value = [&c](const Value& v) {
     if (v.IsObj()) {
-      // Mark只接受罗指针（GcObject*）
+      // Mark只接受裸指针（GcObject*）
       c.Mark(v.AsObj().get());
     }
   };
@@ -797,6 +840,11 @@ void VM::TraceRoots(gc::Collector& c) const {
       if (v.IsObj())
         c.Mark(v.AsObj().get());
     }
+  }
+
+  // 5.扫描globals全局变量
+  for (const auto& it : globals_) {
+    mark_value(it.second);
   }
 }
 

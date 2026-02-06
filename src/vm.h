@@ -4,7 +4,9 @@
 #include <cstddef>
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "call_frame.h"
@@ -99,6 +101,7 @@ class VM {
   StackStats stack_;  // 运行时栈（带统计）
   std::vector<CallFrame> frames_;
   std::vector<Callable> callables_;
+  std::unordered_map<std::string, Value> globals_;
 
   Value last_return_value_ = Value::Null();
   TestEmitSink test_emit_sink_;
