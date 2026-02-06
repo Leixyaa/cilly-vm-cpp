@@ -124,38 +124,41 @@ void Collector::DrainGrayStack() {
 }
 
 void Collector::Sweep() {
-  // Sweep 需要从 intrusive 链表中删除节点：
-  // - prev 指向当前节点的前一个
-  // - obj 是当前遍历节点
+  std::vector<GcObject*> garbage;
+
   GcObject* prev = nullptr;
   GcObject* obj = all_objects_;
+
   while (obj) {
     if (obj->marked()) {
-      // 活对象 为下一轮清理marke
       obj->set_marked(false);
       prev = obj;
       obj = obj->next();
       continue;
     }
 
-    // 死对象 从链表中摘除并释放
     GcObject* dead = obj;
     obj = obj->next();
 
     if (prev)
       prev->set_next(obj);
     else
-      all_objects_ = obj;  // 如果删除的是头节点，则更新 all_objects_
+      all_objects_ = obj;
 
-    // 释放前先从堆字节统计里扣掉（必须保留：否则 heap_bytes() O(1)
-    // 就会越来越大，预算不准）
+    // 更新统计数据
     AddHeapBytesDelta(-static_cast<std::ptrdiff_t>(dead->SizeBytes()));
-
-    delete dead;
-
     --object_count_;
     ++last_swept_count_;
     ++total_swept_count_;
+
+    garbage.push_back(dead);
+  }
+  if (!garbage.empty()) {
+    std::thread([g = std::move(garbage)]() {
+      for (auto* dead : g) {
+        delete dead;
+      }
+    }).detach();
   }
 }
 
