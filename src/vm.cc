@@ -774,7 +774,7 @@ const CallFrame& VM::CurrentFrame() const {
 void VM::CollectGarbage() {
   if (!gc_)
     return;
-  gc_->CollectWithRoots([this](gc::Collector& c) { this->TraceRoots(c); });
+  gc_->CollectParallel([this](gc::Collector& c) { this->TraceRoots(c); });
 }
 
 void VM::SetNextGcBytesThresholdForTest(std::size_t bytes) {

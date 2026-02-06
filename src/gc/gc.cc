@@ -1,5 +1,8 @@
 #include "gc.h"
 
+#include <thread>
+#include <vector>
+
 namespace cilly::gc {
 
 Collector::Collector() = default;
@@ -82,6 +85,11 @@ void Collector::Mark(GcObject* obj) {
   if (!obj)
     return;
 
+  if (parallel_mode_) {
+    MarkParallel(obj);
+    return;
+  }
+
   // 已标记就不用重复入栈，否则会导致重复 Trace，浪费时间
   if (obj->marked())
     return;
@@ -91,6 +99,17 @@ void Collector::Mark(GcObject* obj) {
 
   // gray_stack_：迭代式遍历对象图，避免递归爆栈
   gray_stack_.push_back(obj);
+}
+
+void Collector::MarkParallel(GcObject* obj) {
+  if (!obj)
+    return;
+
+  if (obj->TryMark()) {  // 尝试抢占对象
+    std::lock_guard<std::mutex> lock(work_mutex_);
+    global_work_stack_.push_back(obj);
+    active_tasks_.fetch_add(1);
+  }
 }
 
 void Collector::DrainGrayStack() {
@@ -137,6 +156,29 @@ void Collector::Sweep() {
     --object_count_;
     ++last_swept_count_;
     ++total_swept_count_;
+  }
+}
+
+void Collector::ProcessWorkStack() {
+  while (true) {
+    GcObject* obj;
+
+    {
+      std::unique_lock<std::mutex> lock(work_mutex_);
+      if (global_work_stack_.empty()) {
+        if (active_tasks_.load() == 0)
+          return;
+        lock.unlock();
+        std::this_thread::yield();
+        continue;
+      }
+
+      obj = global_work_stack_.back();
+      global_work_stack_.pop_back();
+    }
+
+    obj->Trace(*this);
+    active_tasks_.fetch_sub(1);
   }
 }
 

@@ -1,6 +1,7 @@
 #ifndef CILLY_GC_GC_OBJECT_H_
 #define CILLY_GC_GC_OBJECT_H_
 
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 
@@ -19,8 +20,13 @@ class GcObject {
   GcObject* next() const { return next_; }
   void set_next(GcObject* n) { next_ = n; }
 
-  bool marked() { return marked_; }
-  void set_marked(bool flag) { marked_ = flag; }
+  bool TryMark() {
+    bool expected = false;
+    return marked_.compare_exchange_strong(expected, true);
+  }
+
+  bool marked() { return marked_.load(std::memory_order_relaxed); }
+  void set_marked(bool flag) { marked_.store(flag, std::memory_order_relaxed); }
 
   // ==================== 堆占用估算 ====================
   // 默认返回基础大小（sizeof(派生类) 由 New<T> 写入 size_bytes_）。
@@ -41,7 +47,7 @@ class GcObject {
 
  private:
   GcObject* next_ = nullptr;
-  bool marked_ = false;
+  std::atomic<bool> marked_{false};
   // 近似字节数：由 Collector::New<T>() 设置为 sizeof(T)
   std::size_t size_bytes_ = 0;
 };
