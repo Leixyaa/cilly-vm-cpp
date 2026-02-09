@@ -439,3 +439,6 @@ cilly_vm_cpp/*.bin
 # Local scratch script (optional)
 # cilly_vm_cpp/file.txt
 
+# Reference docs and playground
+docs/reference/
+

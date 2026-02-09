@@ -527,6 +527,17 @@ cc_test(
 )
 
 cc_test(
+    name = "gc_parallel_test",
+    srcs = ["gc_parallel_test.cc"],
+    deps = [
+        "//src:cilly_core",
+        "//src/gc:gc",
+        "@googletest//:gtest",
+        "@googletest//:gtest_main",
+    ],
+)
+
+cc_test(
     name = "global_variable_test",
     srcs = ["global_variable_test.cc"],
     deps = [
@@ -579,5 +590,6 @@ test_suite(
         ":gc_bytes_budget_growth_smoke_test",
         ":gc_instance_fields_is_gc_object_smoke_test",
         ":gc_stress_smoke_test",
+        ":gc_parallel_test",
     ],
 )
